@@ -1,0 +1,25 @@
+plugin:
+  name: Nations
+  version: 1.0
+  description: "A comprehensive civilization management plugin"
+
+# Main plugin settings
+storage:
+  type: "YAML"
+  auto-save-interval: 600
+  data-folder: "plugins/Nations/data"
+
+# Default starting values for players
+player-defaults:
+  starting-money: 1000
+  starting-town-cost: 5000
+  
+# General plugin features
+features:
+  enable-economy: true
+  enable-warfare: true
+  enable-religion: true
+  enable-alliances: true
+  enable-feudal-system: true
+  enable-legal-system: true
+  enable-military: true

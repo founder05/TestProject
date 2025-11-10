@@ -1,0 +1,43 @@
+# Feudal System Configuration
+
+feudal-system:
+  enable-feudal-relationships: true
+  
+  # Vassal Requirements
+  vassal-requirements:
+    minimum-settlement-level: 2
+    minimum-age-days: 3
+    
+  # Tribute System
+  tribute:
+    base-percentage: 0.10
+    collection-interval: 604800
+    failure-penalty: 0.05
+    
+  # Feudal Obligations
+  obligations:
+    military-support:
+      enabled: true
+      troop-percentage: 0.20
+      
+    economic-support:
+      enabled: true
+      emergency-aid-percentage: 0.15
+      
+    loyalty-oath:
+      enabled: true
+      loyalty-duration: 2592000
+
+  # Betrayal System
+  betrayal:
+    enabled: true
+    cooldown-days: 30
+    rebellion-success-chance: 0.30
+    independence-cost-multiplier: 2.0
+    reputation-loss: 50
+
+  # Breaking Allegiance
+  breaking-allegiance:
+    penalty-duration-days: 14
+    treasury-penalty-percentage: 0.20
+    reputation-loss: 75

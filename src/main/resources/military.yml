@@ -1,0 +1,107 @@
+# Military System Configuration
+
+military-system:
+  enable-military: true
+  
+  # Military Ranks Hierarchy
+  military-ranks:
+    # Supreme Command
+    supreme-commander:
+      level: 10
+      permissions: "all"
+      salary-multiplier: 3.0
+      
+    # High Command
+    general:
+      level: 9
+      permissions: "command,strategy,supply"
+      salary-multiplier: 2.5
+      
+    commander:
+      level: 8
+      permissions: "command,strategy"
+      salary-multiplier: 2.0
+      
+    # Mid-level Officers
+    captain:
+      level: 7
+      permissions: "command,patrol"
+      salary-multiplier: 1.8
+      
+    lieutenant:
+      level: 6
+      permissions: "command,patrol"
+      salary-multiplier: 1.5
+      
+    sergeant:
+      level: 5
+      permissions: "patrol,training"
+      salary-multiplier: 1.3
+      
+    # Enlisted
+    soldier:
+      level: 4
+      permissions: "patrol"
+      salary-multiplier: 1.0
+      
+    recruit:
+      level: 1
+      permissions: "none"
+      salary-multiplier: 0.5
+
+  # Military Units
+  units:
+    enable-military-units: true
+    unit-size: 10
+    unit-formation-enabled: true
+    
+  # Military Buildings
+  buildings:
+    barracks:
+      recruitment-capacity: 20
+      construction-cost: 5000
+      upkeep-cost: 500
+      
+    training-ground:
+      training-slots: 10
+      construction-cost: 3000
+      upkeep-cost: 300
+      
+    armory:
+      storage-capacity: 100
+      construction-cost: 4000
+      upkeep-cost: 400
+
+  # Military Actions
+  military-actions:
+    enable-patrols: true
+    patrol-effectiveness: 1.0
+    
+    enable-defensive-stance: true
+    defensive-bonus: 0.20
+    
+    enable-offensive-stance: true
+    offensive-bonus: 0.15
+    
+    enable-guerrilla-tactics: true
+    guerrilla-effectiveness: 0.80
+
+  # Supply Lines
+  supply-lines:
+    enable-supply-systems: true
+    supply-consumption-per-day: 10
+    supply-disruption-penalty: 0.30
+    
+  # War Participation
+  war-participation:
+    enable-participation-tracking: true
+    reward-for-victory-percentage: 0.10
+    reward-for-defense-percentage: 0.08
+    reward-for-casualty-percentage: 0.05
+
+  # Military Advancement
+  advancement:
+    enable-rank-progression: true
+    experience-per-patrol: 10
+    experience-per-battle: 50
+    experience-to-promote: 500

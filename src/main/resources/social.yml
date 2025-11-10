@@ -1,0 +1,125 @@
+# Social Class System Configuration
+
+social-classes:
+  enable-social-classes: true
+  
+  # Commoner Class
+  commoner:
+    level: 0
+    tax-rate: 0.15
+    can-own-land: false
+    land-claim-limit: 0
+    job-restrictions: []
+    
+  # Noble Class System
+  nobles:
+    enable-nobility: true
+    nobility-inheritance-enabled: true
+    
+    # Knight Tier
+    knight:
+      level: 1
+      tax-benefit: 0.05
+      can-own-land: true
+      land-claim-limit: 20
+      salary-multiplier: 1.1
+      required-wealth: 5000
+      required-experience: 100
+      
+    # Baron Tier
+    baron:
+      level: 2
+      tax-benefit: 0.10
+      can-own-land: true
+      land-claim-limit: 50
+      salary-multiplier: 1.2
+      required-wealth: 15000
+      required-experience: 500
+      required-subordinates: 3
+      
+    # Count Tier
+    count:
+      level: 3
+      tax-benefit: 0.15
+      can-own-land: true
+      land-claim-limit: 100
+      salary-multiplier: 1.3
+      required-wealth: 40000
+      required-experience: 1000
+      required-subordinates: 5
+      
+    # Duke Tier
+    duke:
+      level: 4
+      tax-benefit: 0.20
+      can-own-land: true
+      land-claim-limit: 200
+      salary-multiplier: 1.4
+      required-wealth: 100000
+      required-experience: 2000
+      required-subordinates: 10
+      
+    # Prince Tier
+    prince:
+      level: 5
+      tax-benefit: 0.25
+      can-own-land: true
+      land-claim-limit: 500
+      salary-multiplier: 1.5
+      required-wealth: 250000
+      required-experience: 5000
+      required-subordinates: 20
+      
+    # King Tier
+    king:
+      level: 6
+      tax-benefit: 0.30
+      can-own-land: true
+      land-claim-limit: 1000
+      salary-multiplier: 2.0
+      required-wealth: 500000
+      required-experience: 10000
+      settlement-requirement: "kingdom"
+
+  # Noble Privileges
+  noble-privileges:
+    reduced-taxes: true
+    increased-land-claims: true
+    government-positions-access: true
+    trade-route-discounts: 0.10
+    military-command: true
+    judicial-authority: true
+
+  # Class Mobility
+  mobility:
+    enable-class-mobility: true
+    
+    # Wealth-Based Mobility
+    wealth-based:
+      enabled: true
+      minimum-wealth-for-promotion: true
+      
+    # Merit-Based Mobility
+    merit-based:
+      enabled: true
+      experience-requirement: true
+      achievement-requirement: true
+      
+    # Appointment-Based Mobility
+    appointment-based:
+      enabled: true
+      leader-can-appoint: true
+      appointment-duration-days: 30
+      
+    # Demotion
+    demotion:
+      enabled: true
+      cause-by-debt: true
+      cause-by-crime: true
+      debt-threshold: 5000
+
+  # Social Status Effects
+  status-effects:
+    reputation-multiplier-per-tier: 0.1
+    quest-reward-multiplier-per-tier: 0.05
+    npc-interaction-bonus-per-tier: 0.1

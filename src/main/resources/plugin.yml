@@ -1,0 +1,61 @@
+name: Nations
+version: '1.0'
+main: me.marcdoesntexists.nations.Nations
+api-version: '1.21'
+authors:
+  - MarcDoesntExists
+description: "A comprehensive civilization management plugin for Minecraft"
+
+commands:
+  towns:
+    description: "Manage towns"
+    usage: "/towns [subcommand]"
+    
+  kingdoms:
+    description: "Manage kingdoms"
+    usage: "/kingdoms [subcommand]"
+    
+  empires:
+    description: "Manage empires"
+    usage: "/empires [subcommand]"
+    
+  war:
+    description: "Manage warfare"
+    usage: "/war [subcommand]"
+    
+  alliance:
+    description: "Manage alliances"
+    usage: "/alliance [subcommand]"
+    
+  religion:
+    description: "Manage religions"
+    usage: "/religion [subcommand]"
+    
+  job:
+    description: "Manage jobs"
+    usage: "/job [subcommand]"
+    
+  law:
+    description: "Manage laws"
+    usage: "/law [subcommand]"
+
+permissions:
+  nations.admin:
+    description: "Admin access to Nations plugin"
+    default: op
+    
+  nations.towns.create:
+    description: "Create towns"
+    default: true
+    
+  nations.kingdoms.create:
+    description: "Create kingdoms"
+    default: true
+    
+  nations.war.declare:
+    description: "Declare wars"
+    default: true
+    
+  nations.alliances.create:
+    description: "Create alliances"
+    default: true
