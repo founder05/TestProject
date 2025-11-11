@@ -22,7 +22,7 @@ repositories {
         url = "https://jitpack.io"
     }
     flatDir {
-        dirs 'libs'
+        dirs 'build'
     }
 }
 
@@ -38,7 +38,7 @@ dependencies {
     compileOnly("net.kyori:adventure-api:4.17.0")
     compileOnly("net.kyori:adventure-text-serializer-legacy:4.17.0")
     
-    compileOnly(files('libs/GriefPrevention.jar'))
+    compileOnly(files('build/GriefPrevention.jar'))
 }
 
 tasks {

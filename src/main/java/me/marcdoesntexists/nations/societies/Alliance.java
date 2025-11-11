@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public class Alliance {
+    private final UUID allianceId;
     private final String name;
     private final String leader;
     private final UUID founder;
@@ -17,6 +18,7 @@ public class Alliance {
     private String currentTier = "none";
 
     public Alliance(String name, String leader) {
+        this.allianceId = UUID.randomUUID();
         this.name = name;
         this.leader = leader;
         this.founder = null;
@@ -25,11 +27,16 @@ public class Alliance {
     }
 
     public Alliance(String name, UUID founder) {
+        this.allianceId = UUID.randomUUID();
         this.name = name;
         this.founder = founder;
         this.leader = founder.toString();
         this.createdAt = System.currentTimeMillis();
         this.members.add(founder.toString());
+    }
+
+    public UUID getAllianceId() {
+        return allianceId;
     }
 
     public String getName() {

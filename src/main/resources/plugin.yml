@@ -7,17 +7,13 @@ authors:
 description: "A comprehensive civilization management plugin for Minecraft"
 
 commands:
-  towns:
+  town:
     description: "Manage towns"
-    usage: "/towns [subcommand]"
+    usage: "/town [subcommand]"
     
-  kingdoms:
+  kingdom:
     description: "Manage kingdoms"
-    usage: "/kingdoms [subcommand]"
-    
-  empires:
-    description: "Manage empires"
-    usage: "/empires [subcommand]"
+    usage: "/kingdom [subcommand]"
     
   war:
     description: "Manage warfare"
@@ -44,11 +40,15 @@ permissions:
     description: "Admin access to Nations plugin"
     default: op
     
-  nations.towns.create:
+  nations.admin.bypass:
+    description: "Bypass protection in claimed chunks"
+    default: op
+    
+  nations.town.create:
     description: "Create towns"
     default: true
     
-  nations.kingdoms.create:
+  nations.kingdom.create:
     description: "Create kingdoms"
     default: true
     
@@ -56,6 +56,6 @@ permissions:
     description: "Declare wars"
     default: true
     
-  nations.alliances.create:
+  nations.alliance.create:
     description: "Create alliances"
     default: true

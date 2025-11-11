@@ -22,7 +22,12 @@ settlements:
   towns:
     max-members: 100
     claim-cost: 1000
+    claim-cost-increase: 0.1
+    max-claims: 100
+    claims-per-level: 10
     initial-balance: 10000
+    minimum-claims: 1
+    require-adjacent-claims: true
     
   # Kingdom Settings
   kingdoms:
@@ -36,8 +41,36 @@ settlements:
     bonus-claim-size: 200
     bonus-treasury-income: 500
 
+claim-protection:
+  protection:
+    block-break: true
+    block-place: true
+    containers: true
+    doors: true
+    buttons: true
+    entity-damage: true
+    explosions: true
+    fire-spread: false
+    mob-spawning: true
+    pvp: false
+  default-flags:
+    pvp-enabled: false
+    mob-spawning-enabled: true
+    explosions-enabled: false
+    fire-spread-enabled: false
+  visualization:
+    particle-type: "HAPPY_VILLAGER"
+    particle-density: 1
+    duration-seconds: 5
+  auto-claim:
+    enabled: true
+    max-radius: 5
+    require-adjacent: true
+
 # Functional Areas (Production Zones)
 functional-areas:
+  enabled: true
+  
   farm:
     base-productivity: 1.0
     production-per-tick: 50
@@ -73,3 +106,9 @@ progression:
   experience-per-activity: 10
   experience-to-level-up: 1000
   max-level: 50
+  rewards:
+    claim-chunk: 5
+    recruit-member: 20
+    collect-taxes: 10
+    defend-territory: 50
+    win-war: 100

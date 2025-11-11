@@ -65,5 +65,4 @@ public class SocietiesManager {
     public Collection<Alliance> getAlliances() { return new ArrayList<>(alliances.values()); }
     public Collection<Treaty> getAllTreaties() { return new ArrayList<>(treaties.values()); }
     public Collection<Religion> getAllReligions() { return new ArrayList<>(religions.values()); }
-    public Collection<God> getAllGods() { return new ArrayList<>(gods.values()); }
 }

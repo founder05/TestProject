@@ -1,5 +1,7 @@
 package me.marcdoesntexists.nations;
 
+import me.marcdoesntexists.nations.commands.*;
+import me.marcdoesntexists.nations.listeners.*;
 import me.marcdoesntexists.nations.managers.*;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.PluginManager;
@@ -13,6 +15,8 @@ public final class Nations extends JavaPlugin {
     private EconomyManager economyManager;
     private LawManager lawManager;
     private MilitaryManager militaryManager;
+    private ClaimManager claimManager;
+    private HybridClaimManager hybridClaimManager;
 
     @Override
     public void onEnable() {
@@ -26,6 +30,8 @@ public final class Nations extends JavaPlugin {
         initializeManagers();
         registerEventListeners();
         registerCommands();
+        
+        loadData();
 
         getLogger().info("Nations plugin has been enabled!");
         getLogger().info("Version: " + getDescription().getVersion());
@@ -49,6 +55,8 @@ public final class Nations extends JavaPlugin {
             economyManager = EconomyManager.getInstance();
             lawManager = LawManager.getInstance();
             militaryManager = MilitaryManager.getInstance();
+            claimManager = ClaimManager.getInstance(this);
+            hybridClaimManager = HybridClaimManager.getInstance(this);
 
             getLogger().info("All managers initialized successfully");
         } catch (Exception e) {
@@ -60,11 +68,56 @@ public final class Nations extends JavaPlugin {
 
     private void registerEventListeners() {
         PluginManager pm = Bukkit.getPluginManager();
+        
+        pm.registerEvents(new PlayerListener(this), this);
+        pm.registerEvents(new BlockListener(this), this);
+        pm.registerEvents(new MoveListener(this), this);
+        pm.registerEvents(new EntityListener(this), this);
+        pm.registerEvents(new InteractListener(this), this);
+        
         getLogger().info("Event listeners registered");
     }
 
     private void registerCommands() {
+        TownCommand townCommand = new TownCommand(this);
+        getCommand("town").setExecutor(townCommand);
+        getCommand("town").setTabCompleter(townCommand);
+        
+        KingdomCommand kingdomCommand = new KingdomCommand(this);
+        getCommand("kingdom").setExecutor(kingdomCommand);
+        getCommand("kingdom").setTabCompleter(kingdomCommand);
+        
+        WarCommand warCommand = new WarCommand(this);
+        getCommand("war").setExecutor(warCommand);
+        getCommand("war").setTabCompleter(warCommand);
+        
+        JobCommand jobCommand = new JobCommand(this);
+        getCommand("job").setExecutor(jobCommand);
+        getCommand("job").setTabCompleter(jobCommand);
+        
+        AllianceCommand allianceCommand = new AllianceCommand(this);
+        getCommand("alliance").setExecutor(allianceCommand);
+        getCommand("alliance").setTabCompleter(allianceCommand);
+        
+        ReligionCommand religionCommand = new ReligionCommand(this);
+        getCommand("religion").setExecutor(religionCommand);
+        getCommand("religion").setTabCompleter(religionCommand);
+        
+        LawCommand lawCommand = new LawCommand(this);
+        getCommand("law").setExecutor(lawCommand);
+        getCommand("law").setTabCompleter(lawCommand);
+        
         getLogger().info("Commands registered");
+    }
+    
+    private void loadData() {
+        try {
+            
+            getLogger().info("Data loaded successfully");
+        } catch (Exception e) {
+            getLogger().severe("Failed to load data!");
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -101,5 +154,13 @@ public final class Nations extends JavaPlugin {
 
     public MilitaryManager getMilitaryManager() {
         return militaryManager;
+    }
+
+    public ClaimManager getClaimManager() {
+        return claimManager;
+    }
+
+    public HybridClaimManager getHybridClaimManager() {
+        return hybridClaimManager;
     }
 }

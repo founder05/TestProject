@@ -14,14 +14,13 @@ public class Kingdom {
     private final Set<String> wars = new HashSet<>();
     private String empire = null;
 
-    // CORRECTION: Added class field for towns
     private Set<String> towns = new HashSet<>();
 
     private Map<String, FunctionalArea> functionalAreas = new HashMap<>();
 
-    // Progression System
     private int progressionLevel = 1;
     private long progressionExperience = 0;
+    private int balance = 0;
 
     // Diplomacy fields
     private Set<String> allies = new HashSet<>();
@@ -198,5 +197,25 @@ public class Kingdom {
 
     public void addProgressionExperience(long exp) {
         this.progressionExperience += exp;
+    }
+
+    public int getBalance() {
+        return balance;
+    }
+
+    public void setBalance(int balance) {
+        this.balance = balance;
+    }
+
+    public void addMoney(int amount) {
+        this.balance += amount;
+    }
+
+    public boolean removeMoney(int amount) {
+        if (amount > 0 && balance >= amount) {
+            balance -= amount;
+            return true;
+        }
+        return false;
     }
 }

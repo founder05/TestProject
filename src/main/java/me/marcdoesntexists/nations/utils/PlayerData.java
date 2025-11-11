@@ -1,19 +1,18 @@
 package me.marcdoesntexists.nations.utils;
 
 import me.marcdoesntexists.nations.societies.NobleTier;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class PlayerData {
 
     private final Map<String, Integer> godAffinities = new HashMap<>();
+    private final Set<String> townInvites = new HashSet<>();
     private String town = null;
     private String religion = null;
     private String job = null;
+    private int money = 0;
     private String socialClass = "Commoner";
     private String clergyRank = null;
-    private int money;
     private NobleTier nobleTier = NobleTier.COMMONER;
     private String suzerain = null;
     private boolean isMilitary = false;
@@ -22,12 +21,20 @@ public class PlayerData {
     private long jobExperience = 0;
     private long classExperience = 0;
 
+    public PlayerData() {
+        this(0);
+    }
+
     public PlayerData(int startingMoney) {
-        this.money = startingMoney;
+        this.money = Math.max(0, startingMoney);
     }
 
     public int getMoney() {
         return money;
+    }
+
+    public void setMoney(int amount) {
+        this.money = Math.max(0, amount);
     }
 
     public void addMoney(int amount) {
@@ -37,8 +44,11 @@ public class PlayerData {
     }
 
     public boolean removeMoney(int amount) {
-        if (amount > 0 && this.money >= amount) {
-            this.money -= amount;
+        if (amount <= 0) {
+            return true;
+        }
+        if (money >= amount) {
+            money -= amount;
             return true;
         }
         return false;
@@ -162,5 +172,17 @@ public class PlayerData {
 
     public void setMilitaryRank(String rank) {
         this.militaryRank = rank;
+    }
+
+    public Set<String> getTownInvites() {
+        return new HashSet<>(townInvites);
+    }
+
+    public void addTownInvite(String townName) {
+        townInvites.add(townName);
+    }
+
+    public void removeTownInvite(String townName) {
+        townInvites.remove(townName);
     }
 }

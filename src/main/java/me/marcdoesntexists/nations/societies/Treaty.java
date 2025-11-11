@@ -2,8 +2,10 @@ package me.marcdoesntexists.nations.societies;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class Treaty {
+    private final UUID treatyId;
     private final String name;
     private final String kingdom1;
     private final String kingdom2;
@@ -14,12 +16,17 @@ public class Treaty {
     private Map<String, String> terms = new HashMap<>();
 
     public Treaty(String name, String kingdom1, String kingdom2, TreatyType type, long durationDays) {
+        this.treatyId = UUID.randomUUID();
         this.name = name;
         this.kingdom1 = kingdom1;
         this.kingdom2 = kingdom2;
         this.type = type;
         this.createdAt = System.currentTimeMillis();
         this.expiresAt = createdAt + (durationDays * 24 * 60 * 60 * 1000);
+    }
+
+    public UUID getTreatyId() {
+        return treatyId;
     }
 
     public String getName() {

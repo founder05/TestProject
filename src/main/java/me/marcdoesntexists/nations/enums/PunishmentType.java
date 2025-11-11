@@ -1,6 +1,8 @@
 package me.marcdoesntexists.nations.enums;
 
 public enum PunishmentType {
+    GUILTY("Guilty - Convicted"),
+    NOT_GUILTY("Not Guilty - Acquitted"),
     FINE("Fine - Pay money"),
     IMPRISONMENT("Imprisonment - Days in jail"),
     BANISHMENT("Banishment - Exile from society"),

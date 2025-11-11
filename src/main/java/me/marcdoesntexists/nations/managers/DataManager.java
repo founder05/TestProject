@@ -1,6 +1,7 @@
 package me.marcdoesntexists.nations.managers;
 
 import me.marcdoesntexists.nations.Nations;
+import me.marcdoesntexists.nations.societies.NobleTier;
 import me.marcdoesntexists.nations.utils.PlayerData;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -14,6 +15,7 @@ public class DataManager {
     private final Nations plugin;
     private final Map<UUID, PlayerData> playerDataCache = new HashMap<>();
     private final File dataFolder;
+    private final int startingMoney;
 
     private DataManager(Nations plugin) {
         this.plugin = plugin;
@@ -21,6 +23,9 @@ public class DataManager {
         if (!dataFolder.exists()) {
             dataFolder.mkdirs();
         }
+        ConfigurationManager configManager = ConfigurationManager.getInstance();
+        FileConfiguration mainConfig = configManager != null ? configManager.getMainConfig() : null;
+        this.startingMoney = mainConfig != null ? mainConfig.getInt("player-defaults.starting-money", 1000) : 1000;
     }
 
     public static DataManager getInstance(Nations plugin) {
@@ -43,11 +48,20 @@ public class DataManager {
         if (playerFile.exists()) {
             try {
                 FileConfiguration config = YamlConfiguration.loadConfiguration(playerFile);
-                PlayerData data = new PlayerData(config.getInt("money", 1000));
+                PlayerData data = new PlayerData();
+                data.setMoney(config.getInt("money", startingMoney));
                 data.setTown(config.getString("town"));
                 data.setReligion(config.getString("religion"));
                 data.setJob(config.getString("job"));
                 data.setSocialClass(config.getString("socialClass", "Commoner"));
+                String nobleTierName = config.getString("nobleTier");
+                if (nobleTierName != null) {
+                    try {
+                        data.setNobleTier(NobleTier.valueOf(nobleTierName.toUpperCase()));
+                    } catch (IllegalArgumentException ignored) {
+                        data.setNobleTier(NobleTier.COMMONER);
+                    }
+                }
                 playerDataCache.put(playerId, data);
                 return data;
             } catch (Exception e) {
@@ -55,7 +69,7 @@ public class DataManager {
             }
         }
 
-        PlayerData newData = new PlayerData(1000);
+        PlayerData newData = new PlayerData(startingMoney);
         playerDataCache.put(playerId, newData);
         return newData;
     }
