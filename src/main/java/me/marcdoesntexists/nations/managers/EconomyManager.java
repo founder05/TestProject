@@ -28,11 +28,21 @@ public class EconomyManager {
         return instance;
     }
 
-    public void registerJob(Job job) { jobs.put(job.getJobId(), job); }
-    public Job getJob(UUID id) { return jobs.get(id); }
-    public Collection<Job> getAllJobs() { return new ArrayList<>(jobs.values()); }
+    public void registerJob(Job job) {
+        jobs.put(job.getJobId(), job);
+    }
 
-    public void recordSalary(Salary salary) { salaries.put(salary.getSalaryId(), salary); }
+    public Job getJob(UUID id) {
+        return jobs.get(id);
+    }
+
+    public Collection<Job> getAllJobs() {
+        return new ArrayList<>(jobs.values());
+    }
+
+    public void recordSalary(Salary salary) {
+        salaries.put(salary.getSalaryId(), salary);
+    }
 
     public void recordTransaction(Transaction transaction) {
         transactions.put(transaction.getTransactionId(), transaction);

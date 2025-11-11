@@ -7,38 +7,38 @@ alliances:
   alliance-creation:
     creation-cost: 10000
     minimum-member-kingdoms: 2
-    
+
   # Alliance Benefits
   benefits:
     shared-trade-routes: true
     military-support-available: true
     diplomatic-immunity: true
     joint-research: true
-    
+
   # Trade Routes
   trade-routes:
     establishment-cost: 5000
     maintenance-cost: 500
     profit-margin: 0.25
-    
+
   # Alliance Management
   management:
     require-unanimity-for-war: false
     tax-pool-percentage: 0.05
     joint-treasury-enabled: true
-    
+
   # Alliance Tiers
   tiers:
     tier1:
       name: "Pact"
       min-members: 2
       member-limit: 5
-      
+
     tier2:
       name: "Confederation"
       min-members: 3
       member-limit: 10
-      
+
     tier3:
       name: "Union"
       min-members: 5
@@ -53,23 +53,23 @@ treaties:
     peace:
       duration-days: 30
       breach-penalty: 0.30
-      
+
     trade:
       duration-days: 90
       tax-rate: 0.05
-      
+
     non-aggression:
       duration-days: 60
       violation-penalty: 0.20
-      
+
     mutual-defense:
       duration-days: 90
       support-required: true
-      
+
     neutrality:
       duration-days: 45
       enforcement: true
-      
+
   # Treaty Enforcement
   enforcement:
     auto-enforce: true

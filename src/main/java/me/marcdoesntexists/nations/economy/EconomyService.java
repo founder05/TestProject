@@ -1,11 +1,13 @@
 package me.marcdoesntexists.nations.economy;
 
 import me.marcdoesntexists.nations.Nations;
-import me.marcdoesntexists.nations.managers.*;
-import me.marcdoesntexists.nations.societies.Town;
-import me.marcdoesntexists.nations.societies.Kingdom;
-import me.marcdoesntexists.nations.societies.Empire;
 import me.marcdoesntexists.nations.enums.JobType;
+import me.marcdoesntexists.nations.managers.ConfigurationManager;
+import me.marcdoesntexists.nations.managers.EconomyManager;
+import me.marcdoesntexists.nations.managers.SocietiesManager;
+import me.marcdoesntexists.nations.societies.Empire;
+import me.marcdoesntexists.nations.societies.Kingdom;
+import me.marcdoesntexists.nations.societies.Town;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.scheduler.BukkitRunnable;
 

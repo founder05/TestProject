@@ -1,7 +1,7 @@
 package me.marcdoesntexists.nations.utils;
 
 public class CustomMessages {
-    
+
     public static class Settlement {
         public static final String TOWN_CREATED = "Town %s has been created!";
         public static final String KINGDOM_UPGRADED = "%s has been upgraded to a Kingdom!";

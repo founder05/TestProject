@@ -1,6 +1,7 @@
 package me.marcdoesntexists.nations.utils;
 
 import me.marcdoesntexists.nations.societies.NobleTier;
+
 import java.util.*;
 
 public class PlayerData {

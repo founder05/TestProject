@@ -1,0 +1,88 @@
+package me.marcdoesntexists.nations.commands;
+
+import me.marcdoesntexists.nations.Nations;
+import me.marcdoesntexists.nations.managers.ClaimVisualizer;
+import me.marcdoesntexists.nations.managers.DataManager;
+import me.marcdoesntexists.nations.managers.SocietiesManager;
+import me.marcdoesntexists.nations.societies.Town;
+import me.marcdoesntexists.nations.utils.PlayerData;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class ShowClaimsCommand implements CommandExecutor, TabCompleter {
+
+    private final Nations plugin;
+
+    public ShowClaimsCommand(Nations plugin) {
+        this.plugin = plugin;
+    }
+
+    @Override
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage("Only players can use this command.");
+            return true;
+        }
+
+        DataManager dataManager = plugin.getDataManager();
+        SocietiesManager societiesManager = plugin.getSocietiesManager();
+
+        String townName = dataManager.getPlayerData(player.getUniqueId()).getTown();
+        if (townName == null) {
+            player.sendMessage("§cYou are not in a town!");
+            return true;
+        }
+
+        Town town = societiesManager.getTown(townName);
+        if (town == null) {
+            player.sendMessage("§cTown not found.");
+            return true;
+        }
+
+        if (!player.hasPermission("nations.claim.show")) {
+            player.sendMessage("§cYou don't have permission to view claim borders.");
+            return true;
+        }
+
+        ClaimVisualizer visualizer = plugin.getClaimVisualizer();
+        if (visualizer == null) {
+            player.sendMessage("§cClaim visualizer not available.");
+            return true;
+        }
+
+        visualizer.toggleVisualization(player, town.getName());
+        return true;
+    }
+
+    @Override
+    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NotNull [] args) {
+        // suggest town names (player's town first if applicable)
+        List<String> suggestions = new ArrayList<>();
+        if (sender instanceof Player) {
+            Player p = (Player) sender;
+            DataManager dm = plugin.getDataManager();
+            SocietiesManager sm = plugin.getSocietiesManager();
+            PlayerData pd = dm.getPlayerData(p.getUniqueId());
+            if (pd != null && pd.getTown() != null) {
+                suggestions.add(pd.getTown());
+            }
+            sm.getAllTowns().stream().map(Town::getName).forEach(suggestions::add);
+        }
+        if (args.length == 1) {
+            String partial = args[0].toLowerCase();
+            return suggestions.stream().distinct()
+                    .filter(s -> s.toLowerCase().startsWith(partial))
+                    .collect(Collectors.toList());
+        }
+        return List.of();
+    }
+}

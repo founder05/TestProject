@@ -1,11 +1,12 @@
 package me.marcdoesntexists.nations.law;
 
 import me.marcdoesntexists.nations.Nations;
-import me.marcdoesntexists.nations.managers.ConfigurationManager;
-import me.marcdoesntexists.nations.managers.LawManager;
 import me.marcdoesntexists.nations.enums.CrimeType;
 import me.marcdoesntexists.nations.enums.PunishmentType;
+import me.marcdoesntexists.nations.managers.ConfigurationManager;
+import me.marcdoesntexists.nations.managers.LawManager;
 import org.bukkit.configuration.file.FileConfiguration;
+
 import java.util.UUID;
 
 public class JusticeService {

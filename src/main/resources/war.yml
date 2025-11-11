@@ -8,20 +8,20 @@ warfare:
     declaration-cost: 10000
     minimum-declaration-notice-hours: 24
     cooldown-between-wars-days: 7
-    
+
   # Conquest Mechanics
   conquest:
     enable-territory-conquest: true
     minimum-claim-size-for-conquest: 5
     conquest-speed-modifier: 1.0
-    
+
   # War Objectives
   war-objectives:
     territorial-control-percentage-for-victory: 0.70
     resource-capture-enabled: true
     flag-capture-enabled: true
     enemy-elimination-enabled: false
-    
+
   # Battle System
   battles:
     enable-battle-mechanics: true
@@ -41,35 +41,35 @@ war-crimes:
       reputation-loss: 100
       fine-amount: 50000
       enabled: true
-      
+
     # Destruction of Religious Sites
     religious-destruction:
       severity: 8
       reputation-loss: 80
       fine-amount: 40000
       enabled: true
-      
+
     # War Crime: Massacre
     massacre:
       severity: 10
       reputation-loss: 150
       fine-amount: 100000
       enabled: true
-      
+
     # Forced Displacement
     forced-displacement:
       severity: 7
       reputation-loss: 70
       fine-amount: 35000
       enabled: true
-      
+
     # Poisoning
     poisoning:
       severity: 9
       reputation-loss: 90
       fine-amount: 45000
       enabled: true
-      
+
     # Torture
     torture:
       severity: 8
@@ -84,7 +84,7 @@ war-crimes:
     trade-embargo-enabled: true
     reputation-loss-multiplier: 1.0
     diplomatic-isolation-enabled: true
-    
+
   # Prosecution System
   prosecution:
     enable-war-crime-trials: true

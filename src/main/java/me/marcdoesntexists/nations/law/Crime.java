@@ -1,6 +1,7 @@
 package me.marcdoesntexists.nations.law;
 
 import me.marcdoesntexists.nations.enums.CrimeType;
+
 import java.util.UUID;
 
 public class Crime {
@@ -23,14 +24,43 @@ public class Crime {
         this.solved = false;
     }
 
-    public UUID getCrimeId() { return crimeId; }
-    public UUID getCriminalId() { return criminalId; }
-    public CrimeType getCrimeType() { return crimeType; }
-    public String getTownId() { return townId; }
-    public long getTimestamp() { return timestamp; }
-    public String getLocation() { return location; }
-    public String getEvidence() { return evidence; }
-    public void setEvidence(String evidence) { this.evidence = evidence; }
-    public boolean isSolved() { return solved; }
-    public void setSolved(boolean solved) { this.solved = solved; }
+    public UUID getCrimeId() {
+        return crimeId;
+    }
+
+    public UUID getCriminalId() {
+        return criminalId;
+    }
+
+    public CrimeType getCrimeType() {
+        return crimeType;
+    }
+
+    public String getTownId() {
+        return townId;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public String getEvidence() {
+        return evidence;
+    }
+
+    public void setEvidence(String evidence) {
+        this.evidence = evidence;
+    }
+
+    public boolean isSolved() {
+        return solved;
+    }
+
+    public void setSolved(boolean solved) {
+        this.solved = solved;
+    }
 }

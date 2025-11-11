@@ -10,52 +10,148 @@ commands:
   town:
     description: "Manage towns"
     usage: "/town [subcommand]"
-    
+
+  showclaims:
+    description: "Toggle display of your town's claim borders"
+    usage: "/showclaims"
+
   kingdom:
     description: "Manage kingdoms"
     usage: "/kingdom [subcommand]"
-    
+
   war:
     description: "Manage warfare"
     usage: "/war [subcommand]"
-    
+
   alliance:
     description: "Manage alliances"
     usage: "/alliance [subcommand]"
-    
+
   religion:
     description: "Manage religions"
     usage: "/religion [subcommand]"
-    
+
   job:
     description: "Manage jobs"
     usage: "/job [subcommand]"
-    
+
   law:
-    description: "Manage laws"
+    description: "Manage laws and crimes"
     usage: "/law [subcommand]"
+
+  treaty:
+    description: "Manage treaties between kingdoms"
+    usage: "/treaty [subcommand]"
+
+  feudal:
+    description: "Manage feudal relationships and vassals"
+    usage: "/feudal [subcommand]"
+    aliases: [vassal]
+
+  evolve:
+    description: "Evolve your settlement (Town → Kingdom → Empire)"
+    usage: "/evolve [subcommand]"
+
+  military:
+    description: "Manage military and ranks"
+    usage: "/military [subcommand]"
+
+  trial:
+    description: "Manage trials and judicial actions"
+    usage: "/trial [subcommand]"
+
+  noble:
+    description: "Manage noble tiers and promotions"
+    usage: "/noble [subcommand]"
+
+  god:
+    description: "Manage gods and religion features"
+    usage: "/god [subcommand]"
 
 permissions:
   nations.admin:
     description: "Admin access to Nations plugin"
     default: op
-    
+
   nations.admin.bypass:
     description: "Bypass protection in claimed chunks"
     default: op
-    
+
+  nations.claim.show:
+    description: Allows viewing your town claim borders
+    default: op
+
   nations.town.create:
     description: "Create towns"
     default: true
-    
+
   nations.kingdom.create:
     description: "Create kingdoms"
     default: true
-    
+
   nations.war.declare:
     description: "Declare wars"
     default: true
-    
+
   nations.alliance.create:
     description: "Create alliances"
+    default: true
+
+  nations.treaty.create:
+    description: "Create treaties"
+    default: true
+
+  nations.feudal.manage:
+    description: "Manage feudal relationships"
+    default: true
+
+  nations.evolve:
+    description: "Evolve settlements"
+    default: true
+
+  # Military permissions
+  nations.military.*:
+    description: "All military commands"
+    default: op
+  nations.military.enlist:
+    description: "Enlist players into the military"
+    default: op
+  nations.military.manage:
+    description: "Promote/Demote/Discharge players"
+    default: op
+  nations.military.view:
+    description: "View military info and list"
+    default: true
+
+  # Trial / justice permissions
+  nations.trial.*:
+    description: "All trial commands"
+    default: op
+  nations.trial.start:
+    description: "Start trials"
+    default: op
+  nations.trial.judge:
+    description: "Judge and sentence"
+    default: op
+
+  # Nobility permissions
+  nations.noble.*:
+    description: "All noble commands"
+    default: op
+  nations.noble.promote:
+    description: "Promote players in the noble system"
+    default: op
+  nations.noble.upgrade:
+    description: "Upgrade your noble tier"
+    default: true
+
+  # God / religion permissions
+  nations.god.*:
+    description: "All god/religion commands"
+    default: op
+  nations.god.create:
+    description: "Create gods"
+    default: op
+  nations.god.worship:
+    description: "Worship gods"
     default: true

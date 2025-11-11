@@ -31,14 +31,35 @@ public class MilitaryManager {
         war.declareWar();
     }
 
-    public War getWar(UUID id) { return wars.get(id); }
-    public Collection<War> getAllWars() { return new ArrayList<>(wars.values()); }
+    public War getWar(UUID id) {
+        return wars.get(id);
+    }
 
-    public void recordWarCrime(WarCrime crime) { warCrimes.put(crime.getWarCrimeId(), crime); }
-    public WarCrime getWarCrime(UUID id) { return warCrimes.get(id); }
-    public Collection<WarCrime> getAllWarCrimes() { return new ArrayList<>(warCrimes.values()); }
+    public Collection<War> getAllWars() {
+        return new ArrayList<>(wars.values());
+    }
 
-    public void registerRank(MilitaryRank rank) { ranks.put(rank.getRankId(), rank); }
-    public MilitaryRank getRank(UUID id) { return ranks.get(id); }
-    public Collection<MilitaryRank> getAllRanks() { return new ArrayList<>(ranks.values()); }
+    public void recordWarCrime(WarCrime crime) {
+        warCrimes.put(crime.getWarCrimeId(), crime);
+    }
+
+    public WarCrime getWarCrime(UUID id) {
+        return warCrimes.get(id);
+    }
+
+    public Collection<WarCrime> getAllWarCrimes() {
+        return new ArrayList<>(warCrimes.values());
+    }
+
+    public void registerRank(MilitaryRank rank) {
+        ranks.put(rank.getRankId(), rank);
+    }
+
+    public MilitaryRank getRank(UUID id) {
+        return ranks.get(id);
+    }
+
+    public Collection<MilitaryRank> getAllRanks() {
+        return new ArrayList<>(ranks.values());
+    }
 }

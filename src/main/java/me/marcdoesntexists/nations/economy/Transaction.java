@@ -11,10 +11,6 @@ public class Transaction {
     private long timestamp;
     private String reason;
 
-    public enum TransactionType {
-        SALARY, TAX, FINE, TRADE, TRIBUTE, GIFT, BANK, OTHER
-    }
-
     public Transaction(UUID senderId, UUID recipientId, double amount, TransactionType type, String reason) {
         this.transactionId = UUID.randomUUID();
         this.senderId = senderId;
@@ -35,11 +31,35 @@ public class Transaction {
         this.timestamp = System.currentTimeMillis();
     }
 
-    public UUID getTransactionId() { return transactionId; }
-    public UUID getSenderId() { return senderId; }
-    public UUID getRecipientId() { return recipientId; }
-    public double getAmount() { return amount; }
-    public TransactionType getType() { return type; }
-    public long getTimestamp() { return timestamp; }
-    public String getReason() { return reason; }
+    public UUID getTransactionId() {
+        return transactionId;
+    }
+
+    public UUID getSenderId() {
+        return senderId;
+    }
+
+    public UUID getRecipientId() {
+        return recipientId;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+
+    public TransactionType getType() {
+        return type;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public enum TransactionType {
+        SALARY, TAX, FINE, TRADE, TRIBUTE, GIFT, BANK, OTHER
+    }
 }

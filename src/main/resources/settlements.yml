@@ -7,7 +7,7 @@ settlement-evolution:
     minimum-population: 10
     minimum-treasury: 50000
     minimum-days-old: 7
-    
+
   # Kingdom to Empire Requirements
   kingdom-to-empire:
     minimum-claims: 500
@@ -28,13 +28,13 @@ settlements:
     initial-balance: 10000
     minimum-claims: 1
     require-adjacent-claims: true
-    
+
   # Kingdom Settings
   kingdoms:
     max-towns: 20
     bonus-claim-size: 50
     bonus-treasury-income: 100
-    
+
   # Empire Settings
   empires:
     max-kingdoms: 10
@@ -75,27 +75,27 @@ functional-areas:
     base-productivity: 1.0
     production-per-tick: 50
     upkeep-cost: 100
-    
+
   mine:
     base-productivity: 1.5
     production-per-tick: 75
     upkeep-cost: 200
-    
+
   temple:
     base-productivity: 0.8
     production-per-tick: 30
     upkeep-cost: 150
-    
+
   barracks:
     base-productivity: 1.2
     production-per-tick: 60
     upkeep-cost: 250
-    
+
   market:
     base-productivity: 1.3
     production-per-tick: 80
     upkeep-cost: 300
-    
+
   library:
     base-productivity: 0.9
     production-per-tick: 40

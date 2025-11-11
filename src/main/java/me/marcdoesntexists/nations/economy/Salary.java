@@ -26,11 +26,31 @@ public class Salary {
         this.netAmount = amount - taxDeducted;
     }
 
-    public UUID getSalaryId() { return salaryId; }
-    public UUID getPlayerId() { return playerId; }
-    public UUID getJobId() { return jobId; }
-    public double getAmount() { return amount; }
-    public long getPaymentDate() { return paymentDate; }
-    public double getTaxDeducted() { return taxDeducted; }
-    public double getNetAmount() { return netAmount; }
+    public UUID getSalaryId() {
+        return salaryId;
+    }
+
+    public UUID getPlayerId() {
+        return playerId;
+    }
+
+    public UUID getJobId() {
+        return jobId;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+
+    public long getPaymentDate() {
+        return paymentDate;
+    }
+
+    public double getTaxDeducted() {
+        return taxDeducted;
+    }
+
+    public double getNetAmount() {
+        return netAmount;
+    }
 }

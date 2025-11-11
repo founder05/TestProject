@@ -1,6 +1,7 @@
 package me.marcdoesntexists.nations.economy;
 
 import me.marcdoesntexists.nations.enums.JobType;
+
 import java.util.UUID;
 
 public class Job {
@@ -30,11 +31,31 @@ public class Job {
         this.salary = newSalary;
     }
 
-    public UUID getJobId() { return jobId; }
-    public UUID getPlayerId() { return playerId; }
-    public JobType getJobType() { return jobType; }
-    public String getTownId() { return townId; }
-    public long getHireDate() { return hireDate; }
-    public double getSalary() { return salary; }
-    public boolean isActive() { return active; }
+    public UUID getJobId() {
+        return jobId;
+    }
+
+    public UUID getPlayerId() {
+        return playerId;
+    }
+
+    public JobType getJobType() {
+        return jobType;
+    }
+
+    public String getTownId() {
+        return townId;
+    }
+
+    public long getHireDate() {
+        return hireDate;
+    }
+
+    public double getSalary() {
+        return salary;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
 }

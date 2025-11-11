@@ -6,13 +6,13 @@ taxes:
   town:
     base-rate: 0.10
     collection-interval: 86400
-    
+
   # Kingdom taxes
   kingdom:
     base-rate: 0.15
     collection-interval: 86400
     vassal-share: 0.05
-    
+
   # Empire taxes
   empire:
     base-rate: 0.20
@@ -26,47 +26,47 @@ jobs:
     base-salary: 100
     tier: 1
     tax-percentage: 10
-    
+
   farmer:
     base-salary: 150
     tier: 1
     tax-percentage: 15
-    
+
   builder:
     base-salary: 200
     tier: 2
     tax-percentage: 20
-    
+
   blacksmith:
     base-salary: 250
     tier: 2
     tax-percentage: 25
-    
+
   merchant:
     base-salary: 300
     tier: 2
     tax-percentage: 30
-    
+
   soldier:
     base-salary: 400
     tier: 3
     tax-percentage: 40
-    
+
   scholar:
     base-salary: 350
     tier: 3
     tax-percentage: 35
-    
+
   priest:
     base-salary: 200
     tier: 2
     tax-percentage: 20
-    
+
   guard:
     base-salary: 180
     tier: 2
     tax-percentage: 18
-    
+
   administrator:
     base-salary: 500
     tier: 3

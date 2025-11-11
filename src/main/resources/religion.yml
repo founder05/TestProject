@@ -8,44 +8,44 @@ religion-system:
     creation-cost: 5000
     minimum-founder-level: 1
     initial-followers: 1
-    
+
   # Gods & Deities
   gods:
     max-gods-per-religion: 5
     god-creation-cost: 2000
     power-gain-per-action: 1
-    
+
   # Altars & Temples
   religious-buildings:
     altar-construction-cost: 1000
     temple-construction-cost: 5000
     shrine-construction-cost: 2000
-    
+
   # Faith Mechanics
   faith:
     affinity-gain-per-action: 5
     affinity-loss-per-action: -2
     max-affinity: 100
     min-affinity: 0
-    
+
   # Faith Effects (Bonuses/Penalties)
   faith-effects:
     high-faith-bonus: 0.15
     low-faith-penalty: -0.10
     faith-threshold-for-bonus: 60
-    
+
   # Religious Conflicts
   conflicts:
     enable-religious-wars: true
     religious-persecution-enabled: true
     heresy-punishment-enabled: true
-    
+
   # Religious Persecution
   persecution:
     enabled: true
     follower-conversion-rate: 0.05
     morale-loss-per-day: 5
-    
+
   # Clergy System
   clergy:
     enabled: true

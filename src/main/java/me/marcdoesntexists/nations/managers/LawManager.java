@@ -32,12 +32,31 @@ public class LawManager {
         criminal.addCrime(crime);
     }
 
-    public Crime getCrime(UUID id) { return crimes.get(id); }
-    public Criminal getCriminal(UUID id) { return criminals.get(id); }
-    public Collection<Crime> getAllCrimes() { return new ArrayList<>(crimes.values()); }
-    public Collection<Criminal> getAllCriminals() { return new ArrayList<>(criminals.values()); }
+    public Crime getCrime(UUID id) {
+        return crimes.get(id);
+    }
 
-    public void registerTrial(Trial trial) { trials.put(trial.getTrialId(), trial); }
-    public Trial getTrial(UUID id) { return trials.get(id); }
-    public Collection<Trial> getAllTrials() { return new ArrayList<>(trials.values()); }
+    public Criminal getCriminal(UUID id) {
+        return criminals.get(id);
+    }
+
+    public Collection<Crime> getAllCrimes() {
+        return new ArrayList<>(crimes.values());
+    }
+
+    public Collection<Criminal> getAllCriminals() {
+        return new ArrayList<>(criminals.values());
+    }
+
+    public void registerTrial(Trial trial) {
+        trials.put(trial.getTrialId(), trial);
+    }
+
+    public Trial getTrial(UUID id) {
+        return trials.get(id);
+    }
+
+    public Collection<Trial> getAllTrials() {
+        return new ArrayList<>(trials.values());
+    }
 }

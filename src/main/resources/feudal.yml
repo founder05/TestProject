@@ -7,23 +7,23 @@ feudal-system:
   vassal-requirements:
     minimum-settlement-level: 2
     minimum-age-days: 3
-    
+
   # Tribute System
   tribute:
     base-percentage: 0.10
     collection-interval: 604800
     failure-penalty: 0.05
-    
+
   # Feudal Obligations
   obligations:
     military-support:
       enabled: true
       troop-percentage: 0.20
-      
+
     economic-support:
       enabled: true
       emergency-aid-percentage: 0.15
-      
+
     loyalty-oath:
       enabled: true
       loyalty-duration: 2592000

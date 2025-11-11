@@ -13,7 +13,7 @@ storage:
 player-defaults:
   starting-money: 1000
   starting-town-cost: 5000
-  
+
 # General plugin features
 features:
   enable-economy: true

@@ -14,52 +14,52 @@ public class HybridClaimManager {
     private final Nations plugin;
     private final GriefPreventionIntegration gpIntegration;
     private final ClaimManager internalManager;
-    
+
     private HybridClaimManager(Nations plugin) {
         this.plugin = plugin;
         this.gpIntegration = GriefPreventionIntegration.getInstance(plugin);
         this.internalManager = ClaimManager.getInstance(plugin);
     }
-    
+
     public static HybridClaimManager getInstance(Nations plugin) {
         if (instance == null) {
             instance = new HybridClaimManager(plugin);
         }
         return instance;
     }
-    
+
     public static HybridClaimManager getInstance() {
         return instance;
     }
-    
+
     public ClaimResult claimChunk(Player player, Town town, Chunk chunk) {
         if (gpIntegration.isEnabled()) {
-            GriefPreventionIntegration.ClaimResult result = 
-                gpIntegration.createTownClaim(player, town, chunk);
-            
+            GriefPreventionIntegration.ClaimResult result =
+                    gpIntegration.createTownClaim(player, town, chunk);
+
             return new ClaimResult(result.isSuccess(), result.getMessage());
         } else {
-            ClaimManager.ClaimResult result = 
-                internalManager.claimChunk(chunk, town);
-            
+            ClaimManager.ClaimResult result =
+                    internalManager.claimChunk(chunk, town);
+
             return new ClaimResult(result.isSuccess(), result.getMessage());
         }
     }
-    
+
     public ClaimResult unclaimChunk(Town town, Chunk chunk) {
         if (gpIntegration.isEnabled()) {
-            GriefPreventionIntegration.ClaimResult result = 
-                gpIntegration.removeTownClaim(town, chunk);
-            
+            GriefPreventionIntegration.ClaimResult result =
+                    gpIntegration.removeTownClaim(town, chunk);
+
             return new ClaimResult(result.isSuccess(), result.getMessage());
         } else {
-            ClaimManager.ClaimResult result = 
-                internalManager.unclaimChunk(chunk, town);
-            
+            ClaimManager.ClaimResult result =
+                    internalManager.unclaimChunk(chunk, town);
+
             return new ClaimResult(result.isSuccess(), result.getMessage());
         }
     }
-    
+
     public String getTownAtLocation(Location location) {
         if (gpIntegration.isEnabled()) {
             return gpIntegration.getTownAtLocation(location);
@@ -68,7 +68,7 @@ public class HybridClaimManager {
             return claim != null ? claim.getTownName() : null;
         }
     }
-    
+
     public boolean isChunkClaimed(Chunk chunk) {
         if (gpIntegration.isEnabled()) {
             return gpIntegration.isChunkClaimed(chunk);
@@ -76,7 +76,7 @@ public class HybridClaimManager {
             return internalManager.isClaimed(chunk);
         }
     }
-    
+
     public int getTownClaimCount(String townName) {
         if (gpIntegration.isEnabled()) {
             return gpIntegration.getTownClaimCount(townName);
@@ -84,19 +84,19 @@ public class HybridClaimManager {
             return internalManager.getTownClaims(townName).size();
         }
     }
-    
+
     public void addMemberToClaims(Town town, UUID memberId) {
         if (gpIntegration.isEnabled()) {
             gpIntegration.addMemberToClaims(town, memberId);
         }
     }
-    
+
     public void removeMemberFromClaims(Town town, UUID memberId) {
         if (gpIntegration.isEnabled()) {
             gpIntegration.removeMemberFromClaims(town, memberId);
         }
     }
-    
+
     public void deleteTownClaims(String townName) {
         if (gpIntegration.isEnabled()) {
             gpIntegration.deleteTownClaims(townName);
@@ -104,28 +104,28 @@ public class HybridClaimManager {
             internalManager.removeAllTownClaims(townName);
         }
     }
-    
+
     public boolean isUsingGriefPrevention() {
         return gpIntegration.isEnabled();
     }
-    
+
     public ClaimManager getInternalManager() {
         return internalManager;
     }
-    
+
     public static class ClaimResult {
         private final boolean success;
         private final String message;
-        
+
         public ClaimResult(boolean success, String message) {
             this.success = success;
             this.message = message;
         }
-        
+
         public boolean isSuccess() {
             return success;
         }
-        
+
         public String getMessage() {
             return message;
         }

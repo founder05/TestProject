@@ -1,6 +1,8 @@
 package me.marcdoesntexists.nations.military;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 public class War {
     private UUID warId;
@@ -14,10 +16,6 @@ public class War {
     private Set<WarCrime> warCrimes;
     private int attackerCasualties;
     private int defenderCasualties;
-
-    public enum WarStatus {
-        DECLARED, ACTIVE, CEASEFIRE, CONCLUDED
-    }
 
     public War(String attackerKingdom, String defenderKingdom, UUID initiatorId, String reason) {
         this.warId = UUID.randomUUID();
@@ -49,17 +47,59 @@ public class War {
         }
     }
 
-    public UUID getWarId() { return warId; }
-    public String getAttackerKingdom() { return attackerKingdom; }
-    public String getDefenderKingdom() { return defenderKingdom; }
-    public WarStatus getStatus() { return status; }
-    public void setStatus(WarStatus status) { this.status = status; }
-    public long getStartDate() { return startDate; }
-    public long getEndDate() { return endDate; }
-    public UUID getInitiatorId() { return initiatorId; }
-    public String getReason() { return reason; }
-    public Set<WarCrime> getWarCrimes() { return new HashSet<>(warCrimes); }
-    public void addWarCrime(WarCrime crime) { warCrimes.add(crime); }
-    public int getAttackerCasualties() { return attackerCasualties; }
-    public int getDefenderCasualties() { return defenderCasualties; }
+    public UUID getWarId() {
+        return warId;
+    }
+
+    public String getAttackerKingdom() {
+        return attackerKingdom;
+    }
+
+    public String getDefenderKingdom() {
+        return defenderKingdom;
+    }
+
+    public WarStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(WarStatus status) {
+        this.status = status;
+    }
+
+    public long getStartDate() {
+        return startDate;
+    }
+
+    public long getEndDate() {
+        return endDate;
+    }
+
+    public UUID getInitiatorId() {
+        return initiatorId;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public Set<WarCrime> getWarCrimes() {
+        return new HashSet<>(warCrimes);
+    }
+
+    public void addWarCrime(WarCrime crime) {
+        warCrimes.add(crime);
+    }
+
+    public int getAttackerCasualties() {
+        return attackerCasualties;
+    }
+
+    public int getDefenderCasualties() {
+        return defenderCasualties;
+    }
+
+    public enum WarStatus {
+        DECLARED, ACTIVE, CEASEFIRE, CONCLUDED
+    }
 }

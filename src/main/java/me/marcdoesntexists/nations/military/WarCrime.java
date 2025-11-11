@@ -1,6 +1,7 @@
 package me.marcdoesntexists.nations.military;
 
 import me.marcdoesntexists.nations.enums.WarCrimeType;
+
 import java.util.UUID;
 
 public class WarCrime {
@@ -34,13 +35,39 @@ public class WarCrime {
         this.prosecuted = true;
     }
 
-    public UUID getWarCrimeId() { return warCrimeId; }
-    public UUID getPerpetratorId() { return perpetratorId; }
-    public WarCrimeType getCrimeType() { return crimeType; }
-    public String getKingdom1() { return kingdom1; }
-    public String getKingdom2() { return kingdom2; }
-    public long getTimestamp() { return timestamp; }
-    public String getDescription() { return description; }
-    public int getWitnesses() { return witnesses; }
-    public boolean isProsecuted() { return prosecuted; }
+    public UUID getWarCrimeId() {
+        return warCrimeId;
+    }
+
+    public UUID getPerpetratorId() {
+        return perpetratorId;
+    }
+
+    public WarCrimeType getCrimeType() {
+        return crimeType;
+    }
+
+    public String getKingdom1() {
+        return kingdom1;
+    }
+
+    public String getKingdom2() {
+        return kingdom2;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public int getWitnesses() {
+        return witnesses;
+    }
+
+    public boolean isProsecuted() {
+        return prosecuted;
+    }
 }

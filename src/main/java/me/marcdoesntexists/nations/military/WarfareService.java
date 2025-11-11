@@ -1,10 +1,13 @@
 package me.marcdoesntexists.nations.military;
 
 import me.marcdoesntexists.nations.Nations;
-import me.marcdoesntexists.nations.managers.*;
-import me.marcdoesntexists.nations.societies.Kingdom;
 import me.marcdoesntexists.nations.enums.WarCrimeType;
+import me.marcdoesntexists.nations.managers.ConfigurationManager;
+import me.marcdoesntexists.nations.managers.MilitaryManager;
+import me.marcdoesntexists.nations.managers.SocietiesManager;
+import me.marcdoesntexists.nations.societies.Kingdom;
 import org.bukkit.configuration.file.FileConfiguration;
+
 import java.util.UUID;
 
 public class WarfareService {

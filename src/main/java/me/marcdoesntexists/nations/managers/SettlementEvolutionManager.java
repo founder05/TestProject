@@ -1,9 +1,9 @@
 package me.marcdoesntexists.nations.managers;
 
 import me.marcdoesntexists.nations.Nations;
-import me.marcdoesntexists.nations.societies.Town;
-import me.marcdoesntexists.nations.societies.Kingdom;
 import me.marcdoesntexists.nations.societies.Empire;
+import me.marcdoesntexists.nations.societies.Kingdom;
+import me.marcdoesntexists.nations.societies.Town;
 import org.bukkit.configuration.file.FileConfiguration;
 
 public class SettlementEvolutionManager {

@@ -9,8 +9,8 @@ social-classes:
     tax-rate: 0.15
     can-own-land: false
     land-claim-limit: 0
-    job-restrictions: []
-    
+    job-restrictions: [ ]
+
   # Noble Class System
   nobles:
     enable-nobility: true
@@ -25,7 +25,7 @@ social-classes:
       salary-multiplier: 1.1
       required-wealth: 5000
       required-experience: 100
-      
+
     # Baron Tier
     baron:
       level: 2
@@ -36,7 +36,7 @@ social-classes:
       required-wealth: 15000
       required-experience: 500
       required-subordinates: 3
-      
+
     # Count Tier
     count:
       level: 3
@@ -47,7 +47,7 @@ social-classes:
       required-wealth: 40000
       required-experience: 1000
       required-subordinates: 5
-      
+
     # Duke Tier
     duke:
       level: 4
@@ -58,7 +58,7 @@ social-classes:
       required-wealth: 100000
       required-experience: 2000
       required-subordinates: 10
-      
+
     # Prince Tier
     prince:
       level: 5
@@ -69,7 +69,7 @@ social-classes:
       required-wealth: 250000
       required-experience: 5000
       required-subordinates: 20
-      
+
     # King Tier
     king:
       level: 6
@@ -98,19 +98,19 @@ social-classes:
     wealth-based:
       enabled: true
       minimum-wealth-for-promotion: true
-      
+
     # Merit-Based Mobility
     merit-based:
       enabled: true
       experience-requirement: true
       achievement-requirement: true
-      
+
     # Appointment-Based Mobility
     appointment-based:
       enabled: true
       leader-can-appoint: true
       appointment-duration-days: 30
-      
+
     # Demotion
     demotion:
       enabled: true

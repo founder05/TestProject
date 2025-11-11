@@ -8,50 +8,50 @@ legal-system:
     enabled: true
     creation-cost: 1000
     minimum-settlement-level: 2
-    
+
   # Crime System
   crimes:
     enable-crime-tracking: true
     wanted-level-system: true
-    
+
   # Default Crimes & Fines
   default-crimes:
     theft:
       base-fine: 1000
       severity: 3
-      
+
     murder:
       base-fine: 5000
       severity: 10
-      
+
     assault:
       base-fine: 2000
       severity: 5
-      
+
     property-damage:
       base-fine: 1500
       severity: 4
-      
+
     treason:
       base-fine: 10000
       severity: 10
-      
+
     trespassing:
       base-fine: 500
       severity: 2
-      
+
     tax-evasion:
       base-fine: 2000
       severity: 4
-      
+
     smuggling:
       base-fine: 3000
       severity: 6
-      
+
     arson:
       base-fine: 4000
       severity: 8
-      
+
     perjury:
       base-fine: 1500
       severity: 3
@@ -64,13 +64,13 @@ justice:
     trial-duration-days: 3
     evidence-submission-enabled: true
     appeal-system-enabled: true
-    
+
   # Judges
   judges:
     auto-appoint-judge: false
     judge-salary-multiplier: 2.0
     required-experience-level: 5
-    
+
   # Verdicts
   verdicts:
     required-evidence-percentage: 0.60
@@ -83,27 +83,27 @@ punishments:
   fines:
     enabled: true
     defaulter-status-after-days: 7
-    
+
   # Incarceration System
   incarceration:
     enabled: true
     jail-duration-formula: "crime-severity * 2"
     maximum-jail-duration-days: 30
     escape-probability: 0.05
-    
+
   # Banishment System
   banishment:
     enabled: true
     banishment-duration-days: 30
     territory-restrictions: true
     reputation-loss: 50
-    
+
   # Criminal Status
   criminal-status:
     bounty-system-enabled: true
     bounty-multiplier: 0.10
     criminal-expiration-days: 7
-    
+
   # Pardons
   pardons:
     enabled: true
@@ -115,9 +115,9 @@ punishments:
 punishment-types:
   fine:
     max-amount: 50000
-    
+
   jail:
     max-duration-hours: 720
-    
+
   banishment:
     max-duration-days: 90

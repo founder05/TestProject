@@ -1,8 +1,8 @@
 package me.marcdoesntexists.nations.law;
 
-import me.marcdoesntexists.nations.law.Crime;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 public class Criminal {
     private UUID criminalId;
@@ -36,12 +36,35 @@ public class Criminal {
         this.arrested = false;
     }
 
-    public UUID getCriminalId() { return criminalId; }
-    public String getTownId() { return townId; }
-    public List<Crime> getCrimes() { return new ArrayList<>(crimes); }
-    public int getWantedLevel() { return wantedLevel; }
-    public boolean isArrested() { return arrested; }
-    public long getArrestDate() { return arrestDate; }
-    public double getTotalFines() { return totalFines; }
-    public void addFine(double amount) { this.totalFines += amount; }
+    public UUID getCriminalId() {
+        return criminalId;
+    }
+
+    public String getTownId() {
+        return townId;
+    }
+
+    public List<Crime> getCrimes() {
+        return new ArrayList<>(crimes);
+    }
+
+    public int getWantedLevel() {
+        return wantedLevel;
+    }
+
+    public boolean isArrested() {
+        return arrested;
+    }
+
+    public long getArrestDate() {
+        return arrestDate;
+    }
+
+    public double getTotalFines() {
+        return totalFines;
+    }
+
+    public void addFine(double amount) {
+        this.totalFines += amount;
+    }
 }

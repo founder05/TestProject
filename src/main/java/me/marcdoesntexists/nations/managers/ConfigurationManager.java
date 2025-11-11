@@ -3,6 +3,7 @@ package me.marcdoesntexists.nations.managers;
 import me.marcdoesntexists.nations.Nations;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;

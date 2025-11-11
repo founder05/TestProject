@@ -3,7 +3,7 @@ package me.marcdoesntexists.nations.societies;
 import me.marcdoesntexists.nations.Nations;
 import me.marcdoesntexists.nations.managers.ConfigurationManager;
 import me.marcdoesntexists.nations.managers.SocietiesManager;
-import org.bukkit.configuration.file.FileConfiguration;
+
 import java.util.UUID;
 
 public class ReligionService {
