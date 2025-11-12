@@ -3,6 +3,7 @@ package me.marcdoesntexists.nations.managers;
 import me.marcdoesntexists.nations.Nations;
 import me.marcdoesntexists.nations.societies.*;
 import me.marcdoesntexists.nations.utils.PlayerData;
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -112,6 +113,33 @@ public class DataManager {
             config.save(playerFile);
         } catch (Exception e) {
             plugin.getLogger().severe("Failed to save player data for " + playerId + ": " + e.getMessage());
+        }
+    }
+
+    public void savePlayerMoney(UUID playerId) {
+        PlayerData data = playerDataCache.get(playerId);
+        if (data == null) return;
+
+        try {
+            File playerFile = new File(dataFolder, playerId + ".yml");
+            FileConfiguration config = new YamlConfiguration();
+            if (playerFile.exists()) {
+                config = YamlConfiguration.loadConfiguration(playerFile);
+            }
+            config.set("money", data.getMoney());
+            // Also persist other critical, frequently-changing numeric fields to avoid loss on crash
+            config.set("jobExperience", data.getJobExperience());
+            config.set("nobleTierExperience", data.getNobleTierExperience());
+
+            // keep existing values intact if present
+            if (config.getString("town") == null) config.set("town", data.getTown());
+            if (config.getString("religion") == null) config.set("religion", data.getReligion());
+            if (config.getString("job") == null) config.set("job", data.getJob());
+            if (config.getString("socialClass") == null) config.set("socialClass", data.getSocialClass());
+            if (config.getString("nobleTier") == null) config.set("nobleTier", data.getNobleTier().toString());
+            config.save(playerFile);
+        } catch (Exception e) {
+            plugin.getLogger().severe("Failed to save player money for " + playerId + ": " + e.getMessage());
         }
     }
 
@@ -417,7 +445,14 @@ public class DataManager {
     }
 
     public void saveAllPlayerData() {
-        for (UUID playerId : playerDataCache.keySet()) {
+        // Only save player files for offline players (we want player files to be created/updated
+        // only when the player quits). This prevents autosave from creating/updating player files
+        // while players are online.
+        for (UUID playerId : new ArrayList<>(playerDataCache.keySet())) {
+            if (Bukkit.getPlayer(playerId) != null) {
+                // player is online -> skip writing their personal file during autosave
+                continue;
+            }
             savePlayerData(playerId);
         }
     }
@@ -425,5 +460,12 @@ public class DataManager {
     public void unloadPlayerData(UUID playerId) {
         savePlayerData(playerId);
         playerDataCache.remove(playerId);
+    }
+
+    public void saveAllSocieties() {
+        saveAllTowns();
+        saveAllKingdoms();
+        saveAllAlliances();
+        saveAllReligions();
     }
 }

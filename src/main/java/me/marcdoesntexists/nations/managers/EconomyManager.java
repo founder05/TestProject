@@ -9,10 +9,10 @@ import java.util.*;
 
 public class EconomyManager {
     private static EconomyManager instance;
-    private Map<UUID, Job> jobs;
-    private Map<UUID, Salary> salaries;
-    private Map<UUID, Transaction> transactions;
-    private Map<String, Double> treasuries;
+    private final Map<UUID, Job> jobs;
+    private final Map<UUID, Salary> salaries;
+    private final Map<UUID, Transaction> transactions;
+    private final Map<String, Double> treasuries;
 
     private EconomyManager() {
         this.jobs = new HashMap<>();

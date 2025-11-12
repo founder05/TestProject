@@ -1,0 +1,125 @@
+# Nations GUI Configuration
+# Customize the appearance of the Nations GUI
+
+# General GUI Settings
+gui:
+  # Material to fill empty slots
+  fill-material: GRAY_STAINED_GLASS_PANE
+
+  # Towns GUI
+  towns:
+    title: "§6§lTowns"
+    size: 54  # Must be multiple of 9 (9, 18, 27, 36, 45, 54)
+
+    item:
+      # Item display format
+      name: "§6§l{name}"
+
+      lore:
+        - "§7§m------------------"
+        - "§eMayor: §f{mayor}"
+        - "§eMembers: §f{members}"
+        - "§eClaims: §f{claims}"
+        - "§eBalance: §6${balance}"
+        - "§eLevel: §f{level}"
+        - ""
+        - "§7Kingdom: §f{kingdom}"
+        - "§7§m------------------"
+
+  # Kingdoms GUI
+  kingdoms:
+    title: "§6§lKingdoms"
+    size: 54
+
+    item:
+      # Item display format
+      name: "§6§l⚔ {name}"
+
+      lore:
+        - "§7§m------------------"
+        - "§eKing: §f{king}"
+        - "§eCapital: §f{capital}"
+        - "§eTowns: §f{towns}"
+        - "§ePopulation: §f{population}"
+        - "§eClaims: §f{claims}"
+        - ""
+        - "§6⚔ Military:"
+        - "§7  Vassals: §f{vassals}"
+        - "§7  Allies: §a{allies}"
+        - "§7  Wars: §c{wars}"
+        - ""
+        - "§eLevel: §f{level}"
+        - "§7Empire: §f{empire}"
+        - "§7§m------------------"
+
+  # Empires GUI
+  empires:
+    title: "§d§lEmpires"
+    size: 54
+
+    item:
+      # Item display format
+      name: "§d§l✦ {name}"
+
+      lore:
+        - "§7§m------------------"
+        - "§dEmperor: §f{emperor}"
+        - "§dKingdoms: §f{kingdoms}"
+        - "§dTowns: §f{towns}"
+        - "§dPopulation: §f{population}"
+        - "§dClaims: §f{claims}"
+        - ""
+        - "§dLevel: §f{level}"
+        - "§7§m------------------"
+
+  # Navigation Buttons
+  navigation:
+    # Towns Button
+    towns-button:
+      slot: 45  # Bottom left
+      material: OAK_SAPLING
+      name: "§a§lTowns"
+      lore:
+        - "§7View all towns"
+        - "§7in the world"
+
+    # Kingdoms Button
+    kingdoms-button:
+      slot: 49  # Bottom center
+      material: IRON_SWORD
+      name: "§6§lKingdoms"
+      lore:
+        - "§7View all kingdoms"
+        - "§7and their power"
+
+    # Empires Button
+    empires-button:
+      slot: 53  # Bottom right
+      material: DIAMOND_SWORD
+      name: "§d§lEmpires"
+      lore:
+        - "§7View mighty empires"
+        - "§7that rule the world"
+
+# Alternative Material Options
+# You can change the navigation button materials to any of these:
+#
+# TOWNS:
+#   - OAK_SAPLING (default)
+#   - GRASS_BLOCK
+#   - BRICKS
+#   - ACACIA_SAPLING
+#
+# KINGDOMS:
+#   - IRON_SWORD (default)
+#   - IRON_AXE
+#   - IRON_HELMET
+#   - SHIELD
+#   - BANNER
+#
+# EMPIRES:
+#   - DIAMOND_SWORD (default)
+#   - DIAMOND_CHESTPLATE
+#   - NETHERITE_SWORD
+#   - BEACON
+#   - DRAGON_HEAD

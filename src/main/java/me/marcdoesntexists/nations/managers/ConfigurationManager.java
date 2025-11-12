@@ -38,6 +38,7 @@ public class ConfigurationManager {
         loadConfig("feudal.yml");
         loadConfig("religion.yml");
         loadConfig("diplomacy.yml");
+        loadConfig("gui.yml");
         loadConfig("war.yml");
         loadConfig("legal.yml");
         loadConfig("military.yml");
@@ -86,6 +87,8 @@ public class ConfigurationManager {
     public FileConfiguration getReligionConfig() {
         return configs.get("religion.yml");
     }
+
+    public FileConfiguration getNationsGuiconfig() { return configs.get("gui.yml"); }
 
     public FileConfiguration getDiplomacyConfig() {
         return configs.get("diplomacy.yml");

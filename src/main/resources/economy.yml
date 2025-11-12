@@ -1,5 +1,11 @@
 # Economy System Configuration
 
+# Sync & save intervals (in seconds)
+balance-sync-interval: 10      # how often to poll external providers and sync player balances
+partial-save-enabled: true    # master switch to enable/disable periodic partial save of player money
+partial-save-interval: 60     # how often to persist only player money for online players
+society-save-interval: 300    # how often to persist towns/kingdoms/alliances/religions
+
 # Tax System
 taxes:
   # Town taxes

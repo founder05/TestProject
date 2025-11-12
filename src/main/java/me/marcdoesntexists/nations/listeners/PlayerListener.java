@@ -1,6 +1,7 @@
 package me.marcdoesntexists.nations.listeners;
 
 import me.marcdoesntexists.nations.Nations;
+import me.marcdoesntexists.nations.economy.EconomyService;
 import me.marcdoesntexists.nations.managers.ClaimVisualizer;
 import me.marcdoesntexists.nations.managers.DataManager;
 import me.marcdoesntexists.nations.utils.PlayerData;
@@ -26,6 +27,15 @@ public class PlayerListener implements Listener {
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
 
+        // If an external economy is available, sync the cached PlayerData balance immediately
+        try {
+            EconomyService es = EconomyService.getInstance();
+            if (es != null) {
+                double bal = es.getPlayerBalance(player.getUniqueId());
+                data.setMoney((int) Math.floor(bal));
+            }
+        } catch (Exception ignored) {}
+
         if (data.getTown() != null) {
             player.sendMessage("§7[§6Nations§7] §eWelcome back to §6" + data.getTown() + "§e!");
         } else {
@@ -37,10 +47,8 @@ public class PlayerListener implements Listener {
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
 
-        dataManager.savePlayerData(player.getUniqueId());
+        // Unload will save and remove player from cache. Avoid double-saving.
         dataManager.unloadPlayerData(player.getUniqueId());
-
-        // claimVisualizer may be initialized after this listener; obtain dynamically and null-check
         ClaimVisualizer cv = plugin.getClaimVisualizer();
         if (cv != null) {
             cv.stopVisualization(player);

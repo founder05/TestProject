@@ -11,7 +11,7 @@ commands:
     description: "Manage towns"
     usage: "/town [subcommand]"
 
-  showclaims:
+  show:
     description: "Toggle display of your town's claim borders"
     usage: "/showclaims"
 
@@ -67,6 +67,14 @@ commands:
   god:
     description: "Manage gods and religion features"
     usage: "/god [subcommand]"
+
+  nations:
+    description: "Open Nations GUI"
+    usage: "/nations [towns|kingdoms|empires]"
+
+  saveexempt:
+    description: "Toggle periodic save exemption for a player"
+    usage: "/saveexempt <player>"
 
 permissions:
   nations.admin:
@@ -155,3 +163,8 @@ permissions:
   nations.god.worship:
     description: "Worship gods"
     default: true
+
+  # Exemptions
+  nations.save.exempt:
+    description: "When set, this player will be exempt from periodic partial money saves (useful for admins/test accounts)"
+    default: op

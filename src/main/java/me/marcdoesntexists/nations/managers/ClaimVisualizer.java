@@ -1,16 +1,16 @@
 package me.marcdoesntexists.nations.managers;
 
+import me.clip.placeholderapi.libs.kyori.adventure.platform.bukkit.BukkitAudiences;
 import me.marcdoesntexists.nations.Nations;
 import me.marcdoesntexists.nations.utils.Claim;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
-import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
-import org.bukkit.Particle.DustOptions;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,15 +19,18 @@ public class ClaimVisualizer {
 
     private final Nations plugin;
     private final ClaimManager claimManager;
+    private final MiniMessage mm = MiniMessage.miniMessage();
 
     private final Map<UUID, BukkitTask> activeVisualizers = new ConcurrentHashMap<>();
 
-    private final int particleStep = 3; // spacing in blocks between spawned particles
-    private final DustOptions dust = new DustOptions(Color.fromRGB(80, 200, 255), 1.0f);
+    private final int particleStep = 3;      // block spacing between particles
+    private final int maxViewDistance = 8;   // max chunks radius around player to render
 
     public ClaimVisualizer(Nations plugin) {
         this.plugin = plugin;
         this.claimManager = ClaimManager.getInstance(plugin);
+        // Kyori Adventure wrapper
+        BukkitAudiences adventure = BukkitAudiences.create(plugin);
     }
 
     public boolean isVisualizing(Player player) {
@@ -37,6 +40,7 @@ public class ClaimVisualizer {
     public void toggleVisualization(Player player, String townName) {
         if (isVisualizing(player)) {
             stopVisualization(player);
+            // send plain colored message instead of shaded Component
             player.sendMessage("§aClaim visualization disabled.");
         } else {
             startVisualization(player, townName);
@@ -46,9 +50,13 @@ public class ClaimVisualizer {
 
     public void startVisualization(Player player, String townName) {
         if (isVisualizing(player)) return;
+        if (claimManager == null) {
+            // send plain colored message instead of shaded Component
+            player.sendMessage("§cClaimManager unavailable.");
+            return;
+        }
 
-        // every 10 ticks (~0.5s)
-        long tickInterval = 10L;
+        long tickInterval = 10L; // 0.5s refresh
         BukkitTask task = new BukkitRunnable() {
             @Override
             public void run() {
@@ -57,88 +65,88 @@ public class ClaimVisualizer {
                     return;
                 }
 
-                Set<Claim> claims = claimManager.getTownClaims(townName);
-                if (claims == null || claims.isEmpty()) {
-                    // nothing to show
-                    return;
-                }
+                Collection<Claim> claims = claimManager.getTownClaims(townName);
+                if (claims == null || claims.isEmpty()) return;
 
-                // Group claims by world
+                World playerWorld = player.getWorld();
+                int pxChunk = player.getLocation().getBlockX() >> 4;
+                int pzChunk = player.getLocation().getBlockZ() >> 4;
+
+                // Limit claims to visible range and same world
                 Map<String, Set<ChunkCoord>> byWorld = new HashMap<>();
                 for (Claim c : claims) {
-                    String w = c.getWorldName();
-                    byWorld.computeIfAbsent(w, k -> new HashSet<>())
+                    if (c == null) continue;
+                    if (!Objects.equals(c.getWorldName(), playerWorld.getName())) continue;
+
+                    int dx = Math.abs(c.getChunkX() - pxChunk);
+                    int dz = Math.abs(c.getChunkZ() - pzChunk);
+                    if (dx > maxViewDistance || dz > maxViewDistance) continue; // too far away
+
+                    byWorld.computeIfAbsent(c.getWorldName(), k -> new HashSet<>())
                             .add(new ChunkCoord(c.getChunkX(), c.getChunkZ()));
                 }
 
-                double eyeY = player.getLocation().getY();
+                if (byWorld.isEmpty()) return;
+
+                double eyeY = player.getEyeLocation().getY();
 
                 for (Map.Entry<String, Set<ChunkCoord>> entry : byWorld.entrySet()) {
                     World world = Bukkit.getWorld(entry.getKey());
                     if (world == null) continue;
 
                     Set<ChunkCoord> all = entry.getValue();
+                    if (all.isEmpty()) continue;
 
-                    // Discover connected components and draw each
                     Set<ChunkCoord> remaining = new HashSet<>(all);
+
                     while (!remaining.isEmpty()) {
                         ChunkCoord start = remaining.iterator().next();
                         Set<ChunkCoord> component = floodFillComponent(start, remaining);
-                        // component now contains one connected region; remove from remaining
                         remaining.removeAll(component);
 
-                        // compute exposed edges for component
-                        Map<Integer, List<IntSegment>> horizontalEdges = new HashMap<>(); // zEdge -> list of x segments
-                        Map<Integer, List<IntSegment>> verticalEdges = new HashMap<>();   // xEdge -> list of z segments
+                        // compute edges
+                        Map<Integer, List<IntSegment>> horizontalEdges = new HashMap<>();
+                        Map<Integer, List<IntSegment>> verticalEdges = new HashMap<>();
 
                         for (ChunkCoord cc : component) {
                             int cx = cc.x;
                             int cz = cc.z;
 
                             int minX = cx * 16;
-                            int maxX = (cx + 1) * 16; // edge coordinate at (x+1)*16
+                            int maxX = (cx + 1) * 16;
                             int minZ = cz * 16;
                             int maxZ = (cz + 1) * 16;
 
-                            // North (cz-1)
                             if (!component.contains(new ChunkCoord(cx, cz - 1))) {
                                 horizontalEdges.computeIfAbsent(minZ, k -> new ArrayList<>())
                                         .add(new IntSegment(minX, maxX));
                             }
-                            // South (cz+1)
                             if (!component.contains(new ChunkCoord(cx, cz + 1))) {
                                 horizontalEdges.computeIfAbsent(maxZ, k -> new ArrayList<>())
                                         .add(new IntSegment(minX, maxX));
                             }
-                            // West (cx-1)
                             if (!component.contains(new ChunkCoord(cx - 1, cz))) {
                                 verticalEdges.computeIfAbsent(minX, k -> new ArrayList<>())
                                         .add(new IntSegment(minZ, maxZ));
                             }
-                            // East (cx+1)
                             if (!component.contains(new ChunkCoord(cx + 1, cz))) {
                                 verticalEdges.computeIfAbsent(maxX, k -> new ArrayList<>())
                                         .add(new IntSegment(minZ, maxZ));
                             }
                         }
 
-                        // Merge segments per edge and draw
-                        // Horizontal edges (constant Z): segments along X
+                        // Draw horizontal edges (constant Z)
                         for (Map.Entry<Integer, List<IntSegment>> he : horizontalEdges.entrySet()) {
                             int zEdge = he.getKey();
                             List<IntSegment> segs = mergeSegments(he.getValue());
                             for (IntSegment seg : segs) {
-                                // draw particle line from seg.start -> seg.end at zEdge
                                 for (int x = seg.start; x <= seg.end; x += particleStep) {
                                     spawnParticle(world, new Location(world, x + 0.5, eyeY, zEdge + 0.5));
                                 }
-                                // draw corner markers
-                                spawnParticle(world, new Location(world, seg.start + 0.5, eyeY, zEdge + 0.5));
-                                spawnParticle(world, new Location(world, seg.end + 0.5, eyeY, zEdge + 0.5));
                             }
                         }
 
-                        // Vertical edges (constant X): segments along Z
+                        // Draw vertical edges (constant X)
                         for (Map.Entry<Integer, List<IntSegment>> ve : verticalEdges.entrySet()) {
                             int xEdge = ve.getKey();
                             List<IntSegment> segs = mergeSegments(ve.getValue());
@@ -146,8 +154,6 @@ public class ClaimVisualizer {
                                 for (int z = seg.start; z <= seg.end; z += particleStep) {
                                     spawnParticle(world, new Location(world, xEdge + 0.5, eyeY, z + 0.5));
                                 }
-                                spawnParticle(world, new Location(world, xEdge + 0.5, eyeY, seg.start + 0.5));
-                                spawnParticle(world, new Location(world, xEdge + 0.5, eyeY, seg.end + 0.5));
                             }
                         }
                     }
@@ -170,7 +176,7 @@ public class ClaimVisualizer {
         }
     }
 
-    // Flood-fill to get 4-neighbor connected component and remove visited from remaining set
+    // Flood-fill connected claim area
     private Set<ChunkCoord> floodFillComponent(ChunkCoord start, Set<ChunkCoord> pool) {
         Set<ChunkCoord> comp = new HashSet<>();
         ArrayDeque<ChunkCoord> dq = new ArrayDeque<>();
@@ -180,34 +186,27 @@ public class ClaimVisualizer {
 
         while (!dq.isEmpty()) {
             ChunkCoord cur = dq.poll();
-            ChunkCoord[] neigh = {
+            for (ChunkCoord n : List.of(
                     new ChunkCoord(cur.x + 1, cur.z),
                     new ChunkCoord(cur.x - 1, cur.z),
                     new ChunkCoord(cur.x, cur.z + 1),
-                    new ChunkCoord(cur.x, cur.z - 1)
-            };
-            for (ChunkCoord n : neigh) {
-                if (pool.contains(n) && !comp.contains(n)) {
-                    comp.add(n);
-                    dq.add(n);
-                }
+                    new ChunkCoord(cur.x, cur.z - 1))) {
+                if (pool.contains(n) && comp.add(n)) dq.add(n);
             }
         }
         return comp;
     }
 
-    // Merge integer segments [start,end] that are collinear and contiguous/overlapping
+    // Merge continuous integer ranges
     private List<IntSegment> mergeSegments(List<IntSegment> segments) {
         if (segments == null || segments.isEmpty()) return Collections.emptyList();
         segments.sort(Comparator.comparingInt(s -> s.start));
         List<IntSegment> merged = new ArrayList<>();
-        IntSegment cur = segments.get(0);
+        IntSegment cur = segments.getFirst();
         for (int i = 1; i < segments.size(); i++) {
             IntSegment next = segments.get(i);
-            if (next.start <= cur.end) {
-                // overlap or contiguous
-                cur.end = Math.max(cur.end, next.end);
-            } else {
+            if (next.start <= cur.end) cur.end = Math.max(cur.end, next.end);
+            else {
                 merged.add(cur);
                 cur = next;
             }
@@ -217,22 +216,10 @@ public class ClaimVisualizer {
     }
 
     private void spawnParticle(World world, Location loc) {
-        // Use FLAME particle to avoid API compatibility issues with DustOptions on some server builds
-        world.spawnParticle(Particle.FLAME, loc, 1, 0.0, 0.0, 0.0, 0.0);
+        world.spawnParticle(Particle.FLAME, loc, 1, 0, 0, 0, 0);
     }
 
-    // Helper classes
-    private static class ChunkCoord {
-        final int x, z;
-        ChunkCoord(int x, int z) { this.x = x; this.z = z; }
-        @Override public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof ChunkCoord c)) return false;
-            return x == c.x && z == c.z;
-        }
-        @Override public int hashCode() { return Objects.hash(x, z); }
-    }
-
+    private record ChunkCoord(int x, int z) {}
     private static class IntSegment {
         int start, end;
         IntSegment(int s, int e) {

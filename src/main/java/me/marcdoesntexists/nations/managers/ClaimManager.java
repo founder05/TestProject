@@ -111,6 +111,13 @@ public class ClaimManager {
         return claims.get(chunkKey);
     }
 
+    // New helper to get the town name at a specific location (used by MoveListener)
+    public String getTownAtLocation(Location location) {
+        if (location == null) return null;
+        Claim claim = getClaimAt(location);
+        return claim != null ? claim.getTownName() : null;
+    }
+
     public Set<Claim> getTownClaims(String townName) {
         Set<Claim> result = new HashSet<>();
         Set<String> chunkKeys = townClaims.get(townName);
