@@ -2,11 +2,10 @@ package me.marcdoesntexists.nations.listeners;
 
 import me.marcdoesntexists.nations.Nations;
 import me.marcdoesntexists.nations.managers.ClaimManager;
+import me.marcdoesntexists.nations.utils.MessageUtils;
 import me.marcdoesntexists.nations.managers.SocietiesManager;
 import me.marcdoesntexists.nations.societies.Town;
 import me.marcdoesntexists.nations.utils.Claim;
-import me.marcdoesntexists.nations.utils.MessageUtils;
-import java.util.Map;
 import org.bukkit.Chunk;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -15,6 +14,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockIgniteEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+
+import java.util.Map;
 
 public class BlockListener implements Listener {
 

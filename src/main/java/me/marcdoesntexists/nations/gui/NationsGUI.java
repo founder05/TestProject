@@ -341,6 +341,65 @@ public class NationsGUI implements Listener {
         return item;
     }
 
+    // Refresh GUIs for players currently viewing a category (updates in-place)
+    public static void refreshGUIsForCategory(String category) {
+        if (category == null) return;
+        String cat = category.toUpperCase(Locale.ROOT);
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            String current = playerCurrentCategory.get(p.getUniqueId());
+            if (current != null && current.equalsIgnoreCase(cat)) {
+                // Try to update inventory in-place; fallback to reopening if incompatible
+                try {
+                    updateInventoryForPlayer(p, cat);
+                } catch (Throwable t) {
+                    try {
+                        openMainGUI(p, cat);
+                    } catch (Throwable ignored) {
+                    }
+                }
+            }
+        }
+    }
+
+    // Update the player's open top inventory in-place to reflect current data for the category.
+    private static void updateInventoryForPlayer(Player player, String category) {
+        if (player == null || category == null) return;
+        Nations plugin = Nations.getInstance();
+        FileConfiguration config = plugin.getConfigurationManager().getConfig("gui.yml");
+
+        String key = "gui." + category.toLowerCase(Locale.ROOT) + ".size";
+        int desiredSize = config.getInt(key, 54);
+        if (desiredSize < 9 || desiredSize % 9 != 0) desiredSize = 54;
+
+        Inventory top = player.getOpenInventory().getTopInventory();
+        if (top == null) return;
+
+        // If sizes differ, reopen the GUI (can't resize an existing inventory)
+        if (top.getSize() != desiredSize) {
+            openMainGUI(player, category);
+            return;
+        }
+
+        // Clear only the slots we populate (0 .. size-9)
+        int maxSlot = top.getSize() - 9;
+        for (int i = 0; i < maxSlot; i++) top.setItem(i, null);
+
+        // Rebuild navigation/fillers and entries into the existing inventory
+        addNavigationButtons(top, category, config);
+
+        switch (category) {
+            case CAT_KINGDOMS:
+                addKingdomsToGUI(top, config, maxSlot);
+                break;
+            case CAT_EMPIRES:
+                addEmpiresToGUI(top, config, maxSlot);
+                break;
+            default:
+                addTownsToGUI(top, config, maxSlot);
+                break;
+        }
+    }
+
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
@@ -406,64 +465,6 @@ public class NationsGUI implements Listener {
 
         if (title.equals(titleTowns) || title.equals(titleKingdoms) || title.equals(titleEmpires)) {
             playerCurrentCategory.remove(player.getUniqueId());
-        }
-    }
-
-    // Refresh GUIs for players currently viewing a category (updates in-place)
-    public static void refreshGUIsForCategory(String category) {
-        if (category == null) return;
-        String cat = category.toUpperCase(Locale.ROOT);
-        for (Player p : Bukkit.getOnlinePlayers()) {
-            String current = playerCurrentCategory.get(p.getUniqueId());
-            if (current != null && current.equalsIgnoreCase(cat)) {
-                // Try to update inventory in-place; fallback to reopening if incompatible
-                try {
-                    updateInventoryForPlayer(p, cat);
-                } catch (Throwable t) {
-                    try {
-                        openMainGUI(p, cat);
-                    } catch (Throwable ignored) {}
-                }
-            }
-        }
-    }
-
-    // Update the player's open top inventory in-place to reflect current data for the category.
-    private static void updateInventoryForPlayer(Player player, String category) {
-        if (player == null || category == null) return;
-        Nations plugin = Nations.getInstance();
-        FileConfiguration config = plugin.getConfigurationManager().getConfig("gui.yml");
-
-        String key = "gui." + category.toLowerCase(Locale.ROOT) + ".size";
-        int desiredSize = config.getInt(key, 54);
-        if (desiredSize < 9 || desiredSize % 9 != 0) desiredSize = 54;
-
-        Inventory top = player.getOpenInventory().getTopInventory();
-        if (top == null) return;
-
-        // If sizes differ, reopen the GUI (can't resize an existing inventory)
-        if (top.getSize() != desiredSize) {
-            openMainGUI(player, category);
-            return;
-        }
-
-        // Clear only the slots we populate (0 .. size-9)
-        int maxSlot = top.getSize() - 9;
-        for (int i = 0; i < maxSlot; i++) top.setItem(i, null);
-
-        // Rebuild navigation/fillers and entries into the existing inventory
-        addNavigationButtons(top, category, config);
-
-        switch (category) {
-            case CAT_KINGDOMS:
-                addKingdomsToGUI(top, config, maxSlot);
-                break;
-            case CAT_EMPIRES:
-                addEmpiresToGUI(top, config, maxSlot);
-                break;
-            default:
-                addTownsToGUI(top, config, maxSlot);
-                break;
         }
     }
 }

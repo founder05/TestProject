@@ -2,11 +2,11 @@ package me.marcdoesntexists.nations.commands;
 
 import me.marcdoesntexists.nations.Nations;
 import me.marcdoesntexists.nations.managers.DataManager;
+import me.marcdoesntexists.nations.utils.MessageUtils;
 import me.marcdoesntexists.nations.managers.SettlementEvolutionManager;
 import me.marcdoesntexists.nations.managers.SocietiesManager;
 import me.marcdoesntexists.nations.societies.Kingdom;
 import me.marcdoesntexists.nations.societies.Town;
-import me.marcdoesntexists.nations.utils.MessageUtils;
 import me.marcdoesntexists.nations.utils.PlayerData;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -14,12 +14,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.*;
 
 public class EvolveCommand implements CommandExecutor, TabCompleter {
 
@@ -210,7 +205,7 @@ public class EvolveCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(MessageUtils.get("general.empty"));
             player.sendMessage(MessageUtils.get("evolution.evolved_kingdom_member_title"));
             player.sendMessage(MessageUtils.format("evolution.evolved_kingdom_member_message", Map.of("kingdom", kingdomName)));
-            player.sendMessage("");
+            player.sendMessage(MessageUtils.get("general.empty"));
             // Capabilities - keep concise
             player.sendMessage(MessageUtils.format("evolution.evolved_info_list", Map.of("count", "", "label", "Invite other towns: /kingdom invite <town>")));
             player.sendMessage(MessageUtils.format("evolution.evolved_info_list", Map.of("count", "", "label", "Declare wars: /war declare <kingdom>")));
@@ -287,9 +282,9 @@ public class EvolveCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(MessageUtils.get("general.empty"));
             player.sendMessage(MessageUtils.get("evolution.evolved_empire_member_title"));
             player.sendMessage(MessageUtils.format("evolution.evolved_empire_member_message", Map.of("empire", empireName)));
-            player.sendMessage("");
-            player.sendMessage(MessageUtils.get("evolution.evolved_info_list").replace("{count}", String.valueOf(0)).replace("{label}", "Towns/Pop/Vassals below"));
-            player.sendMessage("");
+            player.sendMessage(MessageUtils.get("general.empty"));
+            player.sendMessage(MessageUtils.format("evolution.evolved_info_list", Map.of("count", "0", "label", "Towns/Pop/Vassals below")));
+            player.sendMessage(MessageUtils.get("general.empty"));
 
             int totalTowns = 0;
             int totalPop = 0;
@@ -327,19 +322,19 @@ public class EvolveCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleInfo(Player player, String[] args) {
         player.sendMessage(MessageUtils.get("evolution.info_header"));
-        player.sendMessage("");
+        player.sendMessage(MessageUtils.get("general.empty"));
         player.sendMessage(MessageUtils.get("evolution.info_hierarchy_title"));
         player.sendMessage(MessageUtils.get("evolution.info_hierarchy_1"));
         player.sendMessage(MessageUtils.get("evolution.info_hierarchy_2"));
         player.sendMessage(MessageUtils.get("evolution.info_hierarchy_3"));
-        player.sendMessage("");
+        player.sendMessage(MessageUtils.get("general.empty"));
         player.sendMessage(MessageUtils.get("evolution.info_benefits_title"));
         player.sendMessage(MessageUtils.get("evolution.info_benefit_1"));
         player.sendMessage(MessageUtils.get("evolution.info_benefit_2"));
         player.sendMessage(MessageUtils.get("evolution.info_benefit_3"));
         player.sendMessage(MessageUtils.get("evolution.info_benefit_4"));
         player.sendMessage(MessageUtils.get("evolution.info_benefit_5"));
-        player.sendMessage("");
+        player.sendMessage(MessageUtils.get("general.empty"));
         player.sendMessage(MessageUtils.get("evolution.info_check_hint"));
         player.sendMessage(MessageUtils.get("evolution.info_footer"));
 
@@ -358,10 +353,7 @@ public class EvolveCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            return Arrays.asList("check", "kingdom", "empire", "info")
-                    .stream()
-                    .filter(s -> s.startsWith(args[0].toLowerCase()))
-                    .collect(Collectors.toList());
+            return me.marcdoesntexists.nations.utils.TabCompletionUtils.match(Arrays.asList("check", "kingdom", "empire", "info"), args[0]);
         }
 
         return new ArrayList<>();

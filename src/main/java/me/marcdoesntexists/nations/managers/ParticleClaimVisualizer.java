@@ -41,25 +41,35 @@ public class ParticleClaimVisualizer implements ClaimVisualizer {
         try {
             String pname = plugin.getConfig().getString("visualizer.particle", "END_ROD");
             p = Particle.valueOf(pname.toUpperCase(Locale.ROOT));
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
         this.particleType = p;
 
         int sp = 4;
-        try { sp = Math.max(1, plugin.getConfig().getInt("visualizer.spacing", 4)); } catch (Throwable ignored) {}
+        try {
+            sp = Math.max(1, plugin.getConfig().getInt("visualizer.spacing", 4));
+        } catch (Throwable ignored) {
+        }
         this.spacing = sp;
 
         long rt = 40L;
-        try { rt = Math.max(1L, plugin.getConfig().getLong("visualizer.refresh-ticks", 40L)); } catch (Throwable ignored) {}
+        try {
+            rt = Math.max(1L, plugin.getConfig().getLong("visualizer.refresh-ticks", 40L));
+        } catch (Throwable ignored) {
+        }
         this.refreshTicks = rt;
 
         // Register listener to stop visualizations when players disconnect/teleport/change world/kicked
         try {
             Bukkit.getPluginManager().registerEvents(new PlayerLifecycleListener(), plugin);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     @Override
-    public boolean isVisualizing(Player player) { return active.containsKey(player.getUniqueId()); }
+    public boolean isVisualizing(Player player) {
+        return active.containsKey(player.getUniqueId());
+    }
 
     @Override
     public void toggleVisualization(Player player, String townName) {
@@ -79,7 +89,14 @@ public class ParticleClaimVisualizer implements ClaimVisualizer {
         active.put(player.getUniqueId(), d);
         render(player, d);
         d.task = new BukkitRunnable() {
-            @Override public void run() { if (!player.isOnline()) { stopVisualization(player); return; } render(player, d); }
+            @Override
+            public void run() {
+                if (!player.isOnline()) {
+                    stopVisualization(player);
+                    return;
+                }
+                render(player, d);
+            }
         }.runTaskTimer(plugin, 40L, refreshTicks);
     }
 
@@ -97,7 +114,10 @@ public class ParticleClaimVisualizer implements ClaimVisualizer {
         for (Map.Entry<UUID, VisualizationData> entry : new ArrayList<>(active.entrySet())) {
             VisualizationData d = active.remove(entry.getKey());
             if (d != null && d.task != null) {
-                try { d.task.cancel(); } catch (Exception ignored) {}
+                try {
+                    d.task.cancel();
+                } catch (Exception ignored) {
+                }
             }
         }
         active.clear();
@@ -109,19 +129,27 @@ public class ParticleClaimVisualizer implements ClaimVisualizer {
         World w = player.getWorld();
         // Spawn particles at chunk borders of claims near the player using configured spacing and particle type
         claims.stream().filter(c -> Objects.equals(c.getWorldName(), w.getName())).forEach(c -> {
-            int x = (c.getChunkX()*16) + 8; int z = (c.getChunkZ()*16) + 8;
+            int x = (c.getChunkX() * 16) + 8;
+            int z = (c.getChunkZ() * 16) + 8;
             for (int dx = -8; dx <= 8; dx += Math.max(1, spacing)) {
-                w.spawnParticle(particleType, x+dx, player.getLocation().getY(), z-8, 1, 0,0,0,0);
-                w.spawnParticle(particleType, x+dx, player.getLocation().getY(), z+8, 1, 0,0,0,0);
+                w.spawnParticle(particleType, x + dx, player.getLocation().getY(), z - 8, 1, 0, 0, 0, 0);
+                w.spawnParticle(particleType, x + dx, player.getLocation().getY(), z + 8, 1, 0, 0, 0, 0);
             }
             for (int dz = -8; dz <= 8; dz += Math.max(1, spacing)) {
-                w.spawnParticle(particleType, x-8, player.getLocation().getY(), z+dz, 1, 0,0,0,0);
-                w.spawnParticle(particleType, x+8, player.getLocation().getY(), z+dz, 1, 0,0,0,0);
+                w.spawnParticle(particleType, x - 8, player.getLocation().getY(), z + dz, 1, 0, 0, 0, 0);
+                w.spawnParticle(particleType, x + 8, player.getLocation().getY(), z + dz, 1, 0, 0, 0, 0);
             }
         });
     }
 
-    private static class VisualizationData { final String townName; BukkitTask task; VisualizationData(String townName) { this.townName = townName; } }
+    private static class VisualizationData {
+        final String townName;
+        BukkitTask task;
+
+        VisualizationData(String townName) {
+            this.townName = townName;
+        }
+    }
 
     // Listener that stops visualizations on relevant player lifecycle events to avoid orphaned tasks
     private class PlayerLifecycleListener implements Listener {

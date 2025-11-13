@@ -13,12 +13,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.*;
 
 public class KingdomCommand implements CommandExecutor, TabCompleter {
 
@@ -310,26 +305,20 @@ public class KingdomCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            return Arrays.asList("create", "info", "invite", "vassalize", "list")
-                    .stream()
-                    .filter(s -> s.startsWith(args[0].toLowerCase()))
-                    .collect(Collectors.toList());
+            return me.marcdoesntexists.nations.utils.TabCompletionUtils.match(Arrays.asList("create", "info", "invite", "vassalize", "list"), args[0]);
         }
 
         if (args.length == 2) {
             if (args[0].equalsIgnoreCase("info") || args[0].equalsIgnoreCase("vassalize")) {
-                return societiesManager.getAllKingdoms().stream()
-                        .map(Kingdom::getName)
-                        .filter(s -> s.toLowerCase().startsWith(args[1].toLowerCase()))
-                        .collect(Collectors.toList());
+                return me.marcdoesntexists.nations.utils.TabCompletionUtils.kingdoms(societiesManager, args[1]);
             }
 
             if (args[0].equalsIgnoreCase("invite")) {
-                return societiesManager.getAllTowns().stream()
-                        .filter(t -> t.getKingdom() == null)
-                        .map(Town::getName)
-                        .filter(s -> s.toLowerCase().startsWith(args[1].toLowerCase()))
-                        .collect(Collectors.toList());
+                // suggest towns without a kingdom
+                return me.marcdoesntexists.nations.utils.TabCompletionUtils.matchDistinct(
+                        societiesManager.getAllTowns().stream().filter(t -> t.getKingdom() == null).map(Town::getName).collect(java.util.stream.Collectors.toList()),
+                        args[1]
+                );
             }
         }
 

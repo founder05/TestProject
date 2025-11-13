@@ -1,6 +1,7 @@
 package me.marcdoesntexists.nations.integrations;
 
 import me.marcdoesntexists.nations.Nations;
+import me.marcdoesntexists.nations.economy.EconomyService;
 import me.marcdoesntexists.nations.societies.Town;
 import me.ryanhamshire.GriefPrevention.Claim;
 import me.ryanhamshire.GriefPrevention.ClaimPermission;
@@ -8,15 +9,13 @@ import me.ryanhamshire.GriefPrevention.CreateClaimResult;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
-import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 
 import java.io.File;
 import java.util.*;
-
-import me.marcdoesntexists.nations.economy.EconomyService;
 
 public class GriefPreventionIntegration {
     private static GriefPreventionIntegration instance;
@@ -135,13 +134,19 @@ public class GriefPreventionIntegration {
             griefPrevention.dataStore.saveClaim(newClaim);
 
             // Refresh GUI so players viewing towns see updated counts
-            try { me.marcdoesntexists.nations.gui.NationsGUI.refreshGUIsForCategory("TOWNS"); } catch (Throwable ignored) {}
+            try {
+                me.marcdoesntexists.nations.gui.NationsGUI.refreshGUIsForCategory("TOWNS");
+            } catch (Throwable ignored) {
+            }
 
             plugin.getLogger().info("Town " + town.getName() + " claimed chunk at " +
                     chunk.getX() + "," + chunk.getZ() + " (GP Claim ID: " + newClaim.getID() + ")");
 
             // Persist town immediately
-            try { plugin.getDataManager().saveTown(town); } catch (Throwable ignored) {}
+            try {
+                plugin.getDataManager().saveTown(town);
+            } catch (Throwable ignored) {
+            }
 
             return new ClaimResult(true, "Chunk claimed successfully! (GP Claim #" + newClaim.getID() + ")");
 
@@ -188,12 +193,18 @@ public class GriefPreventionIntegration {
             town.addMoney(refund);
 
             // Refresh GUI so town claim counts are updated
-            try { me.marcdoesntexists.nations.gui.NationsGUI.refreshGUIsForCategory("TOWNS"); } catch (Throwable ignored) {}
+            try {
+                me.marcdoesntexists.nations.gui.NationsGUI.refreshGUIsForCategory("TOWNS");
+            } catch (Throwable ignored) {
+            }
 
             plugin.getLogger().info("Town " + town.getName() + " unclaimed GP Claim #" + claim.getID());
 
             // Persist town immediately
-            try { plugin.getDataManager().saveTown(town); } catch (Throwable ignored) {}
+            try {
+                plugin.getDataManager().saveTown(town);
+            } catch (Throwable ignored) {
+            }
 
             return new ClaimResult(true, "Claim removed! Refund: " + refund + " coins");
 

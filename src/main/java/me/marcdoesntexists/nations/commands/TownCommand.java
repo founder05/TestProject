@@ -1,12 +1,12 @@
 package me.marcdoesntexists.nations.commands;
 
 import me.marcdoesntexists.nations.Nations;
+import me.marcdoesntexists.nations.economy.EconomyService;
 import me.marcdoesntexists.nations.managers.DataManager;
 import me.marcdoesntexists.nations.managers.SocietiesManager;
 import me.marcdoesntexists.nations.societies.Town;
-import me.marcdoesntexists.nations.utils.PlayerData;
-import me.marcdoesntexists.nations.economy.EconomyService;
 import me.marcdoesntexists.nations.utils.MessageUtils;
+import me.marcdoesntexists.nations.utils.PlayerData;
 import org.bukkit.Chunk;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class TownCommand implements CommandExecutor, TabCompleter {
 
@@ -122,7 +121,8 @@ public class TownCommand implements CommandExecutor, TabCompleter {
         try {
             plugin.getDataManager().saveTown(newTown);
             plugin.getDataManager().savePlayerData(player.getUniqueId());
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
 
         player.sendMessage(MessageUtils.format("town.created", java.util.Map.of("name", townName)));
         player.sendMessage(MessageUtils.get("town.created_hint"));
@@ -223,7 +223,7 @@ public class TownCommand implements CommandExecutor, TabCompleter {
 
         Town town = societiesManager.getTown(townName);
         if (town == null) {
-            player.sendMessage("§cTown not found!");
+            player.sendMessage(MessageUtils.get("town.not_found_literal"));
             data.removeTownInvite(townName);
             return true;
         }
@@ -408,7 +408,8 @@ public class TownCommand implements CommandExecutor, TabCompleter {
         try {
             plugin.getDataManager().saveTown(town);
             plugin.getDataManager().savePlayerMoney(player.getUniqueId());
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
 
         player.sendMessage(MessageUtils.format("town.deposit_success", java.util.Map.of("amount", String.valueOf(amount))));
         player.sendMessage(MessageUtils.format("town.new_balance", java.util.Map.of("balance", String.valueOf(town.getBalance()))));
@@ -450,7 +451,10 @@ public class TownCommand implements CommandExecutor, TabCompleter {
                 town.addMoney(amount);
 
                 // Persist town change
-                try { plugin.getDataManager().saveTown(town); } catch (Throwable ignored) {}
+                try {
+                    plugin.getDataManager().saveTown(town);
+                } catch (Throwable ignored) {
+                }
 
                 player.sendMessage(MessageUtils.get("town.deposit_failed_external"));
                 return true;
@@ -460,7 +464,8 @@ public class TownCommand implements CommandExecutor, TabCompleter {
             try {
                 plugin.getDataManager().saveTown(town);
                 plugin.getDataManager().savePlayerMoney(player.getUniqueId());
-            } catch (Throwable ignored) {}
+            } catch (Throwable ignored) {
+            }
 
             player.sendMessage(MessageUtils.format("town.withdraw_success", java.util.Map.of("amount", String.valueOf(amount))));
             player.sendMessage(MessageUtils.format("town.new_balance", java.util.Map.of("balance", String.valueOf(town.getBalance()))));
@@ -510,18 +515,13 @@ public class TownCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            return Arrays.asList("create", "info", "invite", "kick", "claim", "unclaim", "deposit", "withdraw", "list", "leave", "accept")
-                    .stream()
-                    .filter(s -> s.startsWith(args[0].toLowerCase()))
-                    .collect(Collectors.toList());
+            List<String> cmds = Arrays.asList("create", "info", "invite", "kick", "claim", "unclaim", "deposit", "withdraw", "list", "leave", "accept");
+            return me.marcdoesntexists.nations.utils.TabCompletionUtils.match(cmds, args[0]);
         }
 
         if (args.length == 2) {
             if (args[0].equalsIgnoreCase("info") || args[0].equalsIgnoreCase("accept")) {
-                return societiesManager.getAllTowns().stream()
-                        .map(Town::getName)
-                        .filter(s -> s.toLowerCase().startsWith(args[1].toLowerCase()))
-                        .collect(Collectors.toList());
+                return me.marcdoesntexists.nations.utils.TabCompletionUtils.towns(societiesManager, args[1]);
             }
         }
 

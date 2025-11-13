@@ -1,21 +1,19 @@
 package me.marcdoesntexists.nations.listeners;
 
-import org.bukkit.event.player.AsyncPlayerChatEvent;
 import me.marcdoesntexists.nations.Nations;
 import me.marcdoesntexists.nations.managers.ChatManager;
+import me.marcdoesntexists.nations.utils.MessageUtils;
 import me.marcdoesntexists.nations.managers.SocietiesManager;
 import me.marcdoesntexists.nations.societies.Alliance;
 import me.marcdoesntexists.nations.societies.Empire;
 import me.marcdoesntexists.nations.societies.Kingdom;
-import me.marcdoesntexists.nations.societies.Religion;
 import me.marcdoesntexists.nations.societies.Town;
 import me.marcdoesntexists.nations.utils.PlayerData;
 import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import me.marcdoesntexists.nations.utils.MessageUtils;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 
 import java.util.Map;
 import java.util.UUID;
@@ -68,11 +66,20 @@ public class ChatChannelListener implements Listener {
                     return;
                 }
                 Town town = societies.getTown(pd.getTown());
-                if (town == null) { sender.sendMessage(MessageUtils.get("chat.town_data_not_found")); return; }
+                if (town == null) {
+                    sender.sendMessage(MessageUtils.get("chat.town_data_not_found"));
+                    return;
+                }
                 String kingdomName = town.getKingdom();
-                if (kingdomName == null) { sender.sendMessage(MessageUtils.get("chat.not_in_kingdom")); return; }
+                if (kingdomName == null) {
+                    sender.sendMessage(MessageUtils.get("chat.not_in_kingdom"));
+                    return;
+                }
                 Kingdom kingdom = societies.getKingdom(kingdomName);
-                if (kingdom == null) { sender.sendMessage(MessageUtils.get("chat.kingdom_data_not_found")); return; }
+                if (kingdom == null) {
+                    sender.sendMessage(MessageUtils.get("chat.kingdom_data_not_found"));
+                    return;
+                }
 
                 for (String townName : kingdom.getTowns()) {
                     Town t = societies.getTown(townName);
@@ -90,15 +97,30 @@ public class ChatChannelListener implements Listener {
                     return;
                 }
                 Town town = societies.getTown(pd.getTown());
-                if (town == null) { sender.sendMessage(MessageUtils.get("chat.town_data_not_found")); return; }
+                if (town == null) {
+                    sender.sendMessage(MessageUtils.get("chat.town_data_not_found"));
+                    return;
+                }
                 String kingdomName = town.getKingdom();
-                if (kingdomName == null) { sender.sendMessage(MessageUtils.get("chat.not_in_kingdom")); return; }
+                if (kingdomName == null) {
+                    sender.sendMessage(MessageUtils.get("chat.not_in_kingdom"));
+                    return;
+                }
                 Kingdom kingdom = societies.getKingdom(kingdomName);
-                if (kingdom == null) { sender.sendMessage(MessageUtils.get("chat.kingdom_data_not_found" )); return; }
+                if (kingdom == null) {
+                    sender.sendMessage(MessageUtils.get("chat.kingdom_data_not_found"));
+                    return;
+                }
                 String empireName = kingdom.getEmpire();
-                if (empireName == null) { sender.sendMessage(MessageUtils.get("chat.not_in_empire" )); return; }
+                if (empireName == null) {
+                    sender.sendMessage(MessageUtils.get("chat.not_in_empire"));
+                    return;
+                }
                 Empire empire = societies.getEmpire(empireName);
-                if (empire == null) { sender.sendMessage(MessageUtils.get("chat.empire_data_not_found" )); return; }
+                if (empire == null) {
+                    sender.sendMessage(MessageUtils.get("chat.empire_data_not_found"));
+                    return;
+                }
 
                 for (String k : empire.getKingdoms()) {
                     Kingdom kObj = societies.getKingdom(k);
@@ -114,22 +136,21 @@ public class ChatChannelListener implements Listener {
                 }
                 break;
             }
-            case RELIGION: {
-                if (pd == null || pd.getReligion() == null) { sender.sendMessage(MessageUtils.get("chat.not_in_religion")); return; }
-                Religion religion = societies.getReligion(pd.getReligion());
-                if (religion == null) { sender.sendMessage(MessageUtils.get("chat.religion_data_not_found" )); return; }
-                for (UUID follower : religion.getFollowers()) {
-                    Player p = Bukkit.getPlayer(follower);
-                    if (p != null && p.isOnline()) p.sendMessage(formatted);
-                }
-                break;
-            }
             case ALLIANCE: {
-                if (pd == null || pd.getTown() == null) { sender.sendMessage(MessageUtils.get("chat.not_in_town")); return; }
+                if (pd == null || pd.getTown() == null) {
+                    sender.sendMessage(MessageUtils.get("chat.not_in_town"));
+                    return;
+                }
                 Town townObj = societies.getTown(pd.getTown());
-                if (townObj == null) { sender.sendMessage(MessageUtils.get("chat.town_data_not_found" )); return; }
+                if (townObj == null) {
+                    sender.sendMessage(MessageUtils.get("chat.town_data_not_found"));
+                    return;
+                }
                 String playerKingdom = townObj.getKingdom();
-                if (playerKingdom == null) { sender.sendMessage(MessageUtils.get("chat.not_in_kingdom" )); return; }
+                if (playerKingdom == null) {
+                    sender.sendMessage(MessageUtils.get("chat.not_in_kingdom"));
+                    return;
+                }
 
                 // iterate alliances and find those that include the player's kingdom
                 for (Alliance alliance : societies.getAlliances()) {

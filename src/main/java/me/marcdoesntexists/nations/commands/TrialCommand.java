@@ -2,7 +2,11 @@ package me.marcdoesntexists.nations.commands;
 
 import me.marcdoesntexists.nations.Nations;
 import me.marcdoesntexists.nations.enums.PunishmentType;
-import me.marcdoesntexists.nations.law.*;
+import me.marcdoesntexists.nations.utils.MessageUtils;
+import me.marcdoesntexists.nations.law.Crime;
+import me.marcdoesntexists.nations.law.Criminal;
+import me.marcdoesntexists.nations.law.JusticeService;
+import me.marcdoesntexists.nations.law.Trial;
 import me.marcdoesntexists.nations.managers.DataManager;
 import me.marcdoesntexists.nations.managers.LawManager;
 import me.marcdoesntexists.nations.managers.SocietiesManager;
@@ -139,7 +143,7 @@ public class TrialCommand implements CommandExecutor, TabCompleter {
             defendant.sendMessage(MessageUtils.get("trial.started_notify_defendant"));
             defendant.sendMessage(MessageUtils.format("trial.notify_judge", Map.of("judge", player.getName())));
             defendant.sendMessage(MessageUtils.format("trial.notify_charge", Map.of("charge", crime.getCrimeType().getDisplayName())));
-            defendant.sendMessage(MessageUtils.format("trial.notify_max_fine", Map.of("fine", String.valueOf((int)crime.getCrimeType().getBaseFine()))));
+            defendant.sendMessage(MessageUtils.format("trial.notify_max_fine", Map.of("fine", String.valueOf((int) crime.getCrimeType().getBaseFine()))));
         } else {
             player.sendMessage(MessageUtils.get("trial.failed_start"));
         }
@@ -256,7 +260,7 @@ public class TrialCommand implements CommandExecutor, TabCompleter {
 
         if (justiceService.concludeTrial(trial, punishment, amount, reason)) {
             player.sendMessage(MessageUtils.get("trial.sentence_applied"));
-            player.sendMessage(MessageUtils.format("trial.sentence_info", Map.of("punishment", punishment.getDescription(), "amount", String.valueOf((int)amount))));
+            player.sendMessage(MessageUtils.format("trial.sentence_info", Map.of("punishment", punishment.getDescription(), "amount", String.valueOf((int) amount))));
             player.sendMessage(MessageUtils.format("trial.sentence_reason", Map.of("reason", reason)));
 
             Player defendant = plugin.getServer().getPlayer(trial.getDefendantId());
@@ -268,22 +272,25 @@ public class TrialCommand implements CommandExecutor, TabCompleter {
 
                 switch (punishment) {
                     case FINE:
-                        defendant.sendMessage(MessageUtils.format("trial.notify_fine_amount", Map.of("amount", String.valueOf((int)amount))));
-                        if (defendantData.removeMoney((int)amount)) {
+                        defendant.sendMessage(MessageUtils.format("trial.notify_fine_amount", Map.of("amount", String.valueOf((int) amount))));
+                        if (defendantData.removeMoney((int) amount)) {
                             defendant.sendMessage(MessageUtils.get("trial.fine_paid"));
-                            try { plugin.getDataManager().savePlayerMoney(defendant.getUniqueId()); } catch (Throwable ignored) {}
+                            try {
+                                plugin.getDataManager().savePlayerMoney(defendant.getUniqueId());
+                            } catch (Throwable ignored) {
+                            }
                         } else {
                             defendant.sendMessage(MessageUtils.get("trial.fine_unpaid"));
                         }
                         break;
 
                     case IMPRISONMENT:
-                        defendant.sendMessage(MessageUtils.format("trial.notify_imprisonment", Map.of("hours", String.valueOf((int)amount))));
+                        defendant.sendMessage(MessageUtils.format("trial.notify_imprisonment", Map.of("hours", String.valueOf((int) amount))));
                         defendant.sendMessage(MessageUtils.get("trial.notify_imprisoned"));
                         break;
 
                     case BANISHMENT:
-                        defendant.sendMessage(MessageUtils.format("trial.notify_banishment", Map.of("days", String.valueOf((int)amount))));
+                        defendant.sendMessage(MessageUtils.format("trial.notify_banishment", Map.of("days", String.valueOf((int) amount))));
                         defendant.sendMessage(MessageUtils.get("trial.notify_banished"));
                         break;
                 }
@@ -337,7 +344,7 @@ public class TrialCommand implements CommandExecutor, TabCompleter {
         if (trial.getVerdict() != null) {
             player.sendMessage(MessageUtils.format("trial.info_verdict", Map.of("verdict", trial.getVerdict().getDescription())));
             if (trial.getPunishment() > 0) {
-                player.sendMessage(MessageUtils.format("trial.info_punishment_amount", Map.of("amount", String.valueOf((int)trial.getPunishment()))));
+                player.sendMessage(MessageUtils.format("trial.info_punishment_amount", Map.of("amount", String.valueOf((int) trial.getPunishment()))));
             }
             if (trial.getReason() != null) {
                 player.sendMessage(MessageUtils.format("trial.info_reason", Map.of("reason", trial.getReason())));
@@ -407,7 +414,7 @@ public class TrialCommand implements CommandExecutor, TabCompleter {
         for (Criminal criminal : townCriminals) {
             String criminalName = plugin.getServer().getOfflinePlayer(criminal.getCriminalId()).getName();
             player.sendMessage(MessageUtils.format("trial.criminal_item", Map.of("criminal", criminalName)));
-            player.sendMessage(MessageUtils.format("trial.criminal_stats", Map.of("wanted", String.valueOf(criminal.getWantedLevel()), "fines", String.valueOf((int)criminal.getTotalFines()), "arrested", criminal.isArrested() ? MessageUtils.get("yes") : MessageUtils.get("no"))));
+            player.sendMessage(MessageUtils.format("trial.criminal_stats", Map.of("wanted", String.valueOf(criminal.getWantedLevel()), "fines", String.valueOf((int) criminal.getTotalFines()), "arrested", criminal.isArrested() ? MessageUtils.get("yes") : MessageUtils.get("no"))));
         }
 
         player.sendMessage(MessageUtils.get("trial.criminals_footer"));
@@ -489,24 +496,15 @@ public class TrialCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
         if (args.length == 1) {
-            return Arrays.asList("start", "verdict", "sentence", "info", "list", "criminals", "arrest", "release")
-                    .stream()
-                    .filter(s -> s.startsWith(args[0].toLowerCase()))
-                    .toList();
+            return me.marcdoesntexists.nations.utils.TabCompletionUtils.match(Arrays.asList("start", "verdict", "sentence", "info", "list", "criminals", "arrest", "release"), args[0]);
         }
 
         if (args.length == 3 && args[0].equalsIgnoreCase("verdict")) {
-            return Arrays.asList("guilty", "not_guilty")
-                    .stream()
-                    .filter(s -> s.startsWith(args[2].toLowerCase()))
-                    .toList();
+            return me.marcdoesntexists.nations.utils.TabCompletionUtils.match(Arrays.asList("guilty", "not_guilty"), args[2]);
         }
 
         if (args.length == 3 && args[0].equalsIgnoreCase("sentence")) {
-            return Arrays.asList("FINE", "IMPRISONMENT", "BANISHMENT")
-                    .stream()
-                    .filter(s -> s.startsWith(args[2].toUpperCase()))
-                    .toList();
+            return me.marcdoesntexists.nations.utils.TabCompletionUtils.match(Arrays.asList("FINE", "IMPRISONMENT", "BANISHMENT"), args[2]);
         }
 
         return new ArrayList<>();

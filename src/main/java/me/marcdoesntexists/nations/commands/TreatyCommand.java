@@ -2,12 +2,12 @@ package me.marcdoesntexists.nations.commands;
 
 import me.marcdoesntexists.nations.Nations;
 import me.marcdoesntexists.nations.managers.DataManager;
+import me.marcdoesntexists.nations.utils.MessageUtils;
 import me.marcdoesntexists.nations.managers.SocietiesManager;
 import me.marcdoesntexists.nations.societies.DiplomacyService;
 import me.marcdoesntexists.nations.societies.Kingdom;
 import me.marcdoesntexists.nations.societies.Town;
 import me.marcdoesntexists.nations.societies.Treaty;
-import me.marcdoesntexists.nations.utils.MessageUtils;
 import me.marcdoesntexists.nations.utils.PlayerData;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class TreatyCommand implements CommandExecutor, TabCompleter {
 
@@ -427,34 +426,24 @@ public class TreatyCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            return Arrays.asList("create", "accept", "info", "list", "break", "renew")
-                    .stream()
-                    .filter(s -> s.startsWith(args[0].toLowerCase()))
-                    .collect(Collectors.toList());
+            return me.marcdoesntexists.nations.utils.TabCompletionUtils.match(Arrays.asList("create", "accept", "info", "list", "break", "renew"), args[0]);
         }
 
         if (args.length == 2) {
             if (args[0].equalsIgnoreCase("create")) {
-                return societiesManager.getAllKingdoms().stream()
-                        .map(Kingdom::getName)
-                        .filter(s -> s.toLowerCase().startsWith(args[1].toLowerCase()))
-                        .collect(Collectors.toList());
+                return me.marcdoesntexists.nations.utils.TabCompletionUtils.kingdoms(societiesManager, args[1]);
             }
 
             if (args[0].equalsIgnoreCase("accept") || args[0].equalsIgnoreCase("info") ||
                     args[0].equalsIgnoreCase("break") || args[0].equalsIgnoreCase("renew")) {
-                return societiesManager.getAllTreaties().stream()
-                        .map(Treaty::getName)
-                        .filter(s -> s.toLowerCase().startsWith(args[1].toLowerCase()))
-                        .collect(Collectors.toList());
+                return me.marcdoesntexists.nations.utils.TabCompletionUtils.matchDistinct(
+                        societiesManager.getAllTreaties().stream().map(Treaty::getName).collect(java.util.stream.Collectors.toList()), args[1]
+                );
             }
         }
 
         if (args.length == 3 && args[0].equalsIgnoreCase("create")) {
-            return Arrays.asList("PEACE", "TRADE", "NON_AGGRESSION", "MUTUAL_DEFENSE", "NEUTRALITY")
-                    .stream()
-                    .filter(s -> s.toLowerCase().startsWith(args[2].toLowerCase()))
-                    .collect(Collectors.toList());
+            return me.marcdoesntexists.nations.utils.TabCompletionUtils.match(Arrays.asList("PEACE", "TRADE", "NON_AGGRESSION", "MUTUAL_DEFENSE", "NEUTRALITY"), args[2]);
         }
 
         return new ArrayList<>();

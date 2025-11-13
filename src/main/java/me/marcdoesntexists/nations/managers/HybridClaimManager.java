@@ -1,6 +1,7 @@
 package me.marcdoesntexists.nations.managers;
 
 import me.marcdoesntexists.nations.Nations;
+import me.marcdoesntexists.nations.economy.EconomyService;
 import me.marcdoesntexists.nations.integrations.GriefPreventionIntegration;
 import me.marcdoesntexists.nations.societies.Town;
 import org.bukkit.Chunk;
@@ -8,8 +9,6 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import java.util.UUID;
-
-import me.marcdoesntexists.nations.economy.EconomyService;
 
 public class HybridClaimManager {
     private static HybridClaimManager instance;
@@ -58,7 +57,10 @@ public class HybridClaimManager {
                 }
                 town.removeMoney(cost);
                 // Persist town immediately when using town funds
-                try { plugin.getDataManager().saveTown(town); } catch (Throwable ignored) {}
+                try {
+                    plugin.getDataManager().saveTown(town);
+                } catch (Throwable ignored) {
+                }
             }
 
             ClaimManager.ClaimResult result =

@@ -1,12 +1,15 @@
 package me.marcdoesntexists.nations.managers;
 
 import me.marcdoesntexists.nations.Nations;
-import me.marcdoesntexists.nations.societies.*;
+import me.marcdoesntexists.nations.societies.Empire;
+import me.marcdoesntexists.nations.societies.Kingdom;
+import me.marcdoesntexists.nations.societies.Town;
 import me.marcdoesntexists.nations.utils.PlayerData;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class LeaderboardManager {
@@ -349,46 +352,6 @@ public class LeaderboardManager {
             }
         }
         return entries.stream().sorted((e1, e2) -> Long.compare(e2.getValue(), e1.getValue())).limit(limit).collect(Collectors.toList());
-    }
-
-    // ========== RELIGION LEADERBOARDS ==========
-
-    public List<LeaderboardEntry> getTopReligionsByFollowers(int limit) {
-        return societiesManager.getAllReligions().stream()
-                .sorted((r1, r2) -> Integer.compare(r2.getFollowers().size(), r1.getFollowers().size()))
-                .limit(limit)
-                .map(religion -> new LeaderboardEntry(
-                        religion.getName(),
-                        religion.getFollowers().size(),
-                        "followers"
-                ))
-                .collect(Collectors.toList());
-    }
-
-    public List<LeaderboardEntry> getTopGodsByPower(int limit) {
-        return societiesManager.getAllGods().stream()
-                .sorted((g1, g2) -> Integer.compare(g2.getPower(), g1.getPower()))
-                .limit(limit)
-                .map(god -> new LeaderboardEntry(
-                        god.getName(),
-                        god.getPower(),
-                        "power",
-                        god.getDomain()
-                ))
-                .collect(Collectors.toList());
-    }
-
-    public List<LeaderboardEntry> getTopGodsByFollowers(int limit) {
-        return societiesManager.getAllGods().stream()
-                .sorted((g1, g2) -> Integer.compare(g2.getFollowerCount(), g1.getFollowerCount()))
-                .limit(limit)
-                .map(god -> new LeaderboardEntry(
-                        god.getName(),
-                        god.getFollowerCount(),
-                        "followers",
-                        god.getDomain()
-                ))
-                .collect(Collectors.toList());
     }
 
     // ========== HELPER METHODS ==========

@@ -6,8 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class SoundUtils {
-    private SoundUtils() {}
-
     // Build a single lookup map to avoid repeated calls to Sound.values()
     private static final Map<String, Sound> LOOKUP = new HashMap<>();
 
@@ -20,6 +18,9 @@ public final class SoundUtils {
         }
     }
 
+    private SoundUtils() {
+    }
+
     public static Sound parseSound(String name) {
         if (name == null) return null;
         String candidate = name.trim();
@@ -28,7 +29,8 @@ public final class SoundUtils {
         // Try direct valueOf first (fast path)
         try {
             return Sound.valueOf(candidate.toUpperCase());
-        } catch (IllegalArgumentException ignored) {}
+        } catch (IllegalArgumentException ignored) {
+        }
 
         // Normalized forms
         String normalized = candidate.toUpperCase().replace('-', '_').replace(' ', '_').replace('.', '_');

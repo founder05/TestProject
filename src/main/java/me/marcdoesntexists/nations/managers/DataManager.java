@@ -1,20 +1,23 @@
 package me.marcdoesntexists.nations.managers;
 
 import me.marcdoesntexists.nations.Nations;
-import me.marcdoesntexists.nations.societies.*;
+import me.marcdoesntexists.nations.societies.Alliance;
+import me.marcdoesntexists.nations.societies.Kingdom;
+import me.marcdoesntexists.nations.societies.NobleTier;
+import me.marcdoesntexists.nations.societies.Town;
 import me.marcdoesntexists.nations.utils.PlayerData;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
-import java.util.*;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.util.*;
 
 public class DataManager {
     private static DataManager instance;
@@ -24,7 +27,6 @@ public class DataManager {
     private final File townsFolder;
     private final File kingdomsFolder;
     private final File empiresFolder;
-    private final File religionsFolder;
     private final File alliancesFolder;
     private final File warsFolder;
     private final int startingMoney;
@@ -35,7 +37,6 @@ public class DataManager {
         this.townsFolder = new File(plugin.getDataFolder(), "towns");
         this.kingdomsFolder = new File(plugin.getDataFolder(), "kingdoms");
         this.empiresFolder = new File(plugin.getDataFolder(), "empires");
-        this.religionsFolder = new File(plugin.getDataFolder(), "religions");
         this.alliancesFolder = new File(plugin.getDataFolder(), "alliances");
         this.warsFolder = new File(plugin.getDataFolder(), "wars");
 
@@ -62,7 +63,6 @@ public class DataManager {
         createFolder(townsFolder);
         createFolder(kingdomsFolder);
         createFolder(empiresFolder);
-        createFolder(religionsFolder);
         createFolder(alliancesFolder);
         createFolder(warsFolder);
     }
@@ -92,7 +92,7 @@ public class DataManager {
                 PlayerData data = new PlayerData();
                 data.setMoney(config.getInt("money", startingMoney));
                 data.setTown(config.getString("town"));
-                data.setReligion(config.getString("religion"));
+                // religion support removed
                 data.setJob(config.getString("job"));
                 data.setSocialClass(config.getString("socialClass", "Commoner"));
                 String nobleTierName = config.getString("nobleTier");
@@ -126,7 +126,7 @@ public class DataManager {
             FileConfiguration config = new YamlConfiguration();
             config.set("money", data.getMoney());
             config.set("town", data.getTown());
-            config.set("religion", data.getReligion());
+            // religion support removed
             config.set("job", data.getJob());
             config.set("socialClass", data.getSocialClass());
             if (data.getNobleTier() != null) {
@@ -158,7 +158,6 @@ public class DataManager {
 
             // keep existing values intact if present
             if (config.getString("town") == null) config.set("town", data.getTown());
-            if (config.getString("religion") == null) config.set("religion", data.getReligion());
             if (config.getString("job") == null) config.set("job", data.getJob());
             if (config.getString("socialClass") == null) config.set("socialClass", data.getSocialClass());
             if (config.getString("nobleTier") == null) {
@@ -249,7 +248,8 @@ public class DataManager {
                 try {
                     ClaimManager cm = ClaimManager.getInstance(plugin);
                     if (cm != null) cm.registerTownClaims(town);
-                } catch (Throwable ignored) {}
+                } catch (Throwable ignored) {
+                }
             }
         }
     }
@@ -275,64 +275,6 @@ public class DataManager {
             } catch (Exception e) {
                 plugin.getLogger().warning("Invalid alliance file: " + file.getName());
             }
-        }
-    }
-
-    public void saveAllReligions() {
-        for (Religion religion : SocietiesManager.getInstance().getAllReligions()) {
-            saveReligion(religion);
-        }
-    }
-
-    public void loadAllReligions() {
-        File[] files = religionsFolder.listFiles((dir, name) -> name.endsWith(".yml"));
-        if (files == null) return;
-
-        for (File file : files) {
-            String religionName = file.getName().replace(".yml", "");
-            Religion religion = loadReligion(religionName);
-            if (religion != null) {
-                SocietiesManager.getInstance().registerReligion(religion);
-            }
-        }
-    }
-
-    public Religion loadReligion(String religionName) {
-        try {
-            File religionFile = new File(religionsFolder, religionName + ".yml");
-            if (!religionFile.exists()) return null;
-
-            FileConfiguration config = YamlConfiguration.loadConfiguration(religionFile);
-            String founderStr = config.getString("founder");
-            if (founderStr == null) return null;
-            UUID founder;
-            try {
-                founder = UUID.fromString(founderStr);
-            } catch (Exception ex) {
-                plugin.getLogger().severe("Invalid religion founder UUID in " + religionFile.getName() + ": " + founderStr);
-                return null;
-            }
-
-            Religion religion = new Religion(config.getString("name"), founder);
-
-            for (String follower : config.getStringList("followers")) {
-                try { religion.addFollower(UUID.fromString(follower)); } catch (Exception ignored) {}
-            }
-
-            for (String entry : config.getStringList("clergy")) {
-                String[] parts = entry.split(":", 2);
-                if (parts.length == 2) {
-                    try {
-                        UUID id = UUID.fromString(parts[0]);
-                        religion.setClergyRank(id, parts[1]);
-                    } catch (Exception ignored) {}
-                }
-            }
-
-            return religion;
-        } catch (Exception e) {
-            plugin.getLogger().severe("Failed to load religion " + religionName + ": " + e.getMessage());
-            return null;
         }
     }
 
@@ -454,27 +396,6 @@ public class DataManager {
         }
     }
 
-    public void saveReligion(Religion religion) {
-        try {
-            File religionFile = new File(religionsFolder, religion.getName() + ".yml");
-            FileConfiguration config = new YamlConfiguration();
-
-            config.set("name", religion.getName());
-            config.set("founder", religion.getFounder().toString());
-            config.set("followers", religion.getFollowers().stream().map(UUID::toString).toList());
-
-            List<String> clergyData = new ArrayList<>();
-            for (Map.Entry<UUID, String> entry : religion.getClergy().entrySet()) {
-                clergyData.add(entry.getKey() + ":" + entry.getValue());
-            }
-            config.set("clergy", clergyData);
-
-            saveConfigAtomic(config, religionFile);
-        } catch (Exception e) {
-            plugin.getLogger().severe("Failed to save religion " + religion.getName() + ": " + e.getMessage());
-        }
-    }
-
     // Writes YAML to a temp file and moves it into place to reduce partial writes / corruption
     private void saveConfigAtomic(FileConfiguration config, File target) throws Exception {
         // Load save config values from ConfigurationManager if available
@@ -492,7 +413,8 @@ public class DataManager {
                     maxBackoffMsCfg = main.getLong("save.max-backoff-ms", maxBackoffMsCfg);
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         // create temp file in configured directory or system tmp to reduce interference from OneDrive watchers
         File sysTmpDir = !tmpDirCfg.isEmpty() ? new File(tmpDirCfg) : new File(System.getProperty("java.io.tmpdir"));
@@ -507,7 +429,10 @@ public class DataManager {
         // ensure parent exists for target
         File parent = target.getParentFile();
         if (parent != null && !parent.exists()) {
-            try { parent.mkdirs(); } catch (Exception ignored) {}
+            try {
+                parent.mkdirs();
+            } catch (Exception ignored) {
+            }
         }
 
         // write to the temp file (overwrite)
@@ -535,7 +460,11 @@ public class DataManager {
                                 } catch (Exception lockEx) {
                                     // ignore and retry
                                 }
-                                try { Thread.sleep(50); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+                                try {
+                                    Thread.sleep(50);
+                                } catch (InterruptedException ie) {
+                                    Thread.currentThread().interrupt();
+                                }
                             }
 
                             if (lock != null) {
@@ -549,7 +478,10 @@ public class DataManager {
                                     moved = true;
                                     return; // success, exit method early
                                 } finally {
-                                    try { lock.release(); } catch (Exception ignored) {}
+                                    try {
+                                        lock.release();
+                                    } catch (Exception ignored) {
+                                    }
                                 }
                             }
                         } finally {
@@ -581,7 +513,12 @@ public class DataManager {
                     plugin.getLogger().warning("Attempt " + attempt + " to copy tmp to target failed: " + copyEx.getMessage());
                 }
                 // Wait before retrying
-                try { Thread.sleep(waitMillis); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
+                try {
+                    Thread.sleep(waitMillis);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
                 waitMillis = Math.min(maxBackoffMsCfg, waitMillis * 2);
             }
         }
@@ -602,7 +539,10 @@ public class DataManager {
                 lastException = e;
                 plugin.getLogger().warning("Failed to copy system tmp to local tmp: " + e.getMessage());
             } finally {
-                if (localTmp.exists()) try { localTmp.delete(); } catch (Exception ignored) {}
+                if (localTmp.exists()) try {
+                    localTmp.delete();
+                } catch (Exception ignored) {
+                }
             }
         }
 
@@ -630,11 +570,19 @@ public class DataManager {
                                 break;
                             }
                         } finally {
-                            try { if (lock != null && lock.isValid()) lock.release(); } catch (Exception ignored) {}
+                            try {
+                                if (lock != null && lock.isValid()) lock.release();
+                            } catch (Exception ignored) {
+                            }
                         }
                     } catch (Exception ce) {
                         channelException = ce;
-                        try { Thread.sleep(150 * attempt2); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
+                        try {
+                            Thread.sleep(150 * attempt2);
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            break;
+                        }
                     }
                 }
             } catch (Exception e) {
@@ -642,12 +590,22 @@ public class DataManager {
             }
 
             if (!moved) {
-                if (tmp.exists()) { try { tmp.delete(); } catch (Exception ignored) {} }
+                if (tmp.exists()) {
+                    try {
+                        tmp.delete();
+                    } catch (Exception ignored) {
+                    }
+                }
                 Exception toThrow = lastException != null ? lastException : channelException;
                 throw new java.io.IOException("Failed to move temp file to target '" + target.getAbsolutePath() + "' after " + maxAttempts + " attempts", toThrow);
             }
         }
-        if (tmp.exists()) { try { tmp.delete(); } catch (Exception ignored) {} }
+        if (tmp.exists()) {
+            try {
+                tmp.delete();
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     // ========== SAVE/LOAD ALL ==========
@@ -658,7 +616,6 @@ public class DataManager {
         saveAllTowns();
         saveAllKingdoms();
         saveAllAlliances();
-        saveAllReligions();
         plugin.getLogger().info("All data saved!");
     }
 
@@ -677,7 +634,6 @@ public class DataManager {
         loadAllKingdoms();
         loadAllAlliances();
         loadAllPlayerData();
-        loadAllReligions();
         plugin.getLogger().info("All data loaded!");
     }
 
@@ -713,6 +669,5 @@ public class DataManager {
         saveAllTowns();
         saveAllKingdoms();
         saveAllAlliances();
-        saveAllReligions();
     }
 }

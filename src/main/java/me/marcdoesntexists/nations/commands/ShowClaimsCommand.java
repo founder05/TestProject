@@ -2,11 +2,12 @@ package me.marcdoesntexists.nations.commands;
 
 import me.marcdoesntexists.nations.Nations;
 import me.marcdoesntexists.nations.managers.ClaimVisualizer;
+import me.marcdoesntexists.nations.utils.MessageUtils;
 import me.marcdoesntexists.nations.managers.DataManager;
 import me.marcdoesntexists.nations.managers.SocietiesManager;
 import me.marcdoesntexists.nations.societies.Town;
-import me.marcdoesntexists.nations.utils.PlayerData;
 import me.marcdoesntexists.nations.utils.MessageUtils;
+import me.marcdoesntexists.nations.utils.PlayerData;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -17,7 +18,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ShowClaimsCommand implements CommandExecutor, TabCompleter {
 
@@ -79,10 +79,9 @@ public class ShowClaimsCommand implements CommandExecutor, TabCompleter {
             sm.getAllTowns().stream().map(Town::getName).forEach(suggestions::add);
         }
         if (args.length == 1) {
-            String partial = args[0].toLowerCase();
-            return suggestions.stream().distinct()
-                    .filter(s -> s.toLowerCase().startsWith(partial))
-                    .collect(Collectors.toList());
+            // use TabCompletionUtils to match and sort
+            List<String> merged = new ArrayList<>(suggestions);
+            return me.marcdoesntexists.nations.utils.TabCompletionUtils.matchDistinct(merged, args[0]);
         }
         return List.of();
     }

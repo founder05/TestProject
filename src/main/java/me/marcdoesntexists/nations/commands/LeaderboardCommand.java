@@ -2,6 +2,7 @@ package me.marcdoesntexists.nations.commands;
 
 import me.marcdoesntexists.nations.Nations;
 import me.marcdoesntexists.nations.gui.LeaderboardGUI;
+import me.marcdoesntexists.nations.managers.LeaderboardGUIManager;
 import me.marcdoesntexists.nations.utils.MessageUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -12,14 +13,11 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class LeaderboardCommand implements CommandExecutor, TabCompleter {
-    private final Nations plugin;
     private final LeaderboardGUI gui;
 
     public LeaderboardCommand(Nations plugin) {
-        this.plugin = plugin;
         this.gui = new LeaderboardGUI(plugin);
     }
 
@@ -56,12 +54,9 @@ public class LeaderboardCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            return Arrays.asList("towns_population", "players_money")
-                    .stream()
-                    .filter(s -> s.startsWith(args[0].toLowerCase()))
-                    .collect(Collectors.toList());
+            List<String> choices = Arrays.asList("towns_population", "players_money", "towns", "players", "money", "townpop", "playermoney");
+            return me.marcdoesntexists.nations.utils.TabCompletionUtils.match(choices, args[0]);
         }
         return new ArrayList<>();
     }
 }
-

@@ -1,6 +1,9 @@
 package me.marcdoesntexists.nations.commands;
 
 import me.marcdoesntexists.nations.Nations;
+import me.marcdoesntexists.nations.enums.CasusBelli;
+import me.marcdoesntexists.nations.utils.MessageUtils;
+import me.marcdoesntexists.nations.enums.WarGoal;
 import me.marcdoesntexists.nations.managers.DataManager;
 import me.marcdoesntexists.nations.managers.MilitaryManager;
 import me.marcdoesntexists.nations.managers.SocietiesManager;
@@ -9,6 +12,8 @@ import me.marcdoesntexists.nations.societies.Kingdom;
 import me.marcdoesntexists.nations.societies.Town;
 import me.marcdoesntexists.nations.utils.MessageUtils;
 import me.marcdoesntexists.nations.utils.PlayerData;
+import org.bukkit.Bukkit;
+import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -60,6 +65,14 @@ public class WarCommand implements CommandExecutor, TabCompleter {
                 return handleInfo(player, args);
             case "list":
                 return handleList(player, args);
+            case "score":
+                return handleScore(player, args);
+            case "siege":
+                return handleSiege(player, args);
+            case "raid":
+                return handleRaid(player, args);
+            case "crimes":
+                return handleCrimes(player, args);
             default:
                 sendHelp(player);
                 return true;
@@ -67,8 +80,9 @@ public class WarCommand implements CommandExecutor, TabCompleter {
     }
 
     private boolean handleDeclare(Player player, String[] args) {
-        if (args.length < 2) {
-            player.sendMessage(MessageUtils.get("war.usage_declare"));
+        if (args.length < 3) {
+            player.sendMessage("§cUsage: /war declare <kingdom> <casus_belli> [reason]");
+            player.sendMessage("§7Available CBs: " + Arrays.stream(CasusBelli.values()).map(Enum::name).collect(Collectors.joining(", ")));
             return true;
         }
 
@@ -113,9 +127,25 @@ public class WarCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        String reason = args.length > 2 ? String.join(" ", Arrays.copyOfRange(args, 2, args.length)) : MessageUtils.get("war.no_reason_provided");
+        // Parse CasusBelli
+        CasusBelli cb;
+        try {
+            cb = CasusBelli.valueOf(args[2].toUpperCase());
+        } catch (IllegalArgumentException e) {
+            player.sendMessage("§cInvalid Casus Belli. Available: " + Arrays.stream(CasusBelli.values()).map(Enum::name).collect(Collectors.joining(", ")));
+            return true;
+        }
 
-        War war = new War(attackerKingdom.getName(), defenderKingdom.getName(), player.getUniqueId(), reason);
+        // Check infamy limit
+        if (attackerKingdom.getInfamy() + cb.getInfamyCost() > 100) {
+            player.sendMessage("§cToo much infamy! Declaring war would exceed 100. Current: §e" + attackerKingdom.getInfamy() + " §c+ CB Cost: §e" + cb.getInfamyCost());
+            return true;
+        }
+
+        String reason = args.length > 3 ? String.join(" ", Arrays.copyOfRange(args, 3, args.length)) : MessageUtils.get("war.no_reason_provided");
+
+        // Create war with CB and default WarGoal (CONQUEST)
+        War war = new War(attackerKingdom.getName(), defenderKingdom.getName(), player.getUniqueId(), reason, cb, WarGoal.CONQUEST);
         militaryManager.declareWar(war);
 
         attackerKingdom.declareWar(defenderKingdom.getName());
@@ -123,6 +153,12 @@ public class WarCommand implements CommandExecutor, TabCompleter {
 
         attackerKingdom.addEnemy(defenderKingdom.getName());
         defenderKingdom.addEnemy(attackerKingdom.getName());
+
+        // Add infamy
+        attackerKingdom.addInfamy(cb.getInfamyCost());
+
+        // Broadcast war declaration
+        broadcastWarDeclaration(war, attackerKingdom, defenderKingdom);
 
         player.sendMessage(MessageUtils.format("war.declared_player", Map.of("defender", defenderKingdom.getName(), "reason", reason)));
 
@@ -265,6 +301,204 @@ public class WarCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    private boolean handleScore(Player player, String[] args) {
+        if (args.length < 2) {
+            player.sendMessage("§cUsage: /war score <kingdom>");
+            return true;
+        }
+
+        PlayerData data = dataManager.getPlayerData(player.getUniqueId());
+        if (data.getTown() == null) {
+            player.sendMessage(MessageUtils.get("war.must_be_in_town"));
+            return true;
+        }
+
+        Town town = societiesManager.getTown(data.getTown());
+        if (town.getKingdom() == null) {
+            player.sendMessage(MessageUtils.get("war.must_be_in_kingdom"));
+            return true;
+        }
+
+        Kingdom myKingdom = societiesManager.getKingdom(town.getKingdom());
+        String targetKingdomName = args[1];
+        Kingdom targetKingdom = societiesManager.getKingdom(targetKingdomName);
+
+        if (targetKingdom == null) {
+            player.sendMessage(MessageUtils.get("war.kingdom_not_found"));
+            return true;
+        }
+
+        War war = findWar(myKingdom.getName(), targetKingdom.getName());
+        if (war == null) {
+            player.sendMessage("§cNo active war with " + targetKingdomName);
+            return true;
+        }
+
+        player.sendMessage("§6§l⚔ WAR SCORE ⚔");
+        player.sendMessage("§7━━━━━━━━━━━━━━━━━━━━");
+        player.sendMessage("§eAttacker: §c" + war.getAttackerKingdom());
+        player.sendMessage("§eDefender: §9" + war.getDefenderKingdom());
+        player.sendMessage("§eWar Score: " + getScoreColor(war.getWarScore()) + war.getWarScore() + "§7/100");
+
+        String winner = war.getWinningKingdom();
+        player.sendMessage("§eWinning Side: " + (winner != null ? "§a" + winner : "§7Stalemate"));
+
+        player.sendMessage("§eCasus Belli: §6" + war.getCasusBelli().name());
+        player.sendMessage("§eWar Goal: §6" + war.getWarGoalProgress().getGoal().name() + " §7(" + war.getWarGoalProgress().getProgress() + "%)");
+        player.sendMessage("§7━━━━━━━━━━━━━━━━━━━━");
+
+        return true;
+    }
+
+    private boolean handleSiege(Player player, String[] args) {
+        if (args.length < 3) {
+            player.sendMessage("§cUsage: /war siege <x> <z>");
+            return true;
+        }
+
+        PlayerData data = dataManager.getPlayerData(player.getUniqueId());
+        if (data.getTown() == null) {
+            player.sendMessage(MessageUtils.get("war.must_be_in_town"));
+            return true;
+        }
+
+        Town town = societiesManager.getTown(data.getTown());
+        if (town.getKingdom() == null) {
+            player.sendMessage(MessageUtils.get("war.must_be_in_kingdom"));
+            return true;
+        }
+
+        try {
+            int x = Integer.parseInt(args[1]);
+            int z = Integer.parseInt(args[2]);
+
+            player.sendMessage("§6⚔ SIEGE STARTED ⚔");
+            player.sendMessage("§7Target: §e" + x + ", " + z);
+            player.sendMessage("§7Hold the claim for §e10 minutes §7to capture!");
+
+            // TODO: Implement siege mechanics (scheduler, tracking, capture logic)
+            // Schedule task to check after 10 minutes
+
+        } catch (NumberFormatException e) {
+            player.sendMessage("§cInvalid coordinates!");
+            return true;
+        }
+
+        return true;
+    }
+
+    private boolean handleRaid(Player player, String[] args) {
+        if (args.length < 2) {
+            player.sendMessage("§cUsage: /war raid <kingdom>");
+            return true;
+        }
+
+        PlayerData data = dataManager.getPlayerData(player.getUniqueId());
+        if (data.getTown() == null) {
+            player.sendMessage(MessageUtils.get("war.must_be_in_town"));
+            return true;
+        }
+
+        Town town = societiesManager.getTown(data.getTown());
+        if (town.getKingdom() == null) {
+            player.sendMessage(MessageUtils.get("war.must_be_in_kingdom"));
+            return true;
+        }
+
+        String targetKingdomName = args[1];
+        Kingdom targetKingdom = societiesManager.getKingdom(targetKingdomName);
+
+        if (targetKingdom == null) {
+            player.sendMessage(MessageUtils.get("war.kingdom_not_found"));
+            return true;
+        }
+
+        player.sendMessage("§6⚔ RAID INITIATED ⚔");
+        player.sendMessage("§7Target: §c" + targetKingdomName);
+        player.sendMessage("§7Quick raid without full war declaration!");
+
+        // TODO: Implement raid mechanics (cooldown tracking, resource theft, etc.)
+
+        return true;
+    }
+
+    private boolean handleCrimes(Player player, String[] args) {
+        if (args.length < 2) {
+            player.sendMessage("§cUsage: /war crimes <kingdom>");
+            return true;
+        }
+
+        String targetKingdomName = args[1];
+        Kingdom targetKingdom = societiesManager.getKingdom(targetKingdomName);
+
+        if (targetKingdom == null) {
+            player.sendMessage(MessageUtils.get("war.kingdom_not_found"));
+            return true;
+        }
+
+        PlayerData data = dataManager.getPlayerData(player.getUniqueId());
+        if (data.getTown() == null) {
+            player.sendMessage(MessageUtils.get("war.must_be_in_town"));
+            return true;
+        }
+
+        Town town = societiesManager.getTown(data.getTown());
+        if (town.getKingdom() == null) {
+            player.sendMessage(MessageUtils.get("war.must_be_in_kingdom"));
+            return true;
+        }
+
+        Kingdom myKingdom = societiesManager.getKingdom(town.getKingdom());
+        War war = findWar(myKingdom.getName(), targetKingdom.getName());
+
+        if (war == null) {
+            player.sendMessage("§cNo active war with " + targetKingdomName);
+            return true;
+        }
+
+        player.sendMessage("§4§l⚠ WAR CRIMES ⚠");
+        player.sendMessage("§7━━━━━━━━━━━━━━━━━━━━");
+
+        if (war.getWarCrimes().isEmpty()) {
+            player.sendMessage("§7No war crimes recorded (yet)");
+        } else {
+            int count = 1;
+            for (var crime : war.getWarCrimes()) {
+                player.sendMessage("§c" + count + ". §e" + crime.getCrimeType().name());
+                player.sendMessage("   §7By: §f" + crime.getPerpetratorId());
+                count++;
+            }
+        }
+
+        player.sendMessage("§7Total: §c" + war.getWarCrimes().size());
+        player.sendMessage("§7━━━━━━━━━━━━━━━━━━━━");
+
+        return true;
+    }
+
+    private void broadcastWarDeclaration(War war, Kingdom attacker, Kingdom defender) {
+        Bukkit.broadcastMessage("§4⚔ §l§nWAR DECLARED §4⚔");
+        Bukkit.broadcastMessage("§c" + attacker.getName() + " §7has declared war on §c" + defender.getName());
+        Bukkit.broadcastMessage("§7Casus Belli: §e" + war.getCasusBelli().name() + " §7(+" + war.getCasusBelli().getInfamyCost() + " infamy)");
+        Bukkit.broadcastMessage("§7War Goal: §6" + war.getWarGoalProgress().getGoal().getDescription());
+        Bukkit.broadcastMessage("§7Reason: §f" + war.getReason());
+
+        // Play sound to all players
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            p.playSound(p.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1.0f, 0.8f);
+        }
+
+        // TODO: Spawn lightning at capitals
+    }
+
+    private String getScoreColor(int score) {
+        if (score > 50) return "§a";
+        if (score > 20) return "§2";
+        if (score > -20) return "§e";
+        if (score > -50) return "§6";
+        return "§c";
+    }
+
     private War findWar(String kingdom1, String kingdom2) {
         for (War war : militaryManager.getAllWars()) {
             if ((war.getAttackerKingdom().equals(kingdom1) && war.getDefenderKingdom().equals(kingdom2)) ||
@@ -283,25 +517,27 @@ public class WarCommand implements CommandExecutor, TabCompleter {
         player.sendMessage(MessageUtils.get("war.help_end"));
         player.sendMessage(MessageUtils.get("war.help_info"));
         player.sendMessage(MessageUtils.get("war.help_list"));
+        player.sendMessage("§e/war score <kingdom> §7- View war score");
+        player.sendMessage("§e/war siege <x> <z> §7- Start siege");
+        player.sendMessage("§e/war raid <kingdom> §7- Quick raid");
+        player.sendMessage("§e/war crimes <kingdom> §7- List war crimes");
         player.sendMessage(MessageUtils.get("war.help_footer"));
     }
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            return Arrays.asList("declare", "end", "info", "list")
-                    .stream()
-                    .filter(s -> s.startsWith(args[0].toLowerCase()))
-                    .collect(Collectors.toList());
+            return me.marcdoesntexists.nations.utils.TabCompletionUtils.match(Arrays.asList("declare", "end", "info", "list", "score", "siege", "raid", "crimes"), args[0]);
         }
 
         if (args.length == 2) {
-            if (args[0].equalsIgnoreCase("declare") || args[0].equalsIgnoreCase("end")) {
-                return societiesManager.getAllKingdoms().stream()
-                        .map(Kingdom::getName)
-                        .filter(s -> s.toLowerCase().startsWith(args[1].toLowerCase()))
-                        .collect(Collectors.toList());
+            if (args[0].equalsIgnoreCase("declare") || args[0].equalsIgnoreCase("end") || args[0].equalsIgnoreCase("score") || args[0].equalsIgnoreCase("raid") || args[0].equalsIgnoreCase("crimes")) {
+                return me.marcdoesntexists.nations.utils.TabCompletionUtils.kingdoms(societiesManager, args[1]);
             }
+        }
+
+        if (args.length == 3 && args[0].equalsIgnoreCase("declare")) {
+            return me.marcdoesntexists.nations.utils.TabCompletionUtils.matchDistinct(Arrays.stream(CasusBelli.values()).map(CasusBelli::name).collect(java.util.stream.Collectors.toList()), args[2]);
         }
 
         return new ArrayList<>();

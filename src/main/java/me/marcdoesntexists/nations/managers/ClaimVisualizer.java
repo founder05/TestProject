@@ -9,8 +9,12 @@ import org.bukkit.entity.Player;
  */
 public interface ClaimVisualizer {
     boolean isVisualizing(Player player);
+
     void toggleVisualization(Player player, String townName);
+
     void startVisualization(Player player, String townName);
+
     void stopVisualization(Player player);
+
     void stopAll();
 }

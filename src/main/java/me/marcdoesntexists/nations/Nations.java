@@ -11,16 +11,16 @@ import me.marcdoesntexists.nations.managers.*;
 import me.marcdoesntexists.nations.military.WarfareService;
 import me.marcdoesntexists.nations.societies.DiplomacyService;
 import me.marcdoesntexists.nations.societies.FeudalService;
-import me.marcdoesntexists.nations.societies.ReligionService;
 import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.NamespacedKey;
 
 import java.lang.reflect.Method;
 import java.util.logging.Level;
@@ -41,7 +41,7 @@ public final class Nations extends JavaPlugin {
     private WarfareService warfareService;
     private DiplomacyService diplomacyService;
     private FeudalService feudalService;
-    private ReligionService religionService;
+    // religion service removed
     private SettlementEvolutionManager evolutionManager;
     private ExemptionManager exemptionManager;
 
@@ -76,6 +76,20 @@ public final class Nations extends JavaPlugin {
         registerEventListeners();
         registerCommands();
 
+        // Register PlaceholderAPI expansion if PlaceholderAPI is present
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            try {
+                Plugin placeholderPlugin = Bukkit.getPluginManager().getPlugin("PlaceholderAPI");
+                if (placeholderPlugin != null) {
+                    // Register the expansion for Nations (expansion will access Nations.getInstance())
+                    new me.marcdoesntexists.nations.placeholder.NationsPlaceholderExpansion().register();
+                    getLogger().info("Registered PlaceholderAPI expansion for Nations.");
+                }
+            } catch (Exception e) {
+                getLogger().warning("Failed to register PlaceholderAPI expansion: " + e.getMessage());
+            }
+        }
+
         loadData();
 
         startAutoSaveTasks();
@@ -90,23 +104,30 @@ public final class Nations extends JavaPlugin {
                         // ArmorStand markers created by visualizers
                         if (e instanceof org.bukkit.entity.ArmorStand) {
                             Byte val = e.getPersistentDataContainer().get(cleanupKey, org.bukkit.persistence.PersistentDataType.BYTE);
-                            if (val != null && val == (byte)1) e.remove();
+                            if (val != null && val == (byte) 1) e.remove();
                         }
                         // BlockDisplay / custom displays: try by class name to keep compatibility
                         else if (e.getClass().getSimpleName().equals("BlockDisplay")) {
                             // best-effort: remove any BlockDisplay that contains our key in PDC
                             try {
                                 Byte val = e.getPersistentDataContainer().get(cleanupKey, org.bukkit.persistence.PersistentDataType.BYTE);
-                                if (val != null && val == (byte)1) e.remove();
-                            } catch (Throwable ignored) {}
+                                if (val != null && val == (byte) 1) e.remove();
+                            } catch (Throwable ignored) {
+                            }
                         }
-                    } catch (Throwable ignored) {}
+                    } catch (Throwable ignored) {
+                    }
                 }));
 
                 // If claimVisualizer exists, ask it to stop all visualizations and remove any tracked entities
-                try { if (claimVisualizer != null) claimVisualizer.stopAll(); } catch (Throwable ignored) {}
+                try {
+                    if (claimVisualizer != null) claimVisualizer.stopAll();
+                } catch (Throwable ignored) {
+                }
             }
-        } catch (Throwable t) { getLogger().warning("Failed to run visualizer cleanup on enable: " + t.getMessage()); }
+        } catch (Throwable t) {
+            getLogger().warning("Failed to run visualizer cleanup on enable: " + t.getMessage());
+        }
 
         getLogger().info("Nations plugin has been enabled!");
         getLogger().info("Version: " + getPluginVersion());
@@ -117,6 +138,10 @@ public final class Nations extends JavaPlugin {
         try {
             configurationManager = ConfigurationManager.getInstance(this);
             getLogger().info("Configuration system initialized");
+
+            // Initialize MessageUtils with the plugin instance
+            me.marcdoesntexists.nations.utils.MessageUtils.init(this);
+            getLogger().info("Message system initialized");
         } catch (Exception e) {
             getLogger().severe("Failed to initialize configuration system!");
             getLogger().log(Level.SEVERE, "Error initializing configuration system", e);
@@ -142,6 +167,9 @@ public final class Nations extends JavaPlugin {
             claimManager = ClaimManager.getInstance(this);
             hybridClaimManager = HybridClaimManager.getInstance(this);
 
+            // initialize PvP manager monitor
+            me.marcdoesntexists.nations.managers.PvPManager.getInstance().init(this);
+
             // Exemption manager for partial-save exemptions
             exemptionManager = new ExemptionManager(this);
 
@@ -165,7 +193,7 @@ public final class Nations extends JavaPlugin {
             warfareService = WarfareService.getInstance(this);
             diplomacyService = DiplomacyService.getInstance(this);
             feudalService = FeudalService.getInstance(this);
-            religionService = ReligionService.getInstance(this);
+            // religion service removed
             evolutionManager = SettlementEvolutionManager.getInstance(this);
 
             getLogger().info("All services initialized successfully");
@@ -174,7 +202,7 @@ public final class Nations extends JavaPlugin {
             getLogger().info("✓ Warfare Service - Active");
             getLogger().info("✓ Diplomacy Service - Active");
             getLogger().info("✓ Feudal Service - Active");
-            getLogger().info("✓ Religion Service - Active");
+            // religion service removed
             getLogger().info("✓ Settlement Evolution Manager - Active");
         } catch (Exception e) {
             getLogger().severe("Failed to initialize services!");
@@ -192,7 +220,10 @@ public final class Nations extends JavaPlugin {
         pm.registerEvents(new LeaderboardClickListener(this), this);
         pm.registerEvents(new EntityListener(this), this);
         pm.registerEvents(new InteractListener(this), this);
-        pm.registerEvents(new me.marcdoesntexists.nations.listeners.ChatChannelListener(this), this);
+        pm.registerEvents(new CrimeDetectionListener(this), this);
+        pm.registerEvents(new CrimeBroadcastListener(), this);
+        pm.registerEvents(new me.marcdoesntexists.nations.listeners.DuelProtectionListener(), this);
+        pm.registerEvents(new ChatChannelListener(this), this);
 
         getLogger().info("Event listeners registered");
     }
@@ -217,8 +248,7 @@ public final class Nations extends JavaPlugin {
         AllianceCommand allianceCommand = new AllianceCommand(this);
         safeRegisterCommand("alliance", allianceCommand, allianceCommand);
 
-        ReligionCommand religionCommand = new ReligionCommand(this);
-        safeRegisterCommand("religion", religionCommand, religionCommand);
+        // God/religion commands removed
 
         LawCommand lawCommand = new LawCommand(this);
         safeRegisterCommand("law", lawCommand, lawCommand);
@@ -242,12 +272,12 @@ public final class Nations extends JavaPlugin {
         NobleCommand nobleCommand = new NobleCommand(this);
         safeRegisterCommand("noble", nobleCommand, nobleCommand);
 
+        DuelCommand duelCommand = new DuelCommand(this);
+        safeRegisterCommand("duel", duelCommand, duelCommand);
+
         // Leaderboard command
         me.marcdoesntexists.nations.commands.LeaderboardCommand leaderboardCommand = new me.marcdoesntexists.nations.commands.LeaderboardCommand(this);
         safeRegisterCommand("leaderboard", leaderboardCommand, leaderboardCommand);
-
-        GodCommand godCommand = new GodCommand(this);
-        safeRegisterCommand("god", godCommand, godCommand);
 
         // Save check admin command
         SaveCheckCommand saveCheckCommand = new SaveCheckCommand(this);
@@ -280,8 +310,6 @@ public final class Nations extends JavaPlugin {
         try {
             for (String cmdName : getDescription().getCommands().keySet()) {
                 PluginCommand pc = getCommand(cmdName);
-                if (pc == null) {
-                }
             }
         } catch (Throwable t) {
             getLogger().warning("Error while auto-registering commands: " + t.getMessage());
@@ -292,8 +320,14 @@ public final class Nations extends JavaPlugin {
         StringBuilder sb = new StringBuilder();
         boolean cap = true;
         for (char c : cmdName.toCharArray()) {
-            if (!Character.isLetterOrDigit(c)) { cap = true; continue; }
-            if (cap) { sb.append(Character.toUpperCase(c)); cap = false; } else sb.append(c);
+            if (!Character.isLetterOrDigit(c)) {
+                cap = true;
+                continue;
+            }
+            if (cap) {
+                sb.append(Character.toUpperCase(c));
+                cap = false;
+            } else sb.append(c);
         }
         sb.append("Command");
         return sb.toString();
@@ -413,7 +447,8 @@ public final class Nations extends JavaPlugin {
                         Method success = res.getClass().getMethod("transactionSuccess");
                         Object ok = success.invoke(res);
                         if (ok instanceof Boolean) return (Boolean) ok;
-                    } catch (NoSuchMethodException ignored1) { }
+                    } catch (NoSuchMethodException ignored1) {
+                    }
                 } catch (NoSuchMethodException ignored2) {
                     Method m = vaultEconomyProvider.getClass().getMethod("depositPlayer", String.class, double.class);
                     Object res = m.invoke(vaultEconomyProvider, player.getName(), amount);
@@ -422,7 +457,8 @@ public final class Nations extends JavaPlugin {
                         Method success = res.getClass().getMethod("transactionSuccess");
                         Object ok = success.invoke(res);
                         if (ok instanceof Boolean) return (Boolean) ok;
-                    } catch (NoSuchMethodException ignored3) { }
+                    } catch (NoSuchMethodException ignored3) {
+                    }
                 }
             } catch (Throwable t) {
                 getLogger().warning("Failed to deposit via Vault provider: " + t.getMessage());
@@ -463,7 +499,8 @@ public final class Nations extends JavaPlugin {
                         Method success = res.getClass().getMethod("transactionSuccess");
                         Object ok = success.invoke(res);
                         if (ok instanceof Boolean) return (Boolean) ok;
-                    } catch (NoSuchMethodException ignored5) { }
+                    } catch (NoSuchMethodException ignored5) {
+                    }
                 } catch (NoSuchMethodException ignored6) {
                     Method m = vaultEconomyProvider.getClass().getMethod("withdrawPlayer", String.class, double.class);
                     Object res = m.invoke(vaultEconomyProvider, player.getName(), amount);
@@ -472,7 +509,8 @@ public final class Nations extends JavaPlugin {
                         Method success = res.getClass().getMethod("transactionSuccess");
                         Object ok = success.invoke(res);
                         if (ok instanceof Boolean) return (Boolean) ok;
-                    } catch (NoSuchMethodException ignored7) { }
+                    } catch (NoSuchMethodException ignored7) {
+                    }
                 }
             } catch (Throwable t) {
                 getLogger().warning("Failed to withdraw via Vault provider: " + t.getMessage());
@@ -555,7 +593,8 @@ public final class Nations extends JavaPlugin {
         // Ensure claim visualizer stops and cleans up entities/tasks
         try {
             if (claimVisualizer != null) claimVisualizer.stopAll();
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
 
         if (dataManager != null) {
             getLogger().info("Saving all data before shutdown...");
@@ -586,19 +625,34 @@ public final class Nations extends JavaPlugin {
         return dataManager;
     }
 
-    public SocietiesManager getSocietiesManager() { return societiesManager; }
+    public SocietiesManager getSocietiesManager() {
+        return societiesManager;
+    }
 
-    public EconomyManager getEconomyManager() { return economyManager; }
+    public EconomyManager getEconomyManager() {
+        return economyManager;
+    }
 
-    public LawManager getLawManager() { return lawManager; }
+    public LawManager getLawManager() {
+        return lawManager;
+    }
 
-    public MilitaryManager getMilitaryManager() { return militaryManager; }
+    public MilitaryManager getMilitaryManager() {
+        return militaryManager;
+    }
 
-    public ClaimManager getClaimManager() { return claimManager; }
+    public ClaimVisualizer getClaimVisualizer() {
+        return claimVisualizer;
+    }
 
-    public HybridClaimManager getHybridClaimManager() { return hybridClaimManager; }
+    public ClaimManager getClaimManager() {
+        return claimManager;
+    }
 
-    // Service getters
+    public HybridClaimManager getHybridClaimManager() {
+        return hybridClaimManager;
+    }
+
     public EconomyService getEconomyService() {
         return economyService;
     }
@@ -619,20 +673,15 @@ public final class Nations extends JavaPlugin {
         return feudalService;
     }
 
-    public ReligionService getReligionService() {
-        return religionService;
-    }
-
     public SettlementEvolutionManager getEvolutionManager() {
         return evolutionManager;
     }
 
-    public ClaimVisualizer getClaimVisualizer() { return claimVisualizer; }
+    public ExemptionManager getExemptionManager() {
+        return exemptionManager;
+    }
 
-    public ExemptionManager getExemptionManager() { return exemptionManager; }
-
-    @SuppressWarnings("deprecation")
-    private String getPluginVersion() {
-        return getDescription().getVersion();
+    public String getPluginVersion() {
+        return getDescription() != null ? getDescription().getVersion() : "1.0";
     }
 }

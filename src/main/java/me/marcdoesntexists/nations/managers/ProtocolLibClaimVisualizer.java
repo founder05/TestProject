@@ -5,24 +5,18 @@ import me.marcdoesntexists.nations.utils.Claim;
 import me.marcdoesntexists.nations.utils.MessageUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
-import org.bukkit.NamespacedKey;
-import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
-import org.bukkit.event.player.PlayerInteractAtEntityEvent;
-import org.bukkit.event.player.PlayerInteractEntityEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerKickEvent;
-import org.bukkit.event.player.PlayerTeleportEvent;
-import org.bukkit.event.player.PlayerChangedWorldEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
@@ -50,11 +44,14 @@ public class ProtocolLibClaimVisualizer implements ClaimVisualizer {
         try {
             // Accessing the ProtocolManager can be done if needed later. For now we avoid storing an unused reference.
             Bukkit.getPluginManager().registerEvents(new MarkerEntityListener(), plugin);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     @Override
-    public boolean isVisualizing(Player player) { return activeVisualizers.containsKey(player.getUniqueId()); }
+    public boolean isVisualizing(Player player) {
+        return activeVisualizers.containsKey(player.getUniqueId());
+    }
 
     @Override
     public void toggleVisualization(Player player, String townName) {
@@ -80,7 +77,10 @@ public class ProtocolLibClaimVisualizer implements ClaimVisualizer {
         data.updateTask = new BukkitRunnable() {
             @Override
             public void run() {
-                if (!player.isOnline()) { stopVisualization(player); return; }
+                if (!player.isOnline()) {
+                    stopVisualization(player);
+                    return;
+                }
                 renderBorders(player, data);
             }
         }.runTaskTimer(plugin, 40L, 40L);
@@ -114,7 +114,10 @@ public class ProtocolLibClaimVisualizer implements ClaimVisualizer {
         if (claims == null || claims.isEmpty()) return;
         World playerWorld = player.getWorld();
         Set<ChunkCoord> visibleChunks = getChunkCoords(player, claims, playerWorld);
-        if (visibleChunks.isEmpty()) { removeAllDisplays(data); return; }
+        if (visibleChunks.isEmpty()) {
+            removeAllDisplays(data);
+            return;
+        }
         Set<BorderEdge> edges = findBorderEdges(visibleChunks);
         Set<BorderEdge> toRemove = new HashSet<>(data.activeEdges);
         toRemove.removeAll(edges);
@@ -125,7 +128,8 @@ public class ProtocolLibClaimVisualizer implements ClaimVisualizer {
             }
         }
         data.activeEdges.removeAll(toRemove);
-        Set<BorderEdge> toAdd = new HashSet<>(edges); toAdd.removeAll(data.activeEdges);
+        Set<BorderEdge> toAdd = new HashSet<>(edges);
+        toAdd.removeAll(data.activeEdges);
         for (BorderEdge e : toAdd) {
             List<UUID> ids = spawnBlockDisplays(player, e);
             data.edgeToEntityId.put(e, ids);
@@ -152,11 +156,18 @@ public class ProtocolLibClaimVisualizer implements ClaimVisualizer {
     private Set<BorderEdge> findBorderEdges(Set<ChunkCoord> chunks) {
         Set<BorderEdge> edges = new HashSet<>();
         for (ChunkCoord chunk : chunks) {
-            int minX = chunk.x * 16; int maxX = (chunk.x + 1) * 16; int minZ = chunk.z * 16; int maxZ = (chunk.z + 1) * 16;
-            if (!chunks.contains(new ChunkCoord(chunk.x, chunk.z - 1))) edges.add(new BorderEdge(minX, minZ, maxX, minZ, EdgeDirection.HORIZONTAL));
-            if (!chunks.contains(new ChunkCoord(chunk.x, chunk.z + 1))) edges.add(new BorderEdge(minX, maxZ, maxX, maxZ, EdgeDirection.HORIZONTAL));
-            if (!chunks.contains(new ChunkCoord(chunk.x - 1, chunk.z))) edges.add(new BorderEdge(minX, minZ, minX, maxZ, EdgeDirection.VERTICAL));
-            if (!chunks.contains(new ChunkCoord(chunk.x + 1, chunk.z))) edges.add(new BorderEdge(maxX, minZ, maxX, maxZ, EdgeDirection.VERTICAL));
+            int minX = chunk.x * 16;
+            int maxX = (chunk.x + 1) * 16;
+            int minZ = chunk.z * 16;
+            int maxZ = (chunk.z + 1) * 16;
+            if (!chunks.contains(new ChunkCoord(chunk.x, chunk.z - 1)))
+                edges.add(new BorderEdge(minX, minZ, maxX, minZ, EdgeDirection.HORIZONTAL));
+            if (!chunks.contains(new ChunkCoord(chunk.x, chunk.z + 1)))
+                edges.add(new BorderEdge(minX, maxZ, maxX, maxZ, EdgeDirection.HORIZONTAL));
+            if (!chunks.contains(new ChunkCoord(chunk.x - 1, chunk.z)))
+                edges.add(new BorderEdge(minX, minZ, minX, maxZ, EdgeDirection.VERTICAL));
+            if (!chunks.contains(new ChunkCoord(chunk.x + 1, chunk.z)))
+                edges.add(new BorderEdge(maxX, minZ, maxX, maxZ, EdgeDirection.VERTICAL));
         }
         return edges;
     }
@@ -168,16 +179,22 @@ public class ProtocolLibClaimVisualizer implements ClaimVisualizer {
         try {
             int spacing = 4; // blocks between displays
             if (edge.direction == EdgeDirection.HORIZONTAL) {
-                int start = edge.x1; int end = edge.x2;
+                int start = edge.x1;
+                int end = edge.x2;
                 for (int x = start; x <= end; x += spacing) {
-                    double px = x + 0.5; double py = player.getEyeLocation().getY(); double pz = edge.z1 + 0.5;
+                    double px = x + 0.5;
+                    double py = player.getEyeLocation().getY();
+                    double pz = edge.z1 + 0.5;
                     UUID id = spawnArmorMarker(player.getWorld(), px, py, pz);
                     if (id != null) spawned.add(id);
                 }
             } else {
-                int start = edge.z1; int end = edge.z2;
+                int start = edge.z1;
+                int end = edge.z2;
                 for (int z = start; z <= end; z += spacing) {
-                    double px = edge.x1 + 0.5; double py = player.getEyeLocation().getY(); double pz = z + 0.5;
+                    double px = edge.x1 + 0.5;
+                    double py = player.getEyeLocation().getY();
+                    double pz = z + 0.5;
                     UUID id = spawnArmorMarker(player.getWorld(), px, py, pz);
                     if (id != null) spawned.add(id);
                 }
@@ -207,7 +224,8 @@ public class ProtocolLibClaimVisualizer implements ClaimVisualizer {
                 try {
                     Entity ent = Bukkit.getEntity(id);
                     if (ent != null) ent.remove();
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
             }
         }
 
@@ -231,8 +249,9 @@ public class ProtocolLibClaimVisualizer implements ClaimVisualizer {
             // Mark this entity as a Nations visualizer marker so we can block interactions
             try {
                 NamespacedKey key = new NamespacedKey(plugin, "nations_visual_marker");
-                as.getPersistentDataContainer().set(key, PersistentDataType.BYTE, (byte)1);
-            } catch (Throwable ignored) {}
+                as.getPersistentDataContainer().set(key, PersistentDataType.BYTE, (byte) 1);
+            } catch (Throwable ignored) {
+            }
             return as.getUniqueId();
         } catch (Exception ex) {
             plugin.getLogger().warning("Failed to spawn armor marker: " + ex.getMessage());
@@ -240,13 +259,23 @@ public class ProtocolLibClaimVisualizer implements ClaimVisualizer {
         }
     }
 
-    private record ChunkCoord(int x, int z) {}
-    private enum EdgeDirection { HORIZONTAL, VERTICAL }
-    private record BorderEdge(int x1, int z1, int x2, int z2, EdgeDirection direction) {}
+    private enum EdgeDirection {HORIZONTAL, VERTICAL}
+
+    private record ChunkCoord(int x, int z) {
+    }
+
+    private record BorderEdge(int x1, int z1, int x2, int z2, EdgeDirection direction) {
+    }
 
     private static class VisualizationData {
-        final String townName; final Map<BorderEdge, List<UUID>> edgeToEntityId = new HashMap<>(); final Set<BorderEdge> activeEdges = new HashSet<>(); BukkitTask updateTask;
-        VisualizationData(String townName) { this.townName = townName; }
+        final String townName;
+        final Map<BorderEdge, List<UUID>> edgeToEntityId = new HashMap<>();
+        final Set<BorderEdge> activeEdges = new HashSet<>();
+        BukkitTask updateTask;
+
+        VisualizationData(String townName) {
+            this.townName = townName;
+        }
     }
 
     // Internal listener to block ANY interaction with marker ArmorStands created by this visualizer
@@ -258,7 +287,7 @@ public class ProtocolLibClaimVisualizer implements ClaimVisualizer {
                 if (e == null) return false;
                 if (!(e instanceof ArmorStand)) return false;
                 Byte val = e.getPersistentDataContainer().get(key, PersistentDataType.BYTE);
-                return val != null && val == (byte)1;
+                return val != null && val == (byte) 1;
             } catch (Throwable t) {
                 return false;
             }

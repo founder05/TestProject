@@ -12,8 +12,8 @@ import java.util.UUID;
 public class ExemptionManager {
     private final Nations plugin;
     private final File file;
-    private FileConfiguration config;
     private final Set<UUID> exemptSet = new HashSet<>();
+    private FileConfiguration config;
 
     public ExemptionManager(Nations plugin) {
         this.plugin = plugin;
@@ -31,7 +31,8 @@ public class ExemptionManager {
             for (String s : config.getStringList("exemptions")) {
                 try {
                     exemptSet.add(UUID.fromString(s));
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
             }
         } catch (Exception e) {
             plugin.getLogger().warning("Failed to load exemptions: " + e.getMessage());

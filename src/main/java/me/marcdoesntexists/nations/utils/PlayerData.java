@@ -2,18 +2,16 @@ package me.marcdoesntexists.nations.utils;
 
 import me.marcdoesntexists.nations.societies.NobleTier;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public class PlayerData {
 
-    private final Map<String, Integer> godAffinities = new HashMap<>();
     private final Set<String> townInvites = new HashSet<>();
     private String town = null;
-    private String religion = null;
     private String job = null;
     private int money = 0;
     private String socialClass = "Commoner";
-    private String clergyRank = null;
     private NobleTier nobleTier = NobleTier.COMMONER;
     private String suzerain = null;
     private boolean isMilitary = false;
@@ -57,32 +55,12 @@ public class PlayerData {
         return false;
     }
 
-    public int getGodAffinity(String godName) {
-        return godAffinities.getOrDefault(godName, 0);
-    }
-
-    public void setGodAffinity(String godName, int affinity) {
-        godAffinities.put(godName, affinity);
-    }
-
-    public Map<String, Integer> getGodAffinities() {
-        return Collections.unmodifiableMap(godAffinities);
-    }
-
     public String getTown() {
         return town;
     }
 
     public void setTown(String t) {
         town = t;
-    }
-
-    public String getReligion() {
-        return religion;
-    }
-
-    public void setReligion(String r) {
-        religion = r;
     }
 
     public String getJob() {
@@ -99,14 +77,6 @@ public class PlayerData {
 
     public void setSocialClass(String c) {
         socialClass = c;
-    }
-
-    public String getClergyRank() {
-        return clergyRank;
-    }
-
-    public void setClergyRank(String r) {
-        clergyRank = r;
     }
 
     public NobleTier getNobleTier() {

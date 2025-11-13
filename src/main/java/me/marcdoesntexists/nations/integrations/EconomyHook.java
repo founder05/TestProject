@@ -5,7 +5,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 
 import java.lang.reflect.Method;
-import java.util.logging.Level;
 
 public class EconomyHook {
     private final Nations plugin;
@@ -118,7 +117,8 @@ public class EconomyHook {
                         Method success = res.getClass().getMethod("transactionSuccess");
                         Object ok = success.invoke(res);
                         if (ok instanceof Boolean) return (Boolean) ok;
-                    } catch (NoSuchMethodException ignoredA) { }
+                    } catch (NoSuchMethodException ignoredA) {
+                    }
                 } catch (NoSuchMethodException ignoredB) {
                     Method m = vaultEconomyProvider.getClass().getMethod("depositPlayer", String.class, double.class);
                     Object res = m.invoke(vaultEconomyProvider, player.getName(), amount);
@@ -127,7 +127,8 @@ public class EconomyHook {
                         Method success = res.getClass().getMethod("transactionSuccess");
                         Object ok = success.invoke(res);
                         if (ok instanceof Boolean) return (Boolean) ok;
-                    } catch (NoSuchMethodException ignoredC) { }
+                    } catch (NoSuchMethodException ignoredC) {
+                    }
                 }
             } catch (Throwable t) {
                 plugin.getLogger().warning("Failed to deposit via Vault provider: " + t.getMessage());
@@ -166,7 +167,8 @@ public class EconomyHook {
                         Method success = res.getClass().getMethod("transactionSuccess");
                         Object ok = success.invoke(res);
                         if (ok instanceof Boolean) return (Boolean) ok;
-                    } catch (NoSuchMethodException ignoredE) { }
+                    } catch (NoSuchMethodException ignoredE) {
+                    }
                 } catch (NoSuchMethodException ignoredF) {
                     Method m = vaultEconomyProvider.getClass().getMethod("withdrawPlayer", String.class, double.class);
                     Object res = m.invoke(vaultEconomyProvider, player.getName(), amount);
@@ -175,7 +177,8 @@ public class EconomyHook {
                         Method success = res.getClass().getMethod("transactionSuccess");
                         Object ok = success.invoke(res);
                         if (ok instanceof Boolean) return (Boolean) ok;
-                    } catch (NoSuchMethodException ignoredG) { }
+                    } catch (NoSuchMethodException ignoredG) {
+                    }
                 }
             } catch (Throwable t) {
                 plugin.getLogger().warning("Failed to withdraw via Vault provider: " + t.getMessage());

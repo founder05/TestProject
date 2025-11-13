@@ -8,20 +8,19 @@ import me.marcdoesntexists.nations.managers.SocietiesManager;
 import me.marcdoesntexists.nations.societies.Empire;
 import me.marcdoesntexists.nations.societies.Kingdom;
 import me.marcdoesntexists.nations.societies.Town;
+import me.marcdoesntexists.nations.utils.PlayerData;
+import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.entity.Player;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.UUID;
-
-import net.milkbowl.vault.economy.Economy;
-import me.marcdoesntexists.nations.utils.PlayerData;
 
 public class EconomyService {
     private static EconomyService instance;
@@ -95,11 +94,13 @@ public class EconomyService {
                 Method getUser = null;
                 try {
                     getUser = p.getClass().getMethod("getUser", String.class);
-                } catch (NoSuchMethodException ignored) {}
+                } catch (NoSuchMethodException ignored) {
+                }
                 if (getUser == null) {
                     try {
                         getUser = p.getClass().getMethod("getUser", org.bukkit.entity.Player.class);
-                    } catch (NoSuchMethodException ignored) {}
+                    } catch (NoSuchMethodException ignored) {
+                    }
                 }
 
                 essentialsGetUserMethod = getUser;
@@ -114,21 +115,24 @@ public class EconomyService {
                             try {
                                 essentialsGetMoneyMethod = userClass.getMethod(mn);
                                 break;
-                            } catch (NoSuchMethodException ignored) {}
+                            } catch (NoSuchMethodException ignored) {
+                            }
                         }
 
                         for (String mn : new String[]{"add", "addMoney", "deposit", "setMoney", "giveMoney"}) {
                             try {
                                 essentialsAddMoneyMethod = userClass.getMethod(mn, double.class);
                                 break;
-                            } catch (NoSuchMethodException ignored) {}
+                            } catch (NoSuchMethodException ignored) {
+                            }
                         }
 
                         for (String mn : new String[]{"take", "takeMoney", "withdraw", "removeMoney", "subtractMoney"}) {
                             try {
                                 essentialsTakeMoneyMethod = userClass.getMethod(mn, double.class);
                                 break;
-                            } catch (NoSuchMethodException ignored) {}
+                            } catch (NoSuchMethodException ignored) {
+                            }
                         }
                     }
                 }
@@ -231,7 +235,10 @@ public class EconomyService {
             if (ok) {
                 Transaction transaction = new Transaction(playerId, -amount, "Internal Withdraw");
                 economyManager.recordTransaction(transaction);
-                try { plugin.getDataManager().savePlayerMoney(playerId); } catch (Throwable ignored) {}
+                try {
+                    plugin.getDataManager().savePlayerMoney(playerId);
+                } catch (Throwable ignored) {
+                }
                 return true;
             }
             return false;
@@ -286,7 +293,10 @@ public class EconomyService {
             plugin.getDataManager().getPlayerData(playerId).addMoney((int) Math.floor(amount));
             Transaction transaction = new Transaction(playerId, amount, "Internal Deposit");
             economyManager.recordTransaction(transaction);
-            try { plugin.getDataManager().savePlayerMoney(playerId); } catch (Throwable ignored) {}
+            try {
+                plugin.getDataManager().savePlayerMoney(playerId);
+            } catch (Throwable ignored) {
+            }
             return true;
         } catch (InvocationTargetException ite) {
             plugin.getLogger().warning("Error depositing via essentials: " + ite.getCause());
@@ -305,7 +315,8 @@ public class EconomyService {
             try {
                 // if method accepts Player
                 return essentialsGetUserMethod.invoke(essentialsPlugin, off);
-            } catch (IllegalArgumentException ignored) {}
+            } catch (IllegalArgumentException ignored) {
+            }
 
             // try by name
             if (off.getName() != null) {
@@ -344,7 +355,10 @@ public class EconomyService {
             town.removeMoney((int) taxAmount);
             Transaction transaction = new Transaction(null, taxAmount, "Town Tax from " + town.getName());
             economyManager.recordTransaction(transaction);
-            try { plugin.getDataManager().saveTown(town); } catch (Throwable ignored) {}
+            try {
+                plugin.getDataManager().saveTown(town);
+            } catch (Throwable ignored) {
+            }
         }
     }
 
@@ -359,7 +373,10 @@ public class EconomyService {
                 double townTax = town.getBalance() * kingdomTaxRate;
                 totalTax += townTax;
                 town.removeMoney((int) townTax);
-                try { plugin.getDataManager().saveTown(town); } catch (Throwable ignored) {}
+                try {
+                    plugin.getDataManager().saveTown(town);
+                } catch (Throwable ignored) {
+                }
             }
         }
 
@@ -383,7 +400,10 @@ public class EconomyService {
                         double townTax = town.getBalance() * empireTaxRate;
                         totalTax += townTax;
                         town.removeMoney((int) townTax);
-                        try { plugin.getDataManager().saveTown(town); } catch (Throwable ignored) {}
+                        try {
+                            plugin.getDataManager().saveTown(town);
+                        } catch (Throwable ignored) {
+                        }
                     }
                 }
             }
@@ -454,7 +474,8 @@ public class EconomyService {
                                     plugin.getLogger().fine("Synced money for " + p.getName() + " -> " + newMoney);
                                 }
                             }
-                        } catch (Exception ignored) {}
+                        } catch (Exception ignored) {
+                        }
                     }
                 } catch (Throwable t) {
                     plugin.getLogger().fine("Balance sync iteration failed: " + t.getMessage());
@@ -474,7 +495,8 @@ public class EconomyService {
                 try {
                     // skip if player has permission or is listed in exemption manager
                     if (p.hasPermission("nations.save.exempt")) continue;
-                    if (plugin.getExemptionManager() != null && plugin.getExemptionManager().isExempt(p.getUniqueId())) continue;
+                    if (plugin.getExemptionManager() != null && plugin.getExemptionManager().isExempt(p.getUniqueId()))
+                        continue;
 
                     plugin.getDataManager().savePlayerMoney(p.getUniqueId());
                 } catch (Exception ex) {
@@ -507,7 +529,10 @@ public class EconomyService {
         Town town = societiesManager.getTown(townName);
         if (town != null) {
             town.addMoney(amount);
-            try { plugin.getDataManager().saveTown(town); } catch (Throwable ignored) {}
+            try {
+                plugin.getDataManager().saveTown(town);
+            } catch (Throwable ignored) {
+            }
         }
     }
 
@@ -516,7 +541,10 @@ public class EconomyService {
         if (town != null) {
             boolean ok = town.removeMoney(amount);
             if (ok) {
-                try { plugin.getDataManager().saveTown(town); } catch (Throwable ignored) {}
+                try {
+                    plugin.getDataManager().saveTown(town);
+                } catch (Throwable ignored) {
+                }
             }
             return ok;
         }
@@ -541,8 +569,14 @@ public class EconomyService {
             EconomyManager.getInstance().recordTransaction(tx);
 
             // Persist both
-            try { plugin.getDataManager().saveTown(town); } catch (Throwable ignored) {}
-            try { plugin.getDataManager().savePlayerMoney(playerId); } catch (Throwable ignored) {}
+            try {
+                plugin.getDataManager().saveTown(town);
+            } catch (Throwable ignored) {
+            }
+            try {
+                plugin.getDataManager().savePlayerMoney(playerId);
+            } catch (Throwable ignored) {
+            }
 
             return true;
         } catch (Exception e) {
@@ -572,8 +606,14 @@ public class EconomyService {
             EconomyManager.getInstance().recordTransaction(tx);
 
             // Persist both
-            try { plugin.getDataManager().saveTown(town); } catch (Throwable ignored) {}
-            try { plugin.getDataManager().savePlayerMoney(playerId); } catch (Throwable ignored) {}
+            try {
+                plugin.getDataManager().saveTown(town);
+            } catch (Throwable ignored) {
+            }
+            try {
+                plugin.getDataManager().savePlayerMoney(playerId);
+            } catch (Throwable ignored) {
+            }
 
             return true;
         } catch (Exception e) {

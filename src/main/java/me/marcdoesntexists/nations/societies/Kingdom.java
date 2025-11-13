@@ -22,6 +22,15 @@ public class Kingdom {
     private long progressionExperience = 0;
     private int balance = 0;
 
+    // NEW: Reputation system
+    private int prestige = 0;
+    private int infamy = 0;
+    private long lastReputationUpdate = System.currentTimeMillis();
+
+    // NEW: Vassal loyalty
+    private int loyalty = 100; // 0-100, used when this kingdom is a vassal
+    private long lastLoyaltyUpdate = System.currentTimeMillis();
+
     // Diplomacy fields
     private Set<String> allies = new HashSet<>();
     private Set<String> enemies = new HashSet<>();
@@ -217,5 +226,63 @@ public class Kingdom {
             return true;
         }
         return false;
+    }
+
+    // Prestige methods
+    public int getPrestige() {
+        return prestige;
+    }
+
+    public void setPrestige(int prestige) {
+        this.prestige = Math.max(0, prestige);
+    }
+
+    public void addPrestige(int amount) {
+        this.prestige = Math.max(0, this.prestige + amount);
+        this.lastReputationUpdate = System.currentTimeMillis();
+    }
+
+    // Infamy methods
+    public int getInfamy() {
+        return infamy;
+    }
+
+    public void setInfamy(int infamy) {
+        this.infamy = Math.max(0, Math.min(100, infamy));
+    }
+
+    public void addInfamy(int amount) {
+        this.infamy = Math.max(0, Math.min(100, this.infamy + amount));
+        this.lastReputationUpdate = System.currentTimeMillis();
+    }
+
+    public boolean isHighInfamy() {
+        return infamy >= 75;
+    }
+
+    // Loyalty methods (for vassals)
+    public int getLoyalty() {
+        return loyalty;
+    }
+
+    public void setLoyalty(int loyalty) {
+        this.loyalty = Math.max(0, Math.min(100, loyalty));
+    }
+
+    public void modifyLoyalty(int amount) {
+        this.loyalty = Math.max(0, Math.min(100, this.loyalty + amount));
+        this.lastLoyaltyUpdate = System.currentTimeMillis();
+    }
+
+    public double getRebellionChance() {
+        return (100 - loyalty) / 100.0;
+    }
+
+    public long getLastReputationUpdate() {
+        return lastReputationUpdate;
+    }
+
+    public long getLastLoyaltyUpdate() {
+        return lastLoyaltyUpdate;
     }
 }

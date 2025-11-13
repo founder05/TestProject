@@ -1,19 +1,17 @@
 package me.marcdoesntexists.nations.listeners;
 
 import me.marcdoesntexists.nations.Nations;
-import me.marcdoesntexists.nations.gui.LeaderboardGUI;
 import me.marcdoesntexists.nations.gui.LeaderboardHolder;
 import me.marcdoesntexists.nations.managers.LeaderboardManager;
 import me.marcdoesntexists.nations.managers.LeaderboardManager.LeaderboardEntry;
 import me.marcdoesntexists.nations.utils.MessageUtils;
-import org.bukkit.Bukkit;
+import me.marcdoesntexists.nations.utils.SoundUtils;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.Sound;
-import me.marcdoesntexists.nations.utils.SoundUtils;
 
 import java.util.List;
 
@@ -60,7 +58,8 @@ public class LeaderboardClickListener implements Listener {
                         p.playSound(p.getLocation(), s, (float) clickVolume, (float) clickPitch);
                     }
                 }
-            } catch (Throwable ignored) {}
+            } catch (Throwable ignored) {
+            }
         }
     }
 }

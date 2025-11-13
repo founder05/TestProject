@@ -1,23 +1,18 @@
 package me.marcdoesntexists.nations.managers;
 
-import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.entity.Player;
-
-import java.util.*;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ChatManager {
-    public enum Channel {
-        GLOBAL, TOWN, KINGDOM, EMPIRE, RELIGION, ALLIANCE
-    }
-
     private static ChatManager instance;
-
     private final Map<UUID, Channel> playerChannel = new ConcurrentHashMap<>();
     private final Set<UUID> spyAdmins = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    private ChatManager() {}
+    private ChatManager() {
+    }
 
     public static synchronized ChatManager getInstance() {
         if (instance == null) instance = new ChatManager();
@@ -46,6 +41,10 @@ public class ChatManager {
 
     public Set<UUID> getSpyAdmins() {
         return Collections.unmodifiableSet(spyAdmins);
+    }
+
+    public enum Channel {
+        GLOBAL, TOWN, KINGDOM, EMPIRE, RELIGION, ALLIANCE
     }
 }
 

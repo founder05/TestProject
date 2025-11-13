@@ -2,11 +2,11 @@ package me.marcdoesntexists.nations.commands;
 
 import me.marcdoesntexists.nations.Nations;
 import me.marcdoesntexists.nations.managers.DataManager;
+import me.marcdoesntexists.nations.utils.MessageUtils;
 import me.marcdoesntexists.nations.managers.SocietiesManager;
 import me.marcdoesntexists.nations.societies.NobleTier;
 import me.marcdoesntexists.nations.societies.Town;
 import me.marcdoesntexists.nations.utils.PlayerData;
-import me.marcdoesntexists.nations.utils.MessageUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -15,7 +15,6 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class NobleCommand implements CommandExecutor, TabCompleter {
 
@@ -82,14 +81,14 @@ public class NobleCommand implements CommandExecutor, TabCompleter {
         player.sendMessage(MessageUtils.format("noble.info_player", Map.of("player", target.getName())));
         player.sendMessage(MessageUtils.format("noble.info_tier", Map.of("tier", tier.name())));
         player.sendMessage(MessageUtils.format("noble.info_level", Map.of("level", String.valueOf(tier.getLevel()))));
-        player.sendMessage(MessageUtils.format("noble.info_tax", Map.of("tax", String.valueOf((int)(tier.getTaxBenefitPercentage() * 100)))));
+        player.sendMessage(MessageUtils.format("noble.info_tax", Map.of("tax", String.valueOf((int) (tier.getTaxBenefitPercentage() * 100)))));
 
         player.sendMessage(MessageUtils.format("noble.info_required_land", Map.of("value", String.valueOf(tier.getRequiredLandValue()))));
         player.sendMessage(MessageUtils.format("noble.info_social_class", Map.of("class", data.getSocialClass())));
 
         if (tier != NobleTier.COMMONER && tier != NobleTier.KING) {
             NobleTier nextTier = NobleTier.getByLevel(tier.getLevel() + 1);
-            player.sendMessage("");
+            player.sendMessage(MessageUtils.get("general.empty"));
             player.sendMessage(MessageUtils.format("noble.info_next_tier", Map.of("next", nextTier.name())));
             player.sendMessage(MessageUtils.format("noble.info_next_required", Map.of("required", String.valueOf(nextTier.getRequiredLandValue()))));
         }
@@ -163,7 +162,7 @@ public class NobleCommand implements CommandExecutor, TabCompleter {
 
         player.sendMessage(MessageUtils.format("noble.promote_success", Map.of("player", target.getName(), "tier", newTier.name())));
         target.sendMessage(MessageUtils.format("noble.promoted_notify", Map.of("tier", newTier.name())));
-        target.sendMessage(MessageUtils.format("noble.promoted_benefit_tax", Map.of("tax", String.valueOf((int)(newTier.getTaxBenefitPercentage() * 100)))));
+        target.sendMessage(MessageUtils.format("noble.promoted_benefit_tax", Map.of("tax", String.valueOf((int) (newTier.getTaxBenefitPercentage() * 100)))));
         target.sendMessage(MessageUtils.format("noble.promoted_benefit_status", Map.of("status", newTier.name())));
 
         return true;
@@ -244,7 +243,7 @@ public class NobleCommand implements CommandExecutor, TabCompleter {
 
             List<UUID> members = nobleTiers.get(tier);
             if (!members.isEmpty()) {
-                player.sendMessage("");
+                player.sendMessage(MessageUtils.get("general.empty"));
                 player.sendMessage(MessageUtils.format("noble.list_tier_header", Map.of("tier", tier.name(), "count", String.valueOf(members.size()))));
                 for (UUID memberId : members) {
                     String memberName = plugin.getServer().getOfflinePlayer(memberId).getName();
@@ -254,7 +253,7 @@ public class NobleCommand implements CommandExecutor, TabCompleter {
         }
 
         int commonerCount = nobleTiers.get(NobleTier.COMMONER).size();
-        player.sendMessage("");
+        player.sendMessage(MessageUtils.get("general.empty"));
         player.sendMessage(MessageUtils.format("noble.list_commoners", Map.of("count", String.valueOf(commonerCount))));
         player.sendMessage(MessageUtils.get("noble.list_footer"));
 
@@ -295,7 +294,7 @@ public class NobleCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(MessageUtils.format("noble.requirements_exp", Map.of("amount", String.valueOf(requiredExp))));
         }
 
-        player.sendMessage("");
+        player.sendMessage(MessageUtils.get("general.empty"));
         player.sendMessage(MessageUtils.get("noble.privileges_header"));
         player.sendMessage(MessageUtils.format("noble.privilege_item", Map.of("text", "Reduced taxes")));
         player.sendMessage(MessageUtils.format("noble.privilege_item", Map.of("text", "Increased land claims")));
@@ -341,16 +340,22 @@ public class NobleCommand implements CommandExecutor, TabCompleter {
         if (hasWealth && hasExp) {
             data.removeMoney(requiredWealth);
             // persist player money immediately
-            try { plugin.getDataManager().savePlayerMoney(player.getUniqueId()); } catch (Throwable ignored) {}
+            try {
+                plugin.getDataManager().savePlayerMoney(player.getUniqueId());
+            } catch (Throwable ignored) {
+            }
 
             data.setNobleTier(nextTier);
             data.setSocialClass(nextTier.name());
             data.setNobleTierExperience(0);
 
             // persist full player data (tier changed)
-            try { plugin.getDataManager().savePlayerData(player.getUniqueId()); } catch (Throwable ignored) {}
+            try {
+                plugin.getDataManager().savePlayerData(player.getUniqueId());
+            } catch (Throwable ignored) {
+            }
 
-            player.sendMessage("");
+            player.sendMessage(MessageUtils.get("general.empty"));
             player.sendMessage(MessageUtils.get("noble.upgrade_promoted_title"));
             player.sendMessage(MessageUtils.format("noble.upgrade_now", Map.of("tier", nextTier.name())));
             player.sendMessage(MessageUtils.get("noble.upgrade_benefit_status"));
@@ -369,7 +374,7 @@ public class NobleCommand implements CommandExecutor, TabCompleter {
                 }
             }
         } else {
-            player.sendMessage("");
+            player.sendMessage(MessageUtils.get("general.empty"));
             player.sendMessage(MessageUtils.get("noble.requirements_not_met"));
             player.sendMessage(MessageUtils.get("noble.requirements_help"));
         }
@@ -394,35 +399,20 @@ public class NobleCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
         if (args.length == 1) {
-            return Arrays.asList("info", "promote", "demote", "list", "requirements", "upgrade")
-                    .stream()
-                    .filter(s -> s.startsWith(args[0].toLowerCase()))
-                    .toList();
+            return me.marcdoesntexists.nations.utils.TabCompletionUtils.match(Arrays.asList("info", "promote", "demote", "list", "requirements", "upgrade"), args[0]);
         }
 
         // suggest player names for promote/demote
         if (args.length == 2 && (args[0].equalsIgnoreCase("promote") || args[0].equalsIgnoreCase("demote"))) {
-            String partial = args[1].toLowerCase();
-            return plugin.getServer().getOnlinePlayers().stream()
-                    .map(p -> p.getName())
-                    .filter(n -> n.toLowerCase().startsWith(partial))
-                    .toList();
+            return me.marcdoesntexists.nations.utils.TabCompletionUtils.onlinePlayers(args[1]);
         }
 
         if (args.length == 3 && args[0].equalsIgnoreCase("promote")) {
-            String partial = args[2].toUpperCase();
-            return Arrays.asList("KNIGHT", "BARON", "COUNT", "DUKE", "PRINCE", "KING")
-                    .stream()
-                    .filter(s -> s.startsWith(partial))
-                    .toList();
+            return me.marcdoesntexists.nations.utils.TabCompletionUtils.match(Arrays.asList("KNIGHT", "BARON", "COUNT", "DUKE", "PRINCE", "KING"), args[2]);
         }
 
         if (args.length == 2 && args[0].equalsIgnoreCase("requirements")) {
-            String partial = args[1].toUpperCase();
-            return Arrays.asList("KNIGHT", "BARON", "COUNT", "DUKE", "PRINCE", "KING")
-                    .stream()
-                    .filter(s -> s.startsWith(partial))
-                    .toList();
+            return me.marcdoesntexists.nations.utils.TabCompletionUtils.match(Arrays.asList("KNIGHT", "BARON", "COUNT", "DUKE", "PRINCE", "KING"), args[1]);
         }
 
         return new ArrayList<>();

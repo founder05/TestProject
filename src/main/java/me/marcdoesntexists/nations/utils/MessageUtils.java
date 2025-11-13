@@ -1,73 +1,111 @@
 package me.marcdoesntexists.nations.utils;
 
 import me.marcdoesntexists.nations.Nations;
+import me.marcdoesntexists.nations.managers.ConfigurationManager;
+import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Utility class for managing localized messages from messages.yml
+ */
 public class MessageUtils {
-    // keep track of missing keys we've already warned about to avoid log spam
-    private static final Set<String> warnedMissing = ConcurrentHashMap.newKeySet();
 
-    // sensible defaults for critical messages to avoid empty chat when messages.yml is missing/bugged
-    private static final Map<String, String> DEFAULTS = new HashMap<>();
-    static {
-        DEFAULTS.put("general.prefix", "§8[§6Nations§8]");
+    private static FileConfiguration messagesConfig;
+    private static String prefix = "§6[Nations] §r";
 
-        DEFAULTS.put("chat.format", "§7[{channel}] {player}: {message}");
-
-        DEFAULTS.put("errors.generic", "{prefix} §cErrore: {error}");
-
-        DEFAULTS.put("visualizer.enabled", "{prefix} §aVisualizer attivato per la città {town}.");
-        DEFAULTS.put("visualizer.disabled", "{prefix} §cVisualizer disattivato.");
-        DEFAULTS.put("visualizer.unavailable", "{prefix} §cVisualizer non disponibile su questo server.");
-
-        DEFAULTS.put("actionbar.wilderness", "§7Sei in una zona selvaggia");
-        DEFAULTS.put("actionbar.your_territory", "§aSei nel territorio di §6{town}");
-        DEFAULTS.put("actionbar.foreign_territory", "§cSei nel territorio di §6{town}");
-
-        DEFAULTS.put("gui.leaderboard.click_message", "{prefix} §6{board} §7- {name}: {value}");
-        DEFAULTS.put("gui.town_verbose", "{prefix} §6{town} §7(Membro: {member})");
-
-        // some common fallbacks used across the plugin
-        DEFAULTS.put("commands.player_only", "{prefix} §cQuesto comando può essere usato solo da un giocatore.");
-        DEFAULTS.put("misc.unknown", "§7Sconosciuto");
-    }
-
-    // Fetch raw message by key (dot-separated) and replace placeholders
-    public static String get(String key) {
-        FileConfiguration cfg = Nations.getInstance().getConfigurationManager().getMessagesConfig();
-        if (cfg != null) {
-            String val = cfg.getString(key, null);
-            if (val != null && !val.isEmpty()) return val;
-        }
-        // fallback to defaults
-        String def = DEFAULTS.get(key);
-        if (def != null) return def;
-
-        // warn once per missing key and return a visible placeholder so chat doesn't go blank
-        if (warnedMissing.add(key)) {
-            try { Nations.getInstance().getLogger().warning("Missing messages.yml key: " + key + " — using placeholder"); } catch (Throwable ignored) {}
-        }
-        return "{" + key + "}" ;
-    }
-
-    public static String format(String key, Map<String, String> replacements) {
-        String raw = get(key);
-        if (raw == null) raw = "";
-        if (replacements != null) {
-            for (Map.Entry<String, String> e : replacements.entrySet()) {
-                raw = raw.replace("{" + e.getKey() + "}", e.getValue() == null ? "" : e.getValue());
+    /**
+     * Initialize the MessageUtils with the plugin instance
+     */
+    public static void init(Nations plugin) {
+        ConfigurationManager configManager = ConfigurationManager.getInstance();
+        if (configManager != null) {
+            messagesConfig = configManager.getMessagesConfig();
+            if (messagesConfig != null) {
+                prefix = ChatColor.translateAlternateColorCodes('&',
+                    messagesConfig.getString("general.prefix", "§6[Nations] §r"));
             }
         }
-        // support {prefix} replacement from messages.yml or defaults
-        if (raw.contains("{prefix}")) {
-            String prefix = get("general.prefix");
-            raw = raw.replace("{prefix}", prefix != null ? prefix : "");
+    }
+
+    /**
+     * Get a message from messages.yml by key path
+     *
+     * @param key The dot-separated path to the message (e.g., "town.created")
+     * @return The formatted message string
+     */
+    public static String get(String key) {
+        if (messagesConfig == null) {
+            Nations.getInstance().getLogger().warning("Messages config not loaded! Key: " + key);
+            return "§c[Message Error: " + key + "]";
         }
-        return raw;
+
+        String message = messagesConfig.getString(key);
+
+        if (message == null) {
+            Nations.getInstance().getLogger().warning("Missing messages.yml key: " + key + " — using placeholder");
+            return "§c[Missing: " + key + "]";
+        }
+
+        // Replace %prefix% placeholder
+        message = message.replace("%prefix%", prefix);
+
+        // Translate color codes
+        return ChatColor.translateAlternateColorCodes('&', message);
+    }
+
+    /**
+     * Get a formatted message with placeholder replacements
+     *
+     * @param key The dot-separated path to the message
+     * @param replacements Map of placeholder keys to replacement values
+     * @return The formatted message with all placeholders replaced
+     */
+    public static String format(String key, Map<String, String> replacements) {
+        String message = get(key);
+
+        if (replacements != null) {
+            for (Map.Entry<String, String> entry : replacements.entrySet()) {
+                String placeholder = "{" + entry.getKey() + "}";
+                message = message.replace(placeholder, entry.getValue());
+            }
+        }
+
+        return message;
+    }
+
+    /**
+     * Get the configured prefix
+     *
+     * @return The message prefix
+     */
+    public static String getPrefix() {
+        return prefix;
+    }
+
+    /**
+     * Check if a message key exists in the config
+     *
+     * @param key The message key to check
+     * @return true if the key exists
+     */
+    public static boolean hasKey(String key) {
+        return messagesConfig != null && messagesConfig.contains(key);
+    }
+
+    /**
+     * Reload messages from config
+     */
+    public static void reload() {
+        ConfigurationManager configManager = ConfigurationManager.getInstance();
+        if (configManager != null) {
+            messagesConfig = configManager.getMessagesConfig();
+            if (messagesConfig != null) {
+                prefix = ChatColor.translateAlternateColorCodes('&',
+                    messagesConfig.getString("general.prefix", "§6[Nations] §r"));
+            }
+        }
     }
 }
+

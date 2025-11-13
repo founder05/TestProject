@@ -3,18 +3,18 @@ package me.marcdoesntexists.nations.gui;
 import me.marcdoesntexists.nations.Nations;
 import me.marcdoesntexists.nations.managers.LeaderboardManager;
 import me.marcdoesntexists.nations.managers.LeaderboardManager.LeaderboardEntry;
+import me.marcdoesntexists.nations.utils.MessageUtils;
+import me.marcdoesntexists.nations.utils.SoundUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.Sound;
-import me.marcdoesntexists.nations.utils.SoundUtils;
-import me.marcdoesntexists.nations.utils.MessageUtils;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
-import org.bukkit.OfflinePlayer;
 
 import java.util.List;
 import java.util.UUID;
@@ -43,26 +43,61 @@ public class LeaderboardGUI {
         int limit = Math.min(36, size);
         List<LeaderboardEntry> entries;
         switch (metric) {
-            case "towns.population": entries = lbManager.getTopTownsByPopulation(limit); break;
-            case "towns.wealth": entries = lbManager.getTopTownsByWealth(limit); break;
-            case "towns.claims": entries = lbManager.getTopTownsByClaims(limit); break;
-            case "towns.level": entries = lbManager.getTopTownsByLevel(limit); break;
-            case "kingdoms.population": entries = lbManager.getTopKingdomsByPopulation(limit); break;
-            case "kingdoms.towns": entries = lbManager.getTopKingdomsByTowns(limit); break;
-            case "kingdoms.wealth": entries = lbManager.getTopKingdomsByWealth(limit); break;
-            case "kingdoms.vassals": entries = lbManager.getTopKingdomsByVassals(limit); break;
-            case "kingdoms.level": entries = lbManager.getTopKingdomsByLevel(limit); break;
-            case "players.money": entries = lbManager.getTopPlayersByWealth(limit); break;
-            case "players.noble": entries = lbManager.getTopPlayersByNobleTier(limit); break;
-            case "empires.population": entries = lbManager.getTopEmpiresByPopulation(limit); break;
-            case "empires.kingdoms": entries = lbManager.getTopEmpiresByKingdoms(limit); break;
-            case "empires.claims": entries = lbManager.getTopEmpiresByTerritory(limit); break;
-            case "empires.level": entries = lbManager.getTopEmpiresByLevel(limit); break;
-            case "noble_exp": entries = lbManager.getTopPlayersByNobleTier(limit); break; // fallback
-            case "job_exp": entries = lbManager.getTopPlayersByWealth(limit); break; // fallback
-            case "gods.power": entries = lbManager.getTopGodsByPower(limit); break;
-            case "religions.followers": entries = lbManager.getTopReligionsByFollowers(limit); break;
-            default: entries = List.of(); break;
+            case "towns.population":
+                entries = lbManager.getTopTownsByPopulation(limit);
+                break;
+            case "towns.wealth":
+                entries = lbManager.getTopTownsByWealth(limit);
+                break;
+            case "towns.claims":
+                entries = lbManager.getTopTownsByClaims(limit);
+                break;
+            case "towns.level":
+                entries = lbManager.getTopTownsByLevel(limit);
+                break;
+            case "kingdoms.population":
+                entries = lbManager.getTopKingdomsByPopulation(limit);
+                break;
+            case "kingdoms.towns":
+                entries = lbManager.getTopKingdomsByTowns(limit);
+                break;
+            case "kingdoms.wealth":
+                entries = lbManager.getTopKingdomsByWealth(limit);
+                break;
+            case "kingdoms.vassals":
+                entries = lbManager.getTopKingdomsByVassals(limit);
+                break;
+            case "kingdoms.level":
+                entries = lbManager.getTopKingdomsByLevel(limit);
+                break;
+            case "players.money":
+                entries = lbManager.getTopPlayersByWealth(limit);
+                break;
+            case "players.noble":
+                entries = lbManager.getTopPlayersByNobleTier(limit);
+                break;
+            case "empires.population":
+                entries = lbManager.getTopEmpiresByPopulation(limit);
+                break;
+            case "empires.kingdoms":
+                entries = lbManager.getTopEmpiresByKingdoms(limit);
+                break;
+            case "empires.claims":
+                entries = lbManager.getTopEmpiresByTerritory(limit);
+                break;
+            case "empires.level":
+                entries = lbManager.getTopEmpiresByLevel(limit);
+                break;
+            case "noble_exp":
+                entries = lbManager.getTopPlayersByNobleTier(limit);
+                break; // fallback
+            case "job_exp":
+                entries = lbManager.getTopPlayersByWealth(limit);
+                break; // fallback
+            // religion/god metrics removed
+            default:
+                entries = List.of();
+                break;
         }
 
         for (int i = 0; i < entries.size() && i < size; i++) {
@@ -89,7 +124,10 @@ public class LeaderboardGUI {
                         offline = Bukkit.getOfflinePlayer(u);
                     } catch (Exception ex) {
                         // fallback: use name
-                        try { offline = Bukkit.getOfflinePlayer(e.getName()); } catch (Exception ignored) {}
+                        try {
+                            offline = Bukkit.getOfflinePlayer(e.getName());
+                        } catch (Exception ignored) {
+                        }
                     }
                     if (offline != null) skullMeta.setOwningPlayer(offline);
                     item.setItemMeta(skullMeta);
@@ -135,6 +173,7 @@ public class LeaderboardGUI {
                     player.playSound(player.getLocation(), s, (float) openVolume, (float) openPitch);
                 }
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
     }
 }

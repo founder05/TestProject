@@ -226,17 +226,14 @@ public class LawCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            return Arrays.asList("report", "list", "info", "crimes")
-                    .stream()
-                    .filter(s -> s.startsWith(args[0].toLowerCase()))
-                    .collect(Collectors.toList());
+            return me.marcdoesntexists.nations.utils.TabCompletionUtils.match(Arrays.asList("report", "list", "info", "crimes"), args[0]);
         }
 
         if (args.length == 3 && args[0].equalsIgnoreCase("report")) {
-            return Arrays.stream(CrimeType.values())
-                    .map(ct -> ct.name().toLowerCase())
-                    .filter(s -> s.startsWith(args[2].toLowerCase()))
-                    .collect(Collectors.toList());
+            return me.marcdoesntexists.nations.utils.TabCompletionUtils.matchDistinct(
+                    Arrays.stream(CrimeType.values()).map(CrimeType::name).collect(java.util.stream.Collectors.toList()),
+                    args[2]
+            );
         }
 
         return new ArrayList<>();

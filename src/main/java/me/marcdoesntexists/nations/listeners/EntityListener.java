@@ -6,7 +6,6 @@ import me.marcdoesntexists.nations.managers.SocietiesManager;
 import me.marcdoesntexists.nations.societies.Town;
 import me.marcdoesntexists.nations.utils.Claim;
 import me.marcdoesntexists.nations.utils.MessageUtils;
-import java.util.Map;
 import org.bukkit.Chunk;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
@@ -16,6 +15,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
+
+import java.util.Map;
 
 public class EntityListener implements Listener {
 

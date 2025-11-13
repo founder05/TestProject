@@ -2,11 +2,11 @@ package me.marcdoesntexists.nations.listeners;
 
 import me.marcdoesntexists.nations.Nations;
 import me.marcdoesntexists.nations.managers.ClaimManager;
+import me.marcdoesntexists.nations.utils.MessageUtils;
 import me.marcdoesntexists.nations.managers.HybridClaimManager;
 import me.marcdoesntexists.nations.managers.SocietiesManager;
 import me.marcdoesntexists.nations.societies.Town;
 import me.marcdoesntexists.nations.utils.Claim;
-import me.marcdoesntexists.nations.utils.MessageUtils;
 import org.bukkit.Chunk;
 import org.bukkit.Material;
 import org.bukkit.block.Block;

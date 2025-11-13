@@ -1,8 +1,9 @@
 package me.marcdoesntexists.nations.societies;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import me.marcdoesntexists.nations.enums.AlliancePerk;
+import me.marcdoesntexists.nations.enums.AllianceTier;
+
+import java.util.*;
 
 public class Alliance {
     private final UUID allianceId;
@@ -16,6 +17,12 @@ public class Alliance {
     private String description = "No description";
     private int tier = 1;
     private String currentTier = "none";
+
+    // NEW: Enhanced alliance system
+    private AllianceTier allianceTier = AllianceTier.DEFENSIVE_PACT;
+    private Set<AlliancePerk> activePerks = new HashSet<>();
+    private Map<String, Integer> contributions = new HashMap<>();
+    private int totalContributions = 0;
 
     public Alliance(String name, String leader) {
         this.allianceId = UUID.randomUUID();
@@ -126,5 +133,49 @@ public class Alliance {
 
     public boolean hasInvite(String kingdomName) {
         return pendingInvites.contains(kingdomName);
+    }
+
+    // Alliance tier methods
+    public AllianceTier getAllianceTier() {
+        return allianceTier;
+    }
+
+    public void setAllianceTier(AllianceTier tier) {
+        this.allianceTier = tier;
+    }
+
+    // Perks methods
+    public Set<AlliancePerk> getActivePerks() {
+        return new HashSet<>(activePerks);
+    }
+
+    public void activatePerk(AlliancePerk perk) {
+        activePerks.add(perk);
+    }
+
+    public void deactivatePerk(AlliancePerk perk) {
+        activePerks.remove(perk);
+    }
+
+    public boolean hasPerk(AlliancePerk perk) {
+        return activePerks.contains(perk);
+    }
+
+    // Contribution methods
+    public Map<String, Integer> getContributions() {
+        return new HashMap<>(contributions);
+    }
+
+    public int getContribution(String kingdomName) {
+        return contributions.getOrDefault(kingdomName, 0);
+    }
+
+    public void addContribution(String kingdomName, int amount) {
+        contributions.put(kingdomName, contributions.getOrDefault(kingdomName, 0) + amount);
+        totalContributions += amount;
+    }
+
+    public int getTotalContributions() {
+        return totalContributions;
     }
 }

@@ -6,20 +6,15 @@ import me.marcdoesntexists.nations.managers.SocietiesManager;
 import me.marcdoesntexists.nations.societies.Alliance;
 import me.marcdoesntexists.nations.societies.Kingdom;
 import me.marcdoesntexists.nations.societies.Town;
-import me.marcdoesntexists.nations.utils.PlayerData;
 import me.marcdoesntexists.nations.utils.MessageUtils;
+import me.marcdoesntexists.nations.utils.PlayerData;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.*;
 
 public class AllianceCommand implements CommandExecutor, TabCompleter {
 
@@ -169,7 +164,7 @@ public class AllianceCommand implements CommandExecutor, TabCompleter {
         Kingdom targetKingdom = societiesManager.getKingdom(targetKingdomName);
 
         if (targetKingdom == null) {
-            player.sendMessage(MessageUtils.format("commands.not_found", Map.of("entity","Kingdom")));
+            player.sendMessage(MessageUtils.format("commands.not_found", Map.of("entity", "Kingdom")));
             return true;
         }
 
@@ -370,26 +365,23 @@ public class AllianceCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            return Arrays.asList("create", "invite", "accept", "leave", "info", "list")
-                    .stream()
-                    .filter(s -> s.startsWith(args[0].toLowerCase()))
-                    .collect(Collectors.toList());
+            return me.marcdoesntexists.nations.utils.TabCompletionUtils.match(
+                    Arrays.asList("create", "invite", "accept", "leave", "info", "list"),
+                    args[0]
+            );
         }
 
         if (args.length == 2) {
             if (args[0].equalsIgnoreCase("info") || args[0].equalsIgnoreCase("accept")) {
-                return societiesManager.getAlliances().stream()
-                        .map(Alliance::getName)
-                        .filter(s -> s.toLowerCase().startsWith(args[1].toLowerCase()))
-                        .collect(Collectors.toList());
+                return me.marcdoesntexists.nations.utils.TabCompletionUtils.matchDistinct(
+                        societiesManager.getAlliances().stream().map(Alliance::getName).collect(java.util.stream.Collectors.toList()),
+                        args[1]
+                );
             }
         }
 
         if (args.length == 3 && args[0].equalsIgnoreCase("invite")) {
-            return societiesManager.getAllKingdoms().stream()
-                    .map(Kingdom::getName)
-                    .filter(s -> s.toLowerCase().startsWith(args[2].toLowerCase()))
-                    .collect(Collectors.toList());
+            return me.marcdoesntexists.nations.utils.TabCompletionUtils.kingdoms(societiesManager, args[2]);
         }
 
         return new ArrayList<>();

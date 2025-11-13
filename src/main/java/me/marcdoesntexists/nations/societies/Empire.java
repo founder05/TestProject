@@ -38,6 +38,11 @@ public class Empire {
         return name;
     }
 
+    // Getter for capital (added to resolve references to e.getCapital())
+    public String getCapital() {
+        return capital;
+    }
+
     public Set<String> getKingdoms() {
         return kingdoms;
     }

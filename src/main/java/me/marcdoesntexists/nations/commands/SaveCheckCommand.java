@@ -1,11 +1,10 @@
 package me.marcdoesntexists.nations.commands;
 
-import me.marcdoesntexists.nations.managers.DataManager;
 import me.marcdoesntexists.nations.Nations;
+import me.marcdoesntexists.nations.managers.DataManager;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 
 public class SaveCheckCommand implements CommandExecutor {
     private final Nations plugin;

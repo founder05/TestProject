@@ -1,26 +1,22 @@
 package me.marcdoesntexists.nations.commands;
 
 import me.marcdoesntexists.nations.Nations;
+import me.marcdoesntexists.nations.economy.EconomyService;
+import me.marcdoesntexists.nations.managers.DataManager;
+import me.marcdoesntexists.nations.utils.MessageUtils;
 import me.marcdoesntexists.nations.managers.DataManager;
 import me.marcdoesntexists.nations.managers.SocietiesManager;
 import me.marcdoesntexists.nations.societies.FeudalService;
 import me.marcdoesntexists.nations.societies.Kingdom;
 import me.marcdoesntexists.nations.societies.Town;
 import me.marcdoesntexists.nations.utils.PlayerData;
-import me.marcdoesntexists.nations.utils.MessageUtils;
-import me.marcdoesntexists.nations.economy.EconomyService;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.*;
 
 public class FeudalCommand implements CommandExecutor, TabCompleter {
 
@@ -190,7 +186,10 @@ public class FeudalCommand implements CommandExecutor, TabCompleter {
                 player.sendMessage(MessageUtils.format("feudal.paid_tribute", Map.of("amount", String.valueOf((int) amount), "to", kingdom.getSuzerain())));
 
                 // Persist kingdom (its treasury changed)
-                try { plugin.getDataManager().saveKingdom(kingdom); } catch (Throwable ignored) {}
+                try {
+                    plugin.getDataManager().saveKingdom(kingdom);
+                } catch (Throwable ignored) {
+                }
 
                 // Notify suzerain
                 Kingdom suzerain = societiesManager.getKingdom(kingdom.getSuzerain());
@@ -335,7 +334,10 @@ public class FeudalCommand implements CommandExecutor, TabCompleter {
 
             kingdom.removeMoney(cost);
             // persist kingdom immediately
-            try { plugin.getDataManager().saveKingdom(kingdom); } catch (Throwable ignored) {}
+            try {
+                plugin.getDataManager().saveKingdom(kingdom);
+            } catch (Throwable ignored) {
+            }
         }
 
         boolean endOk = feudalService.endFeudalRelationship(kingdom.getName(), suzerainName);
@@ -345,7 +347,10 @@ public class FeudalCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(MessageUtils.format("feudal.independence_cost", Map.of("cost", String.valueOf(cost))));
 
             // Persist kingdom after successful independence (state changed)
-            try { plugin.getDataManager().saveKingdom(kingdom); } catch (Throwable ignored) {}
+            try {
+                plugin.getDataManager().saveKingdom(kingdom);
+            } catch (Throwable ignored) {
+            }
 
             // Notify suzerain
             Kingdom suzerain = societiesManager.getKingdom(suzerainName);
@@ -355,20 +360,26 @@ public class FeudalCommand implements CommandExecutor, TabCompleter {
                     Player suzKing = plugin.getServer().getPlayer(suzCapital.getMayor());
                     if (suzKing != null) {
                         suzKing.sendMessage(MessageUtils.format("feudal.suzerain_independence_notify", Map.of("kingdom", kingdom.getName(), "cost", String.valueOf(cost))));
-                     }
-                 }
-             }
-         } else {
+                    }
+                }
+            }
+        } else {
             // rollback if we charged player directly
-             if (chargedPlayer) {
-                 economyService.depositToPlayer(player.getUniqueId(), cost);
-                 try { plugin.getDataManager().savePlayerMoney(player.getUniqueId()); } catch (Throwable ignored) {}
-             } else {
-                 kingdom.addMoney(cost); // Refund
-                 try { plugin.getDataManager().saveKingdom(kingdom); } catch (Throwable ignored) {}
-             }
+            if (chargedPlayer) {
+                economyService.depositToPlayer(player.getUniqueId(), cost);
+                try {
+                    plugin.getDataManager().savePlayerMoney(player.getUniqueId());
+                } catch (Throwable ignored) {
+                }
+            } else {
+                kingdom.addMoney(cost); // Refund
+                try {
+                    plugin.getDataManager().saveKingdom(kingdom);
+                } catch (Throwable ignored) {
+                }
+            }
             player.sendMessage(MessageUtils.get("feudal.independence_failed"));
-         }
+        }
 
         return true;
     }
@@ -463,25 +474,19 @@ public class FeudalCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            return Arrays.asList("vassal", "tribute", "rebel", "independence", "info", "list")
-                    .stream()
-                    .filter(s -> s.startsWith(args[0].toLowerCase()))
-                    .collect(Collectors.toList());
+            return me.marcdoesntexists.nations.utils.TabCompletionUtils.match(
+                    Arrays.asList("vassal", "tribute", "rebel", "independence", "info", "list"),
+                    args[0]
+            );
         }
 
         if (args.length == 2) {
             if (args[0].equalsIgnoreCase("vassal")) {
-                return societiesManager.getAllKingdoms().stream()
-                        .map(Kingdom::getName)
-                        .filter(s -> s.toLowerCase().startsWith(args[1].toLowerCase()))
-                        .collect(Collectors.toList());
+                return me.marcdoesntexists.nations.utils.TabCompletionUtils.kingdoms(societiesManager, args[1]);
             }
 
             if (args[0].equalsIgnoreCase("tribute")) {
-                return Arrays.asList("pay", "set")
-                        .stream()
-                        .filter(s -> s.startsWith(args[1].toLowerCase()))
-                        .collect(Collectors.toList());
+                return me.marcdoesntexists.nations.utils.TabCompletionUtils.match(Arrays.asList("pay", "set"), args[1]);
             }
         }
 

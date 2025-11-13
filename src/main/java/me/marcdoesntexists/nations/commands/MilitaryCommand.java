@@ -2,13 +2,13 @@ package me.marcdoesntexists.nations.commands;
 
 import me.marcdoesntexists.nations.Nations;
 import me.marcdoesntexists.nations.managers.DataManager;
+import me.marcdoesntexists.nations.utils.MessageUtils;
 import me.marcdoesntexists.nations.managers.MilitaryManager;
 import me.marcdoesntexists.nations.managers.SocietiesManager;
 import me.marcdoesntexists.nations.military.MilitaryRank;
 import me.marcdoesntexists.nations.societies.Kingdom;
 import me.marcdoesntexists.nations.societies.Town;
 import me.marcdoesntexists.nations.utils.PlayerData;
-import me.marcdoesntexists.nations.utils.MessageUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -17,18 +17,13 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
 public class MilitaryCommand implements CommandExecutor, TabCompleter {
 
-    private final Nations plugin;
-    private final DataManager dataManager;
-    private final SocietiesManager societiesManager;
-    private final MilitaryManager militaryManager;
-
     // Predefined military ranks
     private static final Map<String, Integer> RANK_HIERARCHY = new LinkedHashMap<>();
+
     static {
         RANK_HIERARCHY.put("RECRUIT", 1);
         RANK_HIERARCHY.put("SOLDIER", 4);
@@ -39,6 +34,11 @@ public class MilitaryCommand implements CommandExecutor, TabCompleter {
         RANK_HIERARCHY.put("GENERAL", 9);
         RANK_HIERARCHY.put("SUPREME_COMMANDER", 10);
     }
+
+    private final Nations plugin;
+    private final DataManager dataManager;
+    private final SocietiesManager societiesManager;
+    private final MilitaryManager militaryManager;
 
     public MilitaryCommand(Nations plugin) {
         this.plugin = plugin;
@@ -165,7 +165,7 @@ public class MilitaryCommand implements CommandExecutor, TabCompleter {
 
         target.sendMessage(MessageUtils.format("military.enlist_target_success", Map.of("kingdom", kingdom.getName())));
         target.sendMessage(MessageUtils.format("military.enlist_target_rank", Map.of("rank", "RECRUIT")));
-        target.sendMessage(MessageUtils.format("military.enlist_target_salary", Map.of("salary", String.valueOf((int)baseSalary))));
+        target.sendMessage(MessageUtils.format("military.enlist_target_salary", Map.of("salary", String.valueOf((int) baseSalary))));
 
         if (!target.equals(player)) {
             player.sendMessage(MessageUtils.format("military.enlist_notify", Map.of("player", target.getName())));
@@ -289,7 +289,7 @@ public class MilitaryCommand implements CommandExecutor, TabCompleter {
 
         player.sendMessage(MessageUtils.format("military.promote_success_admin", Map.of("player", target.getName(), "rank", newRank)));
         target.sendMessage(MessageUtils.format("military.promote_success_target", Map.of("rank", newRank)));
-        target.sendMessage(MessageUtils.format("military.promote_new_salary", Map.of("salary", String.valueOf((int)newSalary))));
+        target.sendMessage(MessageUtils.format("military.promote_new_salary", Map.of("salary", String.valueOf((int) newSalary))));
 
         return true;
     }
@@ -467,29 +467,19 @@ public class MilitaryCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            return Arrays.asList("enlist", "discharge", "promote", "demote", "info", "list", "ranks")
-                    .stream()
-                    .filter(s -> s.startsWith(args[0].toLowerCase()))
-                    .toList();
+            return me.marcdoesntexists.nations.utils.TabCompletionUtils.match(Arrays.asList("enlist", "discharge", "promote", "demote", "info", "list", "ranks"), args[0]);
         }
 
         // suggest online players for second argument (player names)
         if (args.length == 2) {
             if (Arrays.asList("enlist", "discharge", "promote", "demote", "info").contains(args[0].toLowerCase())) {
-                String partial = args[1].toLowerCase();
-                return plugin.getServer().getOnlinePlayers().stream()
-                        .map(p -> p.getName())
-                        .filter(n -> n.toLowerCase().startsWith(partial))
-                        .toList();
+                return me.marcdoesntexists.nations.utils.TabCompletionUtils.onlinePlayers(args[1]);
             }
         }
 
         if (args.length == 3) {
             if (args[0].equalsIgnoreCase("promote") || args[0].equalsIgnoreCase("demote")) {
-                String partial = args[2].toUpperCase();
-                return RANK_HIERARCHY.keySet().stream()
-                        .filter(s -> s.startsWith(partial))
-                        .toList();
+                return me.marcdoesntexists.nations.utils.TabCompletionUtils.match(new ArrayList<>(RANK_HIERARCHY.keySet()), args[2]);
             }
         }
 

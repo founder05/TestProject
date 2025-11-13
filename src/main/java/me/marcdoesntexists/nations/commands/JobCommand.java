@@ -1,9 +1,10 @@
 package me.marcdoesntexists.nations.commands;
 
 import me.marcdoesntexists.nations.Nations;
+import me.marcdoesntexists.nations.economy.EconomyService;
 import me.marcdoesntexists.nations.enums.JobType;
-import me.marcdoesntexists.nations.managers.DataManager;
 import me.marcdoesntexists.nations.utils.MessageUtils;
+import me.marcdoesntexists.nations.managers.DataManager;
 import me.marcdoesntexists.nations.utils.PlayerData;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -15,7 +16,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class JobCommand implements CommandExecutor, TabCompleter {
 
@@ -150,17 +150,14 @@ public class JobCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            return Arrays.asList("list", "join", "quit", "info")
-                    .stream()
-                    .filter(s -> s.startsWith(args[0].toLowerCase()))
-                    .collect(Collectors.toList());
+            return me.marcdoesntexists.nations.utils.TabCompletionUtils.match(Arrays.asList("list", "join", "quit", "info"), args[0]);
         }
 
         if (args.length == 2 && args[0].equalsIgnoreCase("join")) {
-            return Arrays.stream(JobType.values())
-                    .map(jt -> jt.name().toLowerCase())
-                    .filter(s -> s.startsWith(args[1].toLowerCase()))
-                    .collect(Collectors.toList());
+            return me.marcdoesntexists.nations.utils.TabCompletionUtils.matchDistinct(
+                    Arrays.stream(JobType.values()).map(jt -> jt.name()).collect(java.util.stream.Collectors.toList()),
+                    args[1]
+            );
         }
 
         return new ArrayList<>();

@@ -81,10 +81,14 @@ public class ClaimManager {
         // Notify GUI refresh so players viewing the towns category see updated claim counts
         try {
             me.marcdoesntexists.nations.gui.NationsGUI.refreshGUIsForCategory("TOWNS");
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
 
         // Persist town immediately
-        try { plugin.getDataManager().saveTown(town); } catch (Throwable ignored) {}
+        try {
+            plugin.getDataManager().saveTown(town);
+        } catch (Throwable ignored) {
+        }
 
         return new ClaimResult(true, "Chunk claimed successfully! Cost: " + claimCost + " coins");
     }
@@ -116,10 +120,14 @@ public class ClaimManager {
         // Refresh GUI so town claim counts are updated
         try {
             me.marcdoesntexists.nations.gui.NationsGUI.refreshGUIsForCategory("TOWNS");
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
 
         // Persist town immediately
-        try { plugin.getDataManager().saveTown(town); } catch (Throwable ignored) {}
+        try {
+            plugin.getDataManager().saveTown(town);
+        } catch (Throwable ignored) {
+        }
 
         return new ClaimResult(true, "Chunk unclaimed! Refund: " + refund + " coins");
     }
@@ -295,7 +303,8 @@ public class ClaimManager {
                 Claim claim = new Claim(key, town.getName(), world, cx, cz);
                 claims.put(key, claim);
                 townClaims.computeIfAbsent(town.getName(), k -> new HashSet<>()).add(key);
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
     }
 

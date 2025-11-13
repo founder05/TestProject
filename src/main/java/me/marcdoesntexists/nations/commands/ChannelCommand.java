@@ -3,17 +3,16 @@ package me.marcdoesntexists.nations.commands;
 import me.marcdoesntexists.nations.Nations;
 import me.marcdoesntexists.nations.managers.ChatManager;
 import me.marcdoesntexists.nations.managers.ChatManager.Channel;
+import me.marcdoesntexists.nations.utils.MessageUtils;
+import org.bukkit.command.Command;
 import me.marcdoesntexists.nations.managers.DataManager;
 import me.marcdoesntexists.nations.utils.PlayerData;
-import me.marcdoesntexists.nations.utils.MessageUtils;
-import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -23,7 +22,9 @@ public class ChannelCommand implements CommandExecutor, TabCompleter {
     private final Nations plugin;
     private final ChatManager chatManager = ChatManager.getInstance();
 
-    public ChannelCommand(Nations plugin) { this.plugin = plugin; }
+    public ChannelCommand(Nations plugin) {
+        this.plugin = plugin;
+    }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -69,7 +70,7 @@ public class ChannelCommand implements CommandExecutor, TabCompleter {
             }
             player.sendMessage(MessageUtils.format("channel.current", Map.of("channel", ch.name())));
         } catch (IllegalArgumentException e) {
-            player.sendMessage("§cUnknown channel. Available: GLOBAL, TOWN, KINGDOM, EMPIRE, RELIGION, ALLIANCE");
+            player.sendMessage(MessageUtils.get("channel.unknown_channel_fallback"));
         }
 
         return true;
@@ -78,13 +79,13 @@ public class ChannelCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            List<String> suggestions = new ArrayList<>(Arrays.asList("GLOBAL","TOWN","KINGDOM","EMPIRE","RELIGION","ALLIANCE","spy"));
-            String pref = args[0].toUpperCase(Locale.ROOT);
-            suggestions.removeIf(s -> !s.startsWith(pref));
-            return suggestions;
+            return me.marcdoesntexists.nations.utils.TabCompletionUtils.match(
+                    Arrays.asList("global", "town", "kingdom", "empire", "religion", "alliance", "spy"),
+                    args[0]
+            );
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("spy")) {
-            return Arrays.asList("on","off");
+            return Arrays.asList("on", "off");
         }
         return List.of();
     }

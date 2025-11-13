@@ -89,7 +89,9 @@ public class ConfigurationManager {
         return configs.get("religion.yml");
     }
 
-    public FileConfiguration getNationsGuiconfig() { return configs.get("gui.yml"); }
+    public FileConfiguration getNationsGuiconfig() {
+        return configs.get("gui.yml");
+    }
 
     public FileConfiguration getDiplomacyConfig() {
         return configs.get("diplomacy.yml");

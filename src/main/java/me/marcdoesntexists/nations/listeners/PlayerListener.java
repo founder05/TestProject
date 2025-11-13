@@ -37,7 +37,8 @@ public class PlayerListener implements Listener {
                 double bal = es.getPlayerBalance(player.getUniqueId());
                 data.setMoney((int) Math.floor(bal));
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         if (data.getTown() != null) {
             player.sendMessage(MessageUtils.format("town.welcome_back", Map.of("town", data.getTown())));

@@ -9,8 +9,6 @@ public class SocietiesManager {
     private Map<String, Town> towns;
     private Map<String, Kingdom> kingdoms;
     private Map<String, Empire> empires;
-    private Map<String, God> gods;
-    private Map<String, Religion> religions;
     private Map<UUID, Alliance> alliances;
     private Map<UUID, Treaty> treaties;
     private Map<UUID, FeudalRelationship> feudalRelationships;
@@ -19,8 +17,6 @@ public class SocietiesManager {
         this.towns = new HashMap<>();
         this.kingdoms = new HashMap<>();
         this.empires = new HashMap<>();
-        this.gods = new HashMap<>();
-        this.religions = new HashMap<>();
         this.alliances = new HashMap<>();
         this.treaties = new HashMap<>();
         this.feudalRelationships = new HashMap<>();
@@ -73,26 +69,6 @@ public class SocietiesManager {
         return new ArrayList<>(empires.values());
     }
 
-    public void registerGod(God god) {
-        gods.put(god.getName(), god);
-    }
-
-    public God getGod(String name) {
-        return gods.get(name);
-    }
-
-    public Collection<God> getAllGods() {
-        return new ArrayList<>(gods.values());
-    }
-
-    public void registerReligion(Religion religion) {
-        religions.put(religion.getName(), religion);
-    }
-
-    public Religion getReligion(String name) {
-        return religions.get(name);
-    }
-
     public void registerAlliance(Alliance alliance) {
         alliances.put(alliance.getAllianceId(), alliance);
     }
@@ -127,9 +103,5 @@ public class SocietiesManager {
 
     public Collection<Treaty> getAllTreaties() {
         return new ArrayList<>(treaties.values());
-    }
-
-    public Collection<Religion> getAllReligions() {
-        return new ArrayList<>(religions.values());
     }
 }
