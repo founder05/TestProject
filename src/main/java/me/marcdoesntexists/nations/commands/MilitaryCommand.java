@@ -8,6 +8,7 @@ import me.marcdoesntexists.nations.military.MilitaryRank;
 import me.marcdoesntexists.nations.societies.Kingdom;
 import me.marcdoesntexists.nations.societies.Town;
 import me.marcdoesntexists.nations.utils.PlayerData;
+import me.marcdoesntexists.nations.utils.MessageUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -49,7 +50,7 @@ public class MilitaryCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage("§cThis command can only be used by players!");
+            sender.sendMessage(MessageUtils.get("military.player_only"));
             return true;
         }
 
@@ -66,37 +67,37 @@ public class MilitaryCommand implements CommandExecutor, TabCompleter {
             case "enlist":
                 // enlist others requires permission
                 if (args.length > 1 && !player.hasPermission("nations.military.enlist")) {
-                    player.sendMessage("§cYou do not have permission to enlist others.");
+                    player.sendMessage(MessageUtils.get("military.no_permission_enlist"));
                     return true;
                 }
                 return handleEnlist(player, args);
             case "discharge":
                 if (!player.hasPermission("nations.military.manage")) {
-                    player.sendMessage("§cYou do not have permission to discharge members.");
+                    player.sendMessage(MessageUtils.get("military.no_permission_manage"));
                     return true;
                 }
                 return handleDischarge(player, args);
             case "promote":
                 if (!player.hasPermission("nations.military.manage")) {
-                    player.sendMessage("§cYou do not have permission to promote members.");
+                    player.sendMessage(MessageUtils.get("military.no_permission_manage"));
                     return true;
                 }
                 return handlePromote(player, args);
             case "demote":
                 if (!player.hasPermission("nations.military.manage")) {
-                    player.sendMessage("§cYou do not have permission to demote members.");
+                    player.sendMessage(MessageUtils.get("military.no_permission_manage"));
                     return true;
                 }
                 return handleDemote(player, args);
             case "info":
                 if (!player.hasPermission("nations.military.view")) {
-                    player.sendMessage("§cYou do not have permission to view military info.");
+                    player.sendMessage(MessageUtils.get("military.no_permission_view"));
                     return true;
                 }
                 return handleInfo(player, args);
             case "list":
                 if (!player.hasPermission("nations.military.view")) {
-                    player.sendMessage("§cYou do not have permission to view the military list.");
+                    player.sendMessage(MessageUtils.get("military.no_permission_view"));
                     return true;
                 }
                 return handleList(player, args);
@@ -115,19 +116,19 @@ public class MilitaryCommand implements CommandExecutor, TabCompleter {
         if (args.length > 1) {
             PlayerData data = dataManager.getPlayerData(player.getUniqueId());
             if (data.getTown() == null) {
-                player.sendMessage("§cYou must be in a town!");
+                player.sendMessage(MessageUtils.get("military.must_be_in_town"));
                 return true;
             }
 
             Town town = societiesManager.getTown(data.getTown());
             if (!town.isMayor(player.getUniqueId())) {
-                player.sendMessage("§cOnly the mayor can enlist others!");
+                player.sendMessage(MessageUtils.get("military.only_mayor"));
                 return true;
             }
 
             target = plugin.getServer().getPlayer(args[1]);
             if (target == null) {
-                player.sendMessage("§cPlayer not found!");
+                player.sendMessage(MessageUtils.get("military.player_not_found"));
                 return true;
             }
         }
@@ -135,18 +136,18 @@ public class MilitaryCommand implements CommandExecutor, TabCompleter {
         PlayerData targetData = dataManager.getPlayerData(target.getUniqueId());
 
         if (targetData.getTown() == null) {
-            player.sendMessage("§cTarget must be in a town!");
+            player.sendMessage(MessageUtils.get("military.target_must_be_in_town"));
             return true;
         }
 
         if (targetData.isMilitary()) {
-            player.sendMessage("§c" + target.getName() + " is already in the military!");
+            player.sendMessage(MessageUtils.format("military.already_in_military", Map.of("player", target.getName())));
             return true;
         }
 
         Town town = societiesManager.getTown(targetData.getTown());
         if (town.getKingdom() == null) {
-            player.sendMessage("§cYour town must be part of a kingdom to have a military!");
+            player.sendMessage(MessageUtils.get("military.town_no_kingdom"));
             return true;
         }
 
@@ -162,12 +163,12 @@ public class MilitaryCommand implements CommandExecutor, TabCompleter {
         targetData.setMilitary(true);
         targetData.setMilitaryRank("RECRUIT");
 
-        target.sendMessage("§a✔ You have enlisted in the military of §6" + kingdom.getName() + "§a!");
-        target.sendMessage("§7Rank: §eRECRUIT");
-        target.sendMessage("§7Salary: §6$" + (int)baseSalary + "§7/day");
+        target.sendMessage(MessageUtils.format("military.enlist_target_success", Map.of("kingdom", kingdom.getName())));
+        target.sendMessage(MessageUtils.format("military.enlist_target_rank", Map.of("rank", "RECRUIT")));
+        target.sendMessage(MessageUtils.format("military.enlist_target_salary", Map.of("salary", String.valueOf((int)baseSalary))));
 
         if (!target.equals(player)) {
-            player.sendMessage("§a✔ §6" + target.getName() + "§a has been enlisted!");
+            player.sendMessage(MessageUtils.format("military.enlist_notify", Map.of("player", target.getName())));
         }
 
         return true;
@@ -180,19 +181,19 @@ public class MilitaryCommand implements CommandExecutor, TabCompleter {
         if (args.length > 1) {
             PlayerData data = dataManager.getPlayerData(player.getUniqueId());
             if (data.getTown() == null) {
-                player.sendMessage("§cYou must be in a town!");
+                player.sendMessage(MessageUtils.get("military.must_be_in_town"));
                 return true;
             }
 
             Town town = societiesManager.getTown(data.getTown());
             if (!town.isMayor(player.getUniqueId())) {
-                player.sendMessage("§cOnly the mayor can discharge others!");
+                player.sendMessage(MessageUtils.get("military.only_mayor"));
                 return true;
             }
 
             target = plugin.getServer().getPlayer(args[1]);
             if (target == null) {
-                player.sendMessage("§cPlayer not found!");
+                player.sendMessage(MessageUtils.get("military.player_not_found"));
                 return true;
             }
         }
@@ -200,17 +201,17 @@ public class MilitaryCommand implements CommandExecutor, TabCompleter {
         PlayerData targetData = dataManager.getPlayerData(target.getUniqueId());
 
         if (!targetData.isMilitary()) {
-            player.sendMessage("§c" + target.getName() + " is not in the military!");
+            player.sendMessage(MessageUtils.format("military.info_player_not_in_military", Map.of("player", target.getName())));
             return true;
         }
 
         targetData.setMilitary(false);
         targetData.setMilitaryRank(null);
 
-        target.sendMessage("§c✘ You have been discharged from military service!");
+        target.sendMessage(MessageUtils.get("military.discharge_target_success"));
 
         if (!target.equals(player)) {
-            player.sendMessage("§a✔ §6" + target.getName() + "§a has been discharged!");
+            player.sendMessage(MessageUtils.format("military.discharge_notify", Map.of("player", target.getName())));
         }
 
         return true;
@@ -219,50 +220,50 @@ public class MilitaryCommand implements CommandExecutor, TabCompleter {
     private boolean handlePromote(Player player, String[] args) {
         // /military promote <player> <rank>
         if (args.length < 3) {
-            player.sendMessage("§cUsage: /military promote <player> <rank>");
-            player.sendMessage("§7Ranks: " + String.join(", ", RANK_HIERARCHY.keySet()));
+            player.sendMessage(MessageUtils.get("military.promote_usage"));
+            player.sendMessage(MessageUtils.format("military.promote_ranks", Map.of("ranks", String.join(", ", RANK_HIERARCHY.keySet()))));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town!");
+            player.sendMessage(MessageUtils.get("military.must_be_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (town.getKingdom() == null) {
-            player.sendMessage("§cYour town must be part of a kingdom!");
+            player.sendMessage(MessageUtils.get("military.town_no_kingdom"));
             return true;
         }
 
         Kingdom kingdom = societiesManager.getKingdom(town.getKingdom());
         if (!kingdom.isKing(town.getName())) {
-            player.sendMessage("§cOnly the capital's mayor can promote military ranks!");
+            player.sendMessage(MessageUtils.get("evolution.only_capital_mayor"));
             return true;
         }
 
         if (!town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cYou must be the mayor!");
+            player.sendMessage(MessageUtils.get("military.only_mayor"));
             return true;
         }
 
         Player target = plugin.getServer().getPlayer(args[1]);
         if (target == null) {
-            player.sendMessage("§cPlayer not found!");
+            player.sendMessage(MessageUtils.get("military.player_not_found"));
             return true;
         }
 
         PlayerData targetData = dataManager.getPlayerData(target.getUniqueId());
         if (!targetData.isMilitary()) {
-            player.sendMessage("§c" + target.getName() + " is not in the military!");
+            player.sendMessage(MessageUtils.format("military.info_player_not_in_military", Map.of("player", target.getName())));
             return true;
         }
 
         String newRank = args[2].toUpperCase();
         if (!RANK_HIERARCHY.containsKey(newRank)) {
-            player.sendMessage("§cInvalid rank!");
-            player.sendMessage("§7Valid ranks: " + String.join(", ", RANK_HIERARCHY.keySet()));
+            player.sendMessage(MessageUtils.get("military.promote_invalid_rank"));
+            player.sendMessage(MessageUtils.format("military.promote_ranks", Map.of("ranks", String.join(", ", RANK_HIERARCHY.keySet()))));
             return true;
         }
 
@@ -271,7 +272,7 @@ public class MilitaryCommand implements CommandExecutor, TabCompleter {
         int currentRankLevel = currentRank != null ? RANK_HIERARCHY.getOrDefault(currentRank, 0) : 0;
 
         if (newRankLevel <= currentRankLevel) {
-            player.sendMessage("§cCannot promote to a lower or equal rank!");
+            player.sendMessage(MessageUtils.get("military.promote_cannot_lower"));
             return true;
         }
 
@@ -286,9 +287,9 @@ public class MilitaryCommand implements CommandExecutor, TabCompleter {
 
         targetData.setMilitaryRank(newRank);
 
-        player.sendMessage("§a✔ §6" + target.getName() + "§a promoted to §e" + newRank + "§a!");
-        target.sendMessage("§a✔ You have been promoted to §e" + newRank + "§a!");
-        target.sendMessage("§7New Salary: §6$" + (int)newSalary + "§7/day");
+        player.sendMessage(MessageUtils.format("military.promote_success_admin", Map.of("player", target.getName(), "rank", newRank)));
+        target.sendMessage(MessageUtils.format("military.promote_success_target", Map.of("rank", newRank)));
+        target.sendMessage(MessageUtils.format("military.promote_new_salary", Map.of("salary", String.valueOf((int)newSalary))));
 
         return true;
     }
@@ -296,44 +297,44 @@ public class MilitaryCommand implements CommandExecutor, TabCompleter {
     private boolean handleDemote(Player player, String[] args) {
         // /military demote <player> <rank>
         if (args.length < 3) {
-            player.sendMessage("§cUsage: /military demote <player> <rank>");
+            player.sendMessage(MessageUtils.get("military.demote_usage"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town!");
+            player.sendMessage(MessageUtils.get("military.must_be_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (!town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cOnly the mayor can demote military ranks!");
+            player.sendMessage(MessageUtils.get("military.only_mayor"));
             return true;
         }
 
         Player target = plugin.getServer().getPlayer(args[1]);
         if (target == null) {
-            player.sendMessage("§cPlayer not found!");
+            player.sendMessage(MessageUtils.get("military.player_not_found"));
             return true;
         }
 
         PlayerData targetData = dataManager.getPlayerData(target.getUniqueId());
         if (!targetData.isMilitary()) {
-            player.sendMessage("§c" + target.getName() + " is not in the military!");
+            player.sendMessage(MessageUtils.format("military.info_player_not_in_military", Map.of("player", target.getName())));
             return true;
         }
 
         String newRank = args[2].toUpperCase();
         if (!RANK_HIERARCHY.containsKey(newRank)) {
-            player.sendMessage("§cInvalid rank!");
+            player.sendMessage(MessageUtils.get("military.promote_invalid_rank"));
             return true;
         }
 
         targetData.setMilitaryRank(newRank);
 
-        player.sendMessage("§a✔ §6" + target.getName() + "§a demoted to §e" + newRank);
-        target.sendMessage("§c✘ You have been demoted to §e" + newRank);
+        player.sendMessage(MessageUtils.format("military.demote_success_admin", Map.of("player", target.getName(), "rank", newRank)));
+        target.sendMessage(MessageUtils.format("military.demote_notify_target", Map.of("rank", newRank)));
 
         return true;
     }
@@ -344,7 +345,7 @@ public class MilitaryCommand implements CommandExecutor, TabCompleter {
         if (args.length > 1) {
             target = plugin.getServer().getPlayer(args[1]);
             if (target == null) {
-                player.sendMessage("§cPlayer not found!");
+                player.sendMessage(MessageUtils.get("military.player_not_found"));
                 return true;
             }
         }
@@ -352,26 +353,26 @@ public class MilitaryCommand implements CommandExecutor, TabCompleter {
         PlayerData data = dataManager.getPlayerData(target.getUniqueId());
 
         if (!data.isMilitary()) {
-            player.sendMessage("§c" + target.getName() + " is not in the military!");
+            player.sendMessage(MessageUtils.format("military.info_player_not_in_military", Map.of("player", target.getName())));
             return true;
         }
 
         String rank = data.getMilitaryRank();
         int rankLevel = RANK_HIERARCHY.getOrDefault(rank, 0);
 
-        player.sendMessage("§7§m----------§r §6Military Info§7 §m----------");
-        player.sendMessage("§eSoldier: §6" + target.getName());
-        player.sendMessage("§eRank: §e" + rank);
-        player.sendMessage("§eLevel: §6" + rankLevel);
+        player.sendMessage(MessageUtils.get("military.info_header"));
+        player.sendMessage(MessageUtils.format("military.info_soldier", Map.of("player", target.getName())));
+        player.sendMessage(MessageUtils.format("military.info_rank", Map.of("rank", rank)));
+        player.sendMessage(MessageUtils.format("military.info_level", Map.of("level", String.valueOf(rankLevel))));
 
         if (data.getTown() != null) {
             Town town = societiesManager.getTown(data.getTown());
             if (town != null && town.getKingdom() != null) {
-                player.sendMessage("§eKingdom: §6" + town.getKingdom());
+                player.sendMessage(MessageUtils.format("military.info_kingdom", Map.of("kingdom", town.getKingdom())));
             }
         }
 
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("military.info_footer"));
 
         return true;
     }
@@ -380,13 +381,13 @@ public class MilitaryCommand implements CommandExecutor, TabCompleter {
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
 
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town!");
+            player.sendMessage(MessageUtils.get("military.must_be_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (town.getKingdom() == null) {
-            player.sendMessage("§cYour town must be part of a kingdom!");
+            player.sendMessage(MessageUtils.get("military.town_no_kingdom"));
             return true;
         }
 
@@ -412,28 +413,28 @@ public class MilitaryCommand implements CommandExecutor, TabCompleter {
 
         int totalMilitary = rankMembers.values().stream().mapToInt(List::size).sum();
 
-        player.sendMessage("§7§m----------§r §6Military of " + kingdom.getName() + "§7 §m----------");
-        player.sendMessage("§eTotal Forces: §6" + totalMilitary);
-        player.sendMessage("");
+        player.sendMessage(MessageUtils.format("military.list_header", Map.of("kingdom", kingdom.getName())));
+        player.sendMessage(MessageUtils.format("military.list_total_forces", Map.of("total", String.valueOf(totalMilitary))));
+        player.sendMessage(MessageUtils.get("general.empty"));
 
         for (String rank : RANK_HIERARCHY.keySet()) {
             List<UUID> members = rankMembers.get(rank);
             if (!members.isEmpty()) {
-                player.sendMessage("§e" + rank + "§7 (" + members.size() + "):");
+                player.sendMessage(MessageUtils.format("military.list_rank_header", Map.of("rank", rank, "count", String.valueOf(members.size()))));
                 for (UUID memberId : members) {
                     String memberName = plugin.getServer().getOfflinePlayer(memberId).getName();
-                    player.sendMessage("§7 • §6" + memberName);
+                    player.sendMessage(MessageUtils.format("military.list_member_item", Map.of("name", memberName)));
                 }
             }
         }
 
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("military.list_footer"));
 
         return true;
     }
 
     private boolean handleRanks(Player player, String[] args) {
-        player.sendMessage("§7§m----------§r §6Military Ranks§7 §m----------");
+        player.sendMessage(MessageUtils.get("military.ranks_header"));
 
         for (Map.Entry<String, Integer> entry : RANK_HIERARCHY.entrySet()) {
             String rank = entry.getKey();
@@ -442,25 +443,25 @@ public class MilitaryCommand implements CommandExecutor, TabCompleter {
             double salaryMultiplier = plugin.getConfigurationManager().getMilitaryConfig()
                     .getDouble("military-system.military-ranks." + rank.toLowerCase() + ".salary-multiplier", 1.0);
 
-            player.sendMessage("§e" + level + ". §6" + rank);
-            player.sendMessage("§7   Salary Multiplier: §ax" + salaryMultiplier);
+            player.sendMessage(MessageUtils.format("military.ranks_line", Map.of("level", String.valueOf(level), "rank", rank)));
+            player.sendMessage(MessageUtils.format("military.ranks_salary_multiplier", Map.of("multiplier", String.valueOf(salaryMultiplier))));
         }
 
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("military.ranks_footer"));
 
         return true;
     }
 
     private void sendHelp(Player player) {
-        player.sendMessage("§7§m----------§r §6Military Commands§7 §m----------");
-        player.sendMessage("§e/military enlist [player]§7 - Enlist in military");
-        player.sendMessage("§e/military discharge [player]§7 - Discharge from military");
-        player.sendMessage("§e/military promote <p> <rank>§7 - Promote soldier");
-        player.sendMessage("§e/military demote <p> <rank>§7 - Demote soldier");
-        player.sendMessage("§e/military info [player]§7 - View military info");
-        player.sendMessage("§e/military list§7 - List all soldiers");
-        player.sendMessage("§e/military ranks§7 - View rank hierarchy");
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("military.help_header"));
+        player.sendMessage(MessageUtils.get("military.help_enlist"));
+        player.sendMessage(MessageUtils.get("military.help_discharge"));
+        player.sendMessage(MessageUtils.get("military.help_promote"));
+        player.sendMessage(MessageUtils.get("military.help_demote"));
+        player.sendMessage(MessageUtils.get("military.help_info"));
+        player.sendMessage(MessageUtils.get("military.help_list"));
+        player.sendMessage(MessageUtils.get("military.help_ranks"));
+        player.sendMessage(MessageUtils.get("military.help_footer"));
     }
 
     @Override

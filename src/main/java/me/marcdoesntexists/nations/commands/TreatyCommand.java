@@ -7,6 +7,7 @@ import me.marcdoesntexists.nations.societies.DiplomacyService;
 import me.marcdoesntexists.nations.societies.Kingdom;
 import me.marcdoesntexists.nations.societies.Town;
 import me.marcdoesntexists.nations.societies.Treaty;
+import me.marcdoesntexists.nations.utils.MessageUtils;
 import me.marcdoesntexists.nations.utils.PlayerData;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -37,7 +38,7 @@ public class TreatyCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage("§cThis command can only be used by players!");
+            sender.sendMessage(MessageUtils.get("commands.player_only"));
             return true;
         }
 
@@ -72,31 +73,31 @@ public class TreatyCommand implements CommandExecutor, TabCompleter {
     private boolean handleCreate(Player player, String[] args) {
         // /treaty create <kingdom> <type> <days>
         if (args.length < 4) {
-            player.sendMessage("§cUsage: /treaty create <kingdom> <type> <days>");
-            player.sendMessage("§7Types: PEACE, TRADE, NON_AGGRESSION, MUTUAL_DEFENSE, NEUTRALITY");
+            player.sendMessage(MessageUtils.get("treaty.usage_create"));
+            player.sendMessage(MessageUtils.get("treaty.usage_types"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town to create treaties!");
+            player.sendMessage(MessageUtils.get("treaty.must_be_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (town.getKingdom() == null) {
-            player.sendMessage("§cYour town must be part of a kingdom!");
+            player.sendMessage(MessageUtils.get("treaty.must_be_in_kingdom"));
             return true;
         }
 
         Kingdom kingdom = societiesManager.getKingdom(town.getKingdom());
         if (!kingdom.isKing(town.getName())) {
-            player.sendMessage("§cOnly the capital's mayor can create treaties!");
+            player.sendMessage(MessageUtils.get("treaty.only_capital_can_create"));
             return true;
         }
 
         if (!town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cYou must be the mayor!");
+            player.sendMessage(MessageUtils.get("treaty.must_be_mayor"));
             return true;
         }
 
@@ -104,12 +105,12 @@ public class TreatyCommand implements CommandExecutor, TabCompleter {
         Kingdom targetKingdom = societiesManager.getKingdom(targetKingdomName);
 
         if (targetKingdom == null) {
-            player.sendMessage("§cKingdom not found!");
+            player.sendMessage(MessageUtils.get("treaty.kingdom_not_found"));
             return true;
         }
 
         if (targetKingdom.getName().equals(kingdom.getName())) {
-            player.sendMessage("§cYou cannot create a treaty with your own kingdom!");
+            player.sendMessage(MessageUtils.get("treaty.cannot_self"));
             return true;
         }
 
@@ -117,8 +118,8 @@ public class TreatyCommand implements CommandExecutor, TabCompleter {
         try {
             type = Treaty.TreatyType.valueOf(args[2].toUpperCase());
         } catch (IllegalArgumentException e) {
-            player.sendMessage("§cInvalid treaty type!");
-            player.sendMessage("§7Valid types: PEACE, TRADE, NON_AGGRESSION, MUTUAL_DEFENSE, NEUTRALITY");
+            player.sendMessage(MessageUtils.get("treaty.invalid_type"));
+            player.sendMessage(MessageUtils.get("treaty.usage_types"));
             return true;
         }
 
@@ -126,34 +127,34 @@ public class TreatyCommand implements CommandExecutor, TabCompleter {
         try {
             days = Long.parseLong(args[3]);
             if (days < 1 || days > 365) {
-                player.sendMessage("§cDuration must be between 1 and 365 days!");
+                player.sendMessage(MessageUtils.get("treaty.duration_bounds"));
                 return true;
             }
         } catch (NumberFormatException e) {
-            player.sendMessage("§cInvalid number of days!");
+            player.sendMessage(MessageUtils.get("treaty.invalid_days"));
             return true;
         }
 
         String treatyName = kingdom.getName() + "-" + targetKingdom.getName() + "-" + type.name();
 
         if (diplomacyService.createTreaty(treatyName, kingdom.getName(), targetKingdom.getName(), type, days)) {
-            player.sendMessage("§a✔ Treaty §6" + treatyName + "§a created!");
-            player.sendMessage("§7Type: §e" + type.name());
-            player.sendMessage("§7Duration: §e" + days + " days");
-            player.sendMessage("§7Between: §6" + kingdom.getName() + " §7and §6" + targetKingdom.getName());
+            player.sendMessage(MessageUtils.format("treaty.created", java.util.Map.of("name", treatyName)));
+            player.sendMessage(MessageUtils.format("treaty.created_type", java.util.Map.of("type", type.name())));
+            player.sendMessage(MessageUtils.format("treaty.created_duration", java.util.Map.of("days", String.valueOf(days))));
+            player.sendMessage(MessageUtils.format("treaty.created_between", java.util.Map.of("a", kingdom.getName(), "b", targetKingdom.getName())));
 
             // Notify the other kingdom
             Town targetCapital = societiesManager.getTown(targetKingdom.getCapital());
             if (targetCapital != null) {
                 Player targetKing = plugin.getServer().getPlayer(targetCapital.getMayor());
                 if (targetKing != null) {
-                    targetKing.sendMessage("§7[§6Treaty§7] §eA treaty has been proposed by §6" + kingdom.getName());
-                    targetKing.sendMessage("§7Type: §e" + type.name() + " §7Duration: §e" + days + " days");
-                    targetKing.sendMessage("§7Use §e/treaty accept " + treatyName + "§7 to accept!");
+                    targetKing.sendMessage(MessageUtils.format("treaty.notify_proposed", java.util.Map.of("from", kingdom.getName())));
+                    targetKing.sendMessage(MessageUtils.format("treaty.notify_proposed_details", java.util.Map.of("type", type.name(), "days", String.valueOf(days))));
+                    targetKing.sendMessage(MessageUtils.format("treaty.notify_proposed_accept", java.util.Map.of("name", treatyName)));
                 }
             }
         } else {
-            player.sendMessage("§cFailed to create treaty!");
+            player.sendMessage(MessageUtils.get("treaty.create_failed"));
         }
 
         return true;
@@ -161,7 +162,7 @@ public class TreatyCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleAccept(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /treaty accept <treatyName>");
+            player.sendMessage(MessageUtils.get("treaty.accept_usage"));
             return true;
         }
 
@@ -176,50 +177,50 @@ public class TreatyCommand implements CommandExecutor, TabCompleter {
         }
 
         if (treaty == null) {
-            player.sendMessage("§cTreaty not found!");
+            player.sendMessage(MessageUtils.get("treaty.not_found"));
             return true;
         }
 
         if (treaty.getStatus() != Treaty.TreatyStatus.PENDING) {
-            player.sendMessage("§cThis treaty is not pending acceptance!");
+            player.sendMessage(MessageUtils.get("treaty.not_pending"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town!");
+            player.sendMessage(MessageUtils.get("treaty.must_be_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (town.getKingdom() == null) {
-            player.sendMessage("§cYour town must be part of a kingdom!");
+            player.sendMessage(MessageUtils.get("treaty.must_be_in_kingdom"));
             return true;
         }
 
         Kingdom kingdom = societiesManager.getKingdom(town.getKingdom());
 
         if (!treaty.getKingdom1().equals(kingdom.getName()) && !treaty.getKingdom2().equals(kingdom.getName())) {
-            player.sendMessage("§cThis treaty doesn't involve your kingdom!");
+            player.sendMessage(MessageUtils.get("treaty.not_involved"));
             return true;
         }
 
         if (!kingdom.isKing(town.getName()) || !town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cOnly the capital's mayor can accept treaties!");
+            player.sendMessage(MessageUtils.get("treaty.only_capital_accept"));
             return true;
         }
 
         treaty.setStatus(Treaty.TreatyStatus.ACTIVE);
 
-        player.sendMessage("§a✔ Treaty §6" + treaty.getName() + "§a accepted!");
-        player.sendMessage("§7The treaty is now active for §e" + treaty.getDaysRemaining() + "§7 days");
+        player.sendMessage(MessageUtils.format("treaty.accept_success", java.util.Map.of("name", treaty.getName())));
+        player.sendMessage(MessageUtils.format("treaty.accept_active_days", java.util.Map.of("days", String.valueOf(treaty.getDaysRemaining()))));
 
         return true;
     }
 
     private boolean handleInfo(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /treaty info <treatyName>");
+            player.sendMessage(MessageUtils.get("treaty.accept_usage"));
             return true;
         }
 
@@ -234,24 +235,24 @@ public class TreatyCommand implements CommandExecutor, TabCompleter {
         }
 
         if (treaty == null) {
-            player.sendMessage("§cTreaty not found!");
+            player.sendMessage(MessageUtils.get("treaty.not_found"));
             return true;
         }
 
-        player.sendMessage("§7§m----------§r §6Treaty Info§7 §m----------");
-        player.sendMessage("§eName: §6" + treaty.getName());
-        player.sendMessage("§eType: §6" + treaty.getType().name());
-        player.sendMessage("§eKingdoms: §6" + treaty.getKingdom1() + " §7& §6" + treaty.getKingdom2());
-        player.sendMessage("§eStatus: §6" + treaty.getStatus().name());
-        player.sendMessage("§eDays Remaining: §6" + treaty.getDaysRemaining());
+        player.sendMessage(MessageUtils.get("treaty.info_header"));
+        player.sendMessage(MessageUtils.format("treaty.info_line_name", java.util.Map.of("name", treaty.getName())));
+        player.sendMessage(MessageUtils.format("treaty.info_line_type", java.util.Map.of("type", treaty.getType().name())));
+        player.sendMessage(MessageUtils.format("treaty.info_line_kingdoms", java.util.Map.of("a", treaty.getKingdom1(), "b", treaty.getKingdom2())));
+        player.sendMessage(MessageUtils.format("treaty.info_line_status", java.util.Map.of("status", treaty.getStatus().name())));
+        player.sendMessage(MessageUtils.format("treaty.info_line_days", java.util.Map.of("days", String.valueOf(treaty.getDaysRemaining()))));
 
         if (treaty.isActive()) {
-            player.sendMessage("§a✔ Treaty is currently active");
+            player.sendMessage(MessageUtils.get("treaty.accept_success").replace("{name}", treaty.getName()));
         } else if (treaty.isExpired()) {
-            player.sendMessage("§c✘ Treaty has expired");
+            player.sendMessage(MessageUtils.get("treaty.break_failed"));
         }
 
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("treaty.info_footer"));
 
         return true;
     }
@@ -260,30 +261,31 @@ public class TreatyCommand implements CommandExecutor, TabCompleter {
         Collection<Treaty> treaties = societiesManager.getAllTreaties();
 
         if (treaties.isEmpty()) {
-            player.sendMessage("§cNo treaties exist!");
+            player.sendMessage(MessageUtils.get("treaty.create_failed").replace("Failed to create treaty!", "No treaties exist!"));
             return true;
         }
 
-        player.sendMessage("§7§m----------§r §6Treaties §7(" + treaties.size() + ")§m----------");
+        player.sendMessage(MessageUtils.format("treaty.list_header", java.util.Map.of("count", String.valueOf(treaties.size()))));
 
         for (Treaty treaty : treaties) {
-            String status = treaty.isActive() ? "§aActive" :
-                    treaty.isExpired() ? "§cExpired" :
-                            treaty.getStatus() == Treaty.TreatyStatus.PENDING ? "§ePending" : "§7" + treaty.getStatus();
+            String statusKey = treaty.isActive() ? "treaty.status.active" :
+                    treaty.isExpired() ? "treaty.status.expired" :
+                            treaty.getStatus() == Treaty.TreatyStatus.PENDING ? "treaty.status.pending" : "treaty.status.unknown";
+            String status = MessageUtils.get(statusKey).replace("{status}", treaty.getStatus().name());
 
-            player.sendMessage("§e• §6" + treaty.getName());
-            player.sendMessage("§7  Type: §e" + treaty.getType().name() + " §7| Status: " + status);
-            player.sendMessage("§7  Between: §6" + treaty.getKingdom1() + " §7& §6" + treaty.getKingdom2());
+            player.sendMessage(MessageUtils.format("treaty.list_item_name", java.util.Map.of("name", treaty.getName())));
+            player.sendMessage(MessageUtils.format("treaty.list_item_details", java.util.Map.of("type", treaty.getType().name(), "status", status)));
+            player.sendMessage(MessageUtils.format("treaty.list_item_between", java.util.Map.of("a", treaty.getKingdom1(), "b", treaty.getKingdom2())));
         }
 
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("treaty.list_footer"));
 
         return true;
     }
 
     private boolean handleBreak(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /treaty break <treatyName>");
+            player.sendMessage(MessageUtils.get("treaty.break_usage"));
             return true;
         }
 
@@ -298,37 +300,37 @@ public class TreatyCommand implements CommandExecutor, TabCompleter {
         }
 
         if (treaty == null) {
-            player.sendMessage("§cTreaty not found!");
+            player.sendMessage(MessageUtils.get("treaty.not_found"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town!");
+            player.sendMessage(MessageUtils.get("treaty.must_be_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (town.getKingdom() == null) {
-            player.sendMessage("§cYour town must be part of a kingdom!");
+            player.sendMessage(MessageUtils.get("treaty.must_be_in_kingdom"));
             return true;
         }
 
         Kingdom kingdom = societiesManager.getKingdom(town.getKingdom());
 
         if (!treaty.getKingdom1().equals(kingdom.getName()) && !treaty.getKingdom2().equals(kingdom.getName())) {
-            player.sendMessage("§cThis treaty doesn't involve your kingdom!");
+            player.sendMessage(MessageUtils.get("treaty.not_involved"));
             return true;
         }
 
         if (!kingdom.isKing(town.getName()) || !town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cOnly the capital's mayor can break treaties!");
+            player.sendMessage(MessageUtils.get("treaty.only_capital_accept"));
             return true;
         }
 
         if (diplomacyService.violateTreaty(treaty.getName(), kingdom.getName())) {
-            player.sendMessage("§c✘ Treaty §6" + treaty.getName() + "§c broken!");
-            player.sendMessage("§7Your kingdom will suffer diplomatic penalties!");
+            player.sendMessage(MessageUtils.format("treaty.break_success", java.util.Map.of("name", treaty.getName())));
+            player.sendMessage(MessageUtils.get("treaty.break_penalty"));
 
             // Notify the other kingdom
             String otherKingdomName = treaty.getOtherKingdom(kingdom.getName());
@@ -338,12 +340,12 @@ public class TreatyCommand implements CommandExecutor, TabCompleter {
                 if (otherCapital != null) {
                     Player otherKing = plugin.getServer().getPlayer(otherCapital.getMayor());
                     if (otherKing != null) {
-                        otherKing.sendMessage("§c✘ §6" + kingdom.getName() + "§c has broken the treaty §6" + treaty.getName() + "§c!");
+                        otherKing.sendMessage(MessageUtils.format("treaty.notify_proposed", java.util.Map.of("from", kingdom.getName())).replace("{from}", kingdom.getName()) + " " + MessageUtils.format("treaty.break_success", java.util.Map.of("name", treaty.getName())));
                     }
                 }
             }
         } else {
-            player.sendMessage("§cFailed to break treaty!");
+            player.sendMessage(MessageUtils.get("treaty.break_failed"));
         }
 
         return true;
@@ -351,7 +353,7 @@ public class TreatyCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleRenew(Player player, String[] args) {
         if (args.length < 3) {
-            player.sendMessage("§cUsage: /treaty renew <treatyName> <days>");
+            player.sendMessage(MessageUtils.get("treaty.renew_usage"));
             return true;
         }
 
@@ -366,7 +368,7 @@ public class TreatyCommand implements CommandExecutor, TabCompleter {
         }
 
         if (treaty == null) {
-            player.sendMessage("§cTreaty not found!");
+            player.sendMessage(MessageUtils.get("treaty.not_found"));
             return true;
         }
 
@@ -374,30 +376,30 @@ public class TreatyCommand implements CommandExecutor, TabCompleter {
         try {
             days = Long.parseLong(args[2]);
             if (days < 1 || days > 365) {
-                player.sendMessage("§cDuration must be between 1 and 365 days!");
+                player.sendMessage(MessageUtils.get("treaty.duration_invalid"));
                 return true;
             }
         } catch (NumberFormatException e) {
-            player.sendMessage("§cInvalid number of days!");
+            player.sendMessage(MessageUtils.get("treaty.invalid_days"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town!");
+            player.sendMessage(MessageUtils.get("treaty.must_be_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (town.getKingdom() == null) {
-            player.sendMessage("§cYour town must be part of a kingdom!");
+            player.sendMessage(MessageUtils.get("treaty.must_be_in_kingdom"));
             return true;
         }
 
         Kingdom kingdom = societiesManager.getKingdom(town.getKingdom());
 
         if (!kingdom.isKing(town.getName()) || !town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cOnly the capital's mayor can renew treaties!");
+            player.sendMessage(MessageUtils.get("treaty.only_capital_accept"));
             return true;
         }
 
@@ -405,21 +407,21 @@ public class TreatyCommand implements CommandExecutor, TabCompleter {
         treaty.setExpiresAt(newExpiry);
         treaty.setStatus(Treaty.TreatyStatus.ACTIVE);
 
-        player.sendMessage("§a✔ Treaty §6" + treaty.getName() + "§a renewed!");
-        player.sendMessage("§7New expiration: §e" + days + "§7 days from now");
+        player.sendMessage(MessageUtils.format("treaty.renew_success", java.util.Map.of("name", treaty.getName())));
+        player.sendMessage(MessageUtils.format("treaty.renew_new_expiry", java.util.Map.of("days", String.valueOf(days))));
 
         return true;
     }
 
     private void sendHelp(Player player) {
-        player.sendMessage("§7§m----------§r §6Treaty Commands§7 §m----------");
-        player.sendMessage("§e/treaty create <kingdom> <type> <days>§7 - Create treaty");
-        player.sendMessage("§e/treaty accept <name>§7 - Accept treaty");
-        player.sendMessage("§e/treaty info <name>§7 - View treaty info");
-        player.sendMessage("§e/treaty list§7 - List all treaties");
-        player.sendMessage("§e/treaty break <name>§7 - Break a treaty");
-        player.sendMessage("§e/treaty renew <name> <days>§7 - Renew treaty");
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("treaty.info_header").replace("Treaty Info", "Treaty Commands"));
+        player.sendMessage(MessageUtils.get("treaty.usage_create"));
+        player.sendMessage(MessageUtils.get("treaty.accept_usage"));
+        player.sendMessage(MessageUtils.get("treaty.info_header"));
+        player.sendMessage(MessageUtils.get("treaty.list_header"));
+        player.sendMessage(MessageUtils.get("treaty.break_usage"));
+        player.sendMessage(MessageUtils.get("treaty.renew_usage"));
+        player.sendMessage(MessageUtils.get("treaty.info_footer"));
     }
 
     @Override

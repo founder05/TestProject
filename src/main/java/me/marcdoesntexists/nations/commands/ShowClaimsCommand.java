@@ -6,6 +6,7 @@ import me.marcdoesntexists.nations.managers.DataManager;
 import me.marcdoesntexists.nations.managers.SocietiesManager;
 import me.marcdoesntexists.nations.societies.Town;
 import me.marcdoesntexists.nations.utils.PlayerData;
+import me.marcdoesntexists.nations.utils.MessageUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -29,7 +30,7 @@ public class ShowClaimsCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can use this command.");
+            sender.sendMessage(MessageUtils.get("commands.player_only"));
             return true;
         }
 
@@ -38,24 +39,24 @@ public class ShowClaimsCommand implements CommandExecutor, TabCompleter {
 
         String townName = dataManager.getPlayerData(player.getUniqueId()).getTown();
         if (townName == null) {
-            player.sendMessage("§cYou are not in a town!");
+            player.sendMessage(MessageUtils.get("claims.not_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(townName);
         if (town == null) {
-            player.sendMessage("§cTown not found.");
+            player.sendMessage(MessageUtils.get("claims.town_not_found"));
             return true;
         }
 
         if (!player.hasPermission("nations.claim.show")) {
-            player.sendMessage("§cYou don't have permission to view claim borders.");
+            player.sendMessage(MessageUtils.get("claims.no_permission"));
             return true;
         }
 
         ClaimVisualizer visualizer = plugin.getClaimVisualizer();
         if (visualizer == null) {
-            player.sendMessage("§cClaim visualizer not available.");
+            player.sendMessage(MessageUtils.get("claims.visualizer_unavailable"));
             return true;
         }
 

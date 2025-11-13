@@ -6,6 +6,7 @@ import me.marcdoesntexists.nations.managers.ClaimManager;
 import me.marcdoesntexists.nations.managers.SocietiesManager;
 import me.marcdoesntexists.nations.societies.Town;
 import me.marcdoesntexists.nations.utils.PlayerData;
+import me.marcdoesntexists.nations.utils.MessageUtils;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Chunk;
 import org.bukkit.entity.Player;
@@ -23,6 +24,7 @@ public class MoveListener implements Listener {
     private final HybridClaimManager hybridClaimManager;
     private final SocietiesManager societiesManager;
     private final Map<UUID, String> playerChunkCache = new HashMap<>();
+    private final Map<UUID, String> playerLastTownCache = new HashMap<>();
 
     public MoveListener(Nations plugin) {
         this.plugin = plugin;
@@ -53,7 +55,16 @@ public class MoveListener implements Listener {
         } catch (Exception e) {
             plugin.getLogger().warning("Error into Land Search: " + e.getMessage());
         }
+
+        String lastTown = playerLastTownCache.get(player.getUniqueId());
         if (townName != null && societiesManager != null) {
+            if (townName.equals(lastTown)) {
+                // still in same town claim, don't resend actionbar
+                return;
+            }
+
+            playerLastTownCache.put(player.getUniqueId(), townName);
+
             Town town = societiesManager.getTown(townName);
             if (town != null) {
                 PlayerData data = plugin.getDataManager() != null
@@ -62,19 +73,25 @@ public class MoveListener implements Listener {
 
                 boolean isMember = data != null && townName.equalsIgnoreCase(data.getTown());
                 Component msg = Component.text(
-                        (isMember ? "§a⚑ §6" : "§e⚑ §6") + town.getName() +
-                                (isMember ? " §7- §aYour Territory" : " §7- §eForeign Territory")
+                        MessageUtils.format(isMember ? "actionbar.your_territory" : "actionbar.foreign_territory", Map.of("town", town.getName()))
                 );
 
                 player.sendActionBar(msg); //
 
                 if (player.hasPermission("nations.claim.verbose")) {
-                    player.sendMessage(Component.text("§7[§6" + town.getName() + "§7] " +
-                            (isMember ? "§aYour territory" : "§eForeign territory")));
+                    player.sendMessage(Component.text(MessageUtils.format("gui.town_verbose", Map.of("town", town.getName(), "member", isMember ? "true" : "false"))));
                 }
                 return;
             }
         }
-        player.sendActionBar(Component.text("§8⚐ §7Wilderness §8- §7Unclaimed Land"));
+
+        // wilderness case
+        if (lastTown == null) {
+            // was already wilderness, don't resend
+            return;
+        }
+
+        playerLastTownCache.put(player.getUniqueId(), null);
+        player.sendActionBar(Component.text(MessageUtils.get("actionbar.wilderness")));
     }
 }

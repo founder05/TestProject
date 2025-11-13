@@ -39,6 +39,7 @@ public class ConfigurationManager {
         loadConfig("religion.yml");
         loadConfig("diplomacy.yml");
         loadConfig("gui.yml");
+        loadConfig("messages.yml");
         loadConfig("war.yml");
         loadConfig("legal.yml");
         loadConfig("military.yml");
@@ -108,6 +109,10 @@ public class ConfigurationManager {
 
     public FileConfiguration getSocialConfig() {
         return configs.get("social.yml");
+    }
+
+    public FileConfiguration getMessagesConfig() {
+        return configs.get("messages.yml");
     }
 
     public void reloadAllConfigurations() {

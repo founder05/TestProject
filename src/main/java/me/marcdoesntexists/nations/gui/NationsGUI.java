@@ -6,6 +6,7 @@ import me.marcdoesntexists.nations.societies.Empire;
 import me.marcdoesntexists.nations.societies.Kingdom;
 import me.marcdoesntexists.nations.societies.Town;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -13,10 +14,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -121,7 +124,7 @@ public class NationsGUI implements Listener {
         int size = inv.getSize();
         int start = size - 9;
         for (int i = start; i < size; i++) {
-            if (inv.getItem(i) == null || inv.getItem(i).getType() == Material.AIR) {
+            if (inv.getItem(i) == null || Objects.requireNonNull(inv.getItem(i)).getType() == Material.AIR) {
                 inv.setItem(i, filler);
             }
         }
@@ -142,13 +145,13 @@ public class NationsGUI implements Listener {
             meta.setDisplayName(name + " §a✔");
             List<String> newLore = new ArrayList<>(lore);
             newLore.add("");
-            newLore.add("§a▶ Currently viewing");
+            newLore.add(me.marcdoesntexists.nations.utils.MessageUtils.get("gui.currently_viewing"));
             meta.setLore(newLore);
         } else {
             meta.setDisplayName(name);
             List<String> newLore = new ArrayList<>(lore);
             newLore.add("");
-            newLore.add("§7Click to view");
+            newLore.add(me.marcdoesntexists.nations.utils.MessageUtils.get("gui.click_to_view"));
             meta.setLore(newLore);
         }
 
@@ -205,22 +208,27 @@ public class NationsGUI implements Listener {
             meta.setDisplayName(nameFormat.replace("{name}", town.getName()));
 
             List<String> loreFormat = config.getStringList("gui.towns.item.lore");
-            List<String> lore = new ArrayList<>();
-            for (String line : loreFormat) {
-                String replaced = line
-                        .replace("{name}", town.getName())
-                        .replace("{mayor}", (mayor.getName() != null ? mayor.getName() : "Unknown"))
-                        .replace("{members}", String.valueOf(town.getMembers().size()))
-                        .replace("{claims}", String.valueOf(town.getClaims().size()))
-                        .replace("{balance}", String.valueOf(town.getBalance()))
-                        .replace("{level}", String.valueOf(town.getProgressionLevel()))
-                        .replace("{kingdom}", town.getKingdom() != null ? town.getKingdom() : "None");
-                lore.add(replaced);
-            }
+            List<String> lore = getStrings(town, loreFormat, mayor);
             meta.setLore(lore);
             item.setItemMeta(meta);
         }
         return item;
+    }
+
+    private static @NotNull List<String> getStrings(Town town, List<String> loreFormat, OfflinePlayer mayor) {
+        List<String> lore = new ArrayList<>();
+        for (String line : loreFormat) {
+            String replaced = line
+                    .replace("{name}", town.getName())
+                    .replace("{mayor}", (mayor.getName() != null ? mayor.getName() : "Unknown"))
+                    .replace("{members}", String.valueOf(town.getMembers().size()))
+                    .replace("{claims}", String.valueOf(town.getClaims().size()))
+                    .replace("{balance}", String.valueOf(town.getBalance()))
+                    .replace("{level}", String.valueOf(town.getProgressionLevel()))
+                    .replace("{kingdom}", town.getKingdom() != null ? town.getKingdom() : "None");
+            lore.add(replaced);
+        }
+        return lore;
     }
 
     private static ItemStack createKingdomItem(Kingdom kingdom, FileConfiguration config) {
@@ -335,27 +343,39 @@ public class NationsGUI implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!(event.getWhoClicked() instanceof Player)) return;
+        if (!(event.getWhoClicked() instanceof Player player)) return;
 
-        Player player = (Player) event.getWhoClicked();
-        String title = event.getView().getTitle();
-        FileConfiguration config = Nations.getInstance().getConfigurationManager().getConfig("gui.yml");
+        // If the player is not currently viewing our Nations GUI category, try fallback by title
+        String current = playerCurrentCategory.get(player.getUniqueId());
+        if (current == null) {
+            FileConfiguration config = Nations.getInstance().getConfigurationManager().getConfig("gui.yml");
+            String title = ChatColor.stripColor(event.getView().getTitle());
+            String titleTowns = ChatColor.stripColor(config.getString("gui.towns.title", "Nations - Towns"));
+            String titleKingdoms = ChatColor.stripColor(config.getString("gui.kingdoms.title", "Nations - Kingdoms"));
+            String titleEmpires = ChatColor.stripColor(config.getString("gui.empires.title", "Nations - Empires"));
 
-        // check if this title matches any of the categories
-        String titleTowns = config.getString("gui.towns.title", "Nations - Towns");
-        String titleKingdoms = config.getString("gui.kingdoms.title", "Nations - Kingdoms");
-        String titleEmpires = config.getString("gui.empires.title", "Nations - Empires");
-
-        if (!title.equals(titleTowns) && !title.equals(titleKingdoms) && !title.equals(titleEmpires)) {
-            return;
+            if (title.equals(titleTowns)) {
+                current = CAT_TOWNS;
+                playerCurrentCategory.put(player.getUniqueId(), current);
+            } else if (title.equals(titleKingdoms)) {
+                current = CAT_KINGDOMS;
+                playerCurrentCategory.put(player.getUniqueId(), current);
+            } else if (title.equals(titleEmpires)) {
+                current = CAT_EMPIRES;
+                playerCurrentCategory.put(player.getUniqueId(), current);
+            } else {
+                return;
+            }
         }
 
         event.setCancelled(true);
 
-        int slot = event.getSlot();
+        FileConfiguration config = Nations.getInstance().getConfigurationManager().getConfig("gui.yml");
         int townsSlot = config.getInt("gui.navigation.towns-button.slot", 45);
         int kingdomsSlot = config.getInt("gui.navigation.kingdoms-button.slot", 49);
         int empiresSlot = config.getInt("gui.navigation.empires-button.slot", 53);
+
+        int slot = event.getSlot();
 
         if (slot == townsSlot) {
             openMainGUI(player, CAT_TOWNS);
@@ -363,6 +383,87 @@ public class NationsGUI implements Listener {
             openMainGUI(player, CAT_KINGDOMS);
         } else if (slot == empiresSlot) {
             openMainGUI(player, CAT_EMPIRES);
+        }
+    }
+
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+        if (!(event.getPlayer() instanceof Player)) return;
+        Player player = (Player) event.getPlayer();
+
+        // If the player had a mapping (was viewing a Nations GUI), remove it on close
+        if (playerCurrentCategory.containsKey(player.getUniqueId())) {
+            playerCurrentCategory.remove(player.getUniqueId());
+            return;
+        }
+
+        // Fallback: try to match by title and remove mapping if matches
+        FileConfiguration config = Nations.getInstance().getConfigurationManager().getConfig("gui.yml");
+        String title = ChatColor.stripColor(event.getView().getTitle());
+        String titleTowns = ChatColor.stripColor(config.getString("gui.towns.title", "Nations - Towns"));
+        String titleKingdoms = ChatColor.stripColor(config.getString("gui.kingdoms.title", "Nations - Kingdoms"));
+        String titleEmpires = ChatColor.stripColor(config.getString("gui.empires.title", "Nations - Empires"));
+
+        if (title.equals(titleTowns) || title.equals(titleKingdoms) || title.equals(titleEmpires)) {
+            playerCurrentCategory.remove(player.getUniqueId());
+        }
+    }
+
+    // Refresh GUIs for players currently viewing a category (updates in-place)
+    public static void refreshGUIsForCategory(String category) {
+        if (category == null) return;
+        String cat = category.toUpperCase(Locale.ROOT);
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            String current = playerCurrentCategory.get(p.getUniqueId());
+            if (current != null && current.equalsIgnoreCase(cat)) {
+                // Try to update inventory in-place; fallback to reopening if incompatible
+                try {
+                    updateInventoryForPlayer(p, cat);
+                } catch (Throwable t) {
+                    try {
+                        openMainGUI(p, cat);
+                    } catch (Throwable ignored) {}
+                }
+            }
+        }
+    }
+
+    // Update the player's open top inventory in-place to reflect current data for the category.
+    private static void updateInventoryForPlayer(Player player, String category) {
+        if (player == null || category == null) return;
+        Nations plugin = Nations.getInstance();
+        FileConfiguration config = plugin.getConfigurationManager().getConfig("gui.yml");
+
+        String key = "gui." + category.toLowerCase(Locale.ROOT) + ".size";
+        int desiredSize = config.getInt(key, 54);
+        if (desiredSize < 9 || desiredSize % 9 != 0) desiredSize = 54;
+
+        Inventory top = player.getOpenInventory().getTopInventory();
+        if (top == null) return;
+
+        // If sizes differ, reopen the GUI (can't resize an existing inventory)
+        if (top.getSize() != desiredSize) {
+            openMainGUI(player, category);
+            return;
+        }
+
+        // Clear only the slots we populate (0 .. size-9)
+        int maxSlot = top.getSize() - 9;
+        for (int i = 0; i < maxSlot; i++) top.setItem(i, null);
+
+        // Rebuild navigation/fillers and entries into the existing inventory
+        addNavigationButtons(top, category, config);
+
+        switch (category) {
+            case CAT_KINGDOMS:
+                addKingdomsToGUI(top, config, maxSlot);
+                break;
+            case CAT_EMPIRES:
+                addEmpiresToGUI(top, config, maxSlot);
+                break;
+            default:
+                addTownsToGUI(top, config, maxSlot);
+                break;
         }
     }
 }

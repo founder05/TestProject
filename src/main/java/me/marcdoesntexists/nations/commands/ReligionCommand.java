@@ -4,6 +4,7 @@ import me.marcdoesntexists.nations.Nations;
 import me.marcdoesntexists.nations.managers.DataManager;
 import me.marcdoesntexists.nations.managers.SocietiesManager;
 import me.marcdoesntexists.nations.societies.Religion;
+import me.marcdoesntexists.nations.utils.MessageUtils;
 import me.marcdoesntexists.nations.utils.PlayerData;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -32,7 +33,7 @@ public class ReligionCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage("§cThis command can only be used by players!");
+            sender.sendMessage(MessageUtils.get("commands.player_only"));
             return true;
         }
 
@@ -64,20 +65,20 @@ public class ReligionCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleCreate(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /religion create <name>");
+            player.sendMessage(MessageUtils.get("religion.usage_create"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getReligion() != null) {
-            player.sendMessage("§cYou are already in a religion!");
+            player.sendMessage(MessageUtils.get("religion.already_in_religion"));
             return true;
         }
 
         String religionName = args[1];
 
         if (societiesManager.getReligion(religionName) != null) {
-            player.sendMessage("§cA religion with this name already exists!");
+            player.sendMessage(MessageUtils.get("religion.already_exists"));
             return true;
         }
 
@@ -86,21 +87,21 @@ public class ReligionCommand implements CommandExecutor, TabCompleter {
         data.setReligion(religionName);
         data.setClergyRank("Founder");
 
-        player.sendMessage("§a✔ Religion §6" + religionName + "§a created successfully!");
-        player.sendMessage("§7You are now the founder of this religion.");
+        player.sendMessage(MessageUtils.format("religion.created", java.util.Map.of("name", religionName)));
+        player.sendMessage(MessageUtils.get("religion.created_note"));
 
         return true;
     }
 
     private boolean handleJoin(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /religion join <name>");
+            player.sendMessage(MessageUtils.get("religion.usage_join"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getReligion() != null) {
-            player.sendMessage("§cYou are already in a religion! Leave it first.");
+            player.sendMessage(MessageUtils.get("religion.must_leave_first"));
             return true;
         }
 
@@ -108,18 +109,18 @@ public class ReligionCommand implements CommandExecutor, TabCompleter {
         Religion religion = societiesManager.getReligion(religionName);
 
         if (religion == null) {
-            player.sendMessage("§cReligion not found!");
+            player.sendMessage(MessageUtils.get("religion.not_found"));
             return true;
         }
 
         religion.addFollower(player.getUniqueId());
         data.setReligion(religionName);
 
-        player.sendMessage("§a✔ You have joined §6" + religionName + "§a!");
+        player.sendMessage(MessageUtils.format("religion.joined", java.util.Map.of("name", religionName)));
 
         Player founder = plugin.getServer().getPlayer(religion.getFounder());
         if (founder != null) {
-            founder.sendMessage("§a✔ §6" + player.getName() + "§a has joined your religion!");
+            founder.sendMessage(MessageUtils.format("religion.notify_founder_join", java.util.Map.of("player", player.getName())));
         }
 
         return true;
@@ -129,14 +130,14 @@ public class ReligionCommand implements CommandExecutor, TabCompleter {
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
 
         if (data.getReligion() == null) {
-            player.sendMessage("§cYou are not in a religion!");
+            player.sendMessage(MessageUtils.get("religion.not_in_religion"));
             return true;
         }
 
         Religion religion = societiesManager.getReligion(data.getReligion());
 
         if (religion != null && religion.getFounder().equals(player.getUniqueId())) {
-            player.sendMessage("§cYou cannot leave a religion you founded! Transfer leadership first.");
+            player.sendMessage(MessageUtils.get("religion.cannot_leave_founder"));
             return true;
         }
 
@@ -144,7 +145,7 @@ public class ReligionCommand implements CommandExecutor, TabCompleter {
         data.setReligion(null);
         data.setClergyRank(null);
 
-        player.sendMessage("§a✔ You have left §6" + religionName + "§a!");
+        player.sendMessage(MessageUtils.format("religion.left", java.util.Map.of("name", religionName)));
 
         return true;
     }
@@ -155,7 +156,7 @@ public class ReligionCommand implements CommandExecutor, TabCompleter {
         if (args.length < 2) {
             PlayerData data = dataManager.getPlayerData(player.getUniqueId());
             if (data.getReligion() == null) {
-                player.sendMessage("§cYou are not in a religion! Usage: /religion info <name>");
+                player.sendMessage(MessageUtils.get("religion.not_in_religion_usage"));
                 return true;
             }
             religionName = data.getReligion();
@@ -165,15 +166,15 @@ public class ReligionCommand implements CommandExecutor, TabCompleter {
 
         Religion religion = societiesManager.getReligion(religionName);
         if (religion == null) {
-            player.sendMessage("§cReligion not found!");
+            player.sendMessage(MessageUtils.get("religion.not_found"));
             return true;
         }
 
-        player.sendMessage("§7§m----------§r §6" + religion.getName() + "§7 §m----------");
-        player.sendMessage("§eFounder: §6" + plugin.getServer().getOfflinePlayer(religion.getFounder()).getName());
-        player.sendMessage("§eFollowers: §6" + religion.getFollowers().size());
-        player.sendMessage("§eClergy Members: §6" + religion.getClergy().size());
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.format("religion.info_header", java.util.Map.of("name", religion.getName())));
+        player.sendMessage(MessageUtils.format("religion.info_founder", java.util.Map.of("founder", plugin.getServer().getOfflinePlayer(religion.getFounder()).getName())));
+        player.sendMessage(MessageUtils.format("religion.info_followers", java.util.Map.of("count", String.valueOf(religion.getFollowers().size()))));
+        player.sendMessage(MessageUtils.format("religion.info_clergy", java.util.Map.of("count", String.valueOf(religion.getClergy().size()))));
+        player.sendMessage(MessageUtils.get("religion.info_footer"));
 
         return true;
     }
@@ -182,30 +183,30 @@ public class ReligionCommand implements CommandExecutor, TabCompleter {
         Collection<Religion> religions = societiesManager.getAllReligions();
 
         if (religions.isEmpty()) {
-            player.sendMessage("§cNo religions exist yet!");
+            player.sendMessage(MessageUtils.get("religion.no_religions"));
             return true;
         }
 
-        player.sendMessage("§7§m----------§r §6Religions §7(" + religions.size() + ")§m----------");
+        player.sendMessage(MessageUtils.format("religion.list_header", java.util.Map.of("count", String.valueOf(religions.size()))));
 
         for (Religion religion : religions) {
             String founderName = plugin.getServer().getOfflinePlayer(religion.getFounder()).getName();
-            player.sendMessage("§e• §6" + religion.getName() + " §7- Founder: §e" + founderName + " §7- Followers: §e" + religion.getFollowers().size());
+            player.sendMessage(MessageUtils.format("religion.list_item", java.util.Map.of("name", religion.getName(), "founder", founderName, "followers", String.valueOf(religion.getFollowers().size()))));
         }
 
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("religion.info_footer"));
 
         return true;
     }
 
     private void sendHelp(Player player) {
-        player.sendMessage("§7§m----------§r §6Religion Commands§7 §m----------");
-        player.sendMessage("§e/religion create <name>§7 - Create a religion");
-        player.sendMessage("§e/religion join <name>§7 - Join a religion");
-        player.sendMessage("§e/religion leave§7 - Leave your religion");
-        player.sendMessage("§e/religion info [name]§7 - View religion info");
-        player.sendMessage("§e/religion list§7 - List all religions");
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("religion.help_header"));
+        player.sendMessage(MessageUtils.get("religion.help_create"));
+        player.sendMessage(MessageUtils.get("religion.help_join"));
+        player.sendMessage(MessageUtils.get("religion.help_leave"));
+        player.sendMessage(MessageUtils.get("religion.help_info"));
+        player.sendMessage(MessageUtils.get("religion.help_list"));
+        player.sendMessage(MessageUtils.get("religion.help_footer"));
     }
 
     @Override

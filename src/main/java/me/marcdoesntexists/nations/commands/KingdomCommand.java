@@ -5,6 +5,7 @@ import me.marcdoesntexists.nations.managers.DataManager;
 import me.marcdoesntexists.nations.managers.SocietiesManager;
 import me.marcdoesntexists.nations.societies.Kingdom;
 import me.marcdoesntexists.nations.societies.Town;
+import me.marcdoesntexists.nations.utils.MessageUtils;
 import me.marcdoesntexists.nations.utils.PlayerData;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class KingdomCommand implements CommandExecutor, TabCompleter {
@@ -34,7 +36,7 @@ public class KingdomCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage("§cThis command can only be used by players!");
+            sender.sendMessage(MessageUtils.get("kingdom.player_only"));
             return true;
         }
 
@@ -66,36 +68,36 @@ public class KingdomCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleCreate(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /kingdom create <name>");
+            player.sendMessage(MessageUtils.get("kingdom.usage_create"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town to create a kingdom!");
+            player.sendMessage(MessageUtils.get("kingdom.must_be_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (!town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cOnly the mayor can evolve a town into a kingdom!");
+            player.sendMessage(MessageUtils.get("kingdom.only_mayor"));
             return true;
         }
 
         if (town.getKingdom() != null) {
-            player.sendMessage("§cYour town is already part of a kingdom!");
+            player.sendMessage(MessageUtils.get("kingdom.already_in_kingdom"));
             return true;
         }
 
         if (town.getMembers().size() < MIN_TOWN_MEMBERS) {
-            player.sendMessage("§cYour town needs at least " + MIN_TOWN_MEMBERS + " members to form a kingdom!");
+            player.sendMessage(MessageUtils.get("kingdom.not_enough_members").replace("{min}", String.valueOf(MIN_TOWN_MEMBERS)));
             return true;
         }
 
         String kingdomName = args[1];
 
         if (societiesManager.getKingdom(kingdomName) != null) {
-            player.sendMessage("§cA kingdom with this name already exists!");
+            player.sendMessage(MessageUtils.get("kingdom.kingdom_exists"));
             return true;
         }
 
@@ -103,8 +105,8 @@ public class KingdomCommand implements CommandExecutor, TabCompleter {
         societiesManager.registerKingdom(newKingdom);
         town.setKingdom(kingdomName);
 
-        player.sendMessage("§a✔ Kingdom §6" + kingdomName + "§a created successfully!");
-        player.sendMessage("§7Your town §e" + town.getName() + "§7 is now the capital!");
+        player.sendMessage(MessageUtils.format("kingdom.kingdom_created", Map.of("kingdom", kingdomName)));
+        player.sendMessage(MessageUtils.format("kingdom.kingdom_capital_set", Map.of("town", town.getName())));
 
         return true;
     }
@@ -115,13 +117,13 @@ public class KingdomCommand implements CommandExecutor, TabCompleter {
         if (args.length < 2) {
             PlayerData data = dataManager.getPlayerData(player.getUniqueId());
             if (data.getTown() == null) {
-                player.sendMessage("§cYou are not in a town! Usage: /kingdom info <name>");
+                player.sendMessage(MessageUtils.get("kingdom.must_be_in_town"));
                 return true;
             }
 
             Town town = societiesManager.getTown(data.getTown());
             if (town.getKingdom() == null) {
-                player.sendMessage("§cYour town is not part of a kingdom! Usage: /kingdom info <name>");
+                player.sendMessage(MessageUtils.get("kingdom.already_in_kingdom"));
                 return true;
             }
 
@@ -132,58 +134,58 @@ public class KingdomCommand implements CommandExecutor, TabCompleter {
 
         Kingdom kingdom = societiesManager.getKingdom(kingdomName);
         if (kingdom == null) {
-            player.sendMessage("§cKingdom not found!");
+            player.sendMessage(MessageUtils.get("kingdom.kingdom_not_found"));
             return true;
         }
 
-        player.sendMessage("§7§m----------§r §6" + kingdom.getName() + "§7 §m----------");
-        player.sendMessage("§eCapital: §6" + kingdom.getCapital());
-        player.sendMessage("§eTowns: §6" + kingdom.getTowns().size());
-        player.sendMessage("§eAllies: §6" + kingdom.getAllies().size());
-        player.sendMessage("§eEnemies: §6" + kingdom.getEnemies().size());
-        player.sendMessage("§eActive Wars: §6" + kingdom.getWars().size());
-        player.sendMessage("§eVassals: §6" + kingdom.getVassals().size());
+        player.sendMessage(MessageUtils.format("kingdom.kingdom_info_header", Map.of("kingdom", kingdom.getName())));
+        player.sendMessage(MessageUtils.format("kingdom.kingdom_info_capital", Map.of("capital", kingdom.getCapital())));
+        player.sendMessage(MessageUtils.format("kingdom.kingdom_info_towns", Map.of("count", String.valueOf(kingdom.getTowns().size()))));
+        player.sendMessage(MessageUtils.format("kingdom.kingdom_info_allies", Map.of("count", String.valueOf(kingdom.getAllies().size()))));
+        player.sendMessage(MessageUtils.format("kingdom.kingdom_info_enemies", Map.of("count", String.valueOf(kingdom.getEnemies().size()))));
+        player.sendMessage(MessageUtils.format("kingdom.kingdom_info_wars", Map.of("count", String.valueOf(kingdom.getWars().size()))));
+        player.sendMessage(MessageUtils.format("kingdom.kingdom_info_vassals", Map.of("count", String.valueOf(kingdom.getVassals().size()))));
 
         if (kingdom.getSuzerain() != null) {
-            player.sendMessage("§eSuzerain: §6" + kingdom.getSuzerain());
+            player.sendMessage(MessageUtils.format("kingdom.kingdom_info_suzerain", Map.of("suzerain", kingdom.getSuzerain())));
         }
 
         if (kingdom.getEmpire() != null) {
-            player.sendMessage("§eEmpire: §6" + kingdom.getEmpire());
+            player.sendMessage(MessageUtils.format("kingdom.kingdom_info_empire", Map.of("empire", kingdom.getEmpire())));
         }
 
-        player.sendMessage("§eLevel: §6" + kingdom.getProgressionLevel());
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.format("kingdom.kingdom_info_level", Map.of("level", String.valueOf(kingdom.getProgressionLevel()))));
+        player.sendMessage(MessageUtils.get("kingdom.kingdom_info_header").replace("{kingdom}", ""));
 
         return true;
     }
 
     private boolean handleInvite(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /kingdom invite <town>");
+            player.sendMessage(MessageUtils.get("kingdom.usage_invite"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou are not in a town!");
+            player.sendMessage(MessageUtils.get("kingdom.must_be_in_town"));
             return true;
         }
 
         Town senderTown = societiesManager.getTown(data.getTown());
         if (senderTown.getKingdom() == null) {
-            player.sendMessage("§cYour town is not part of a kingdom!");
+            player.sendMessage(MessageUtils.get("kingdom.already_in_kingdom"));
             return true;
         }
 
         Kingdom kingdom = societiesManager.getKingdom(senderTown.getKingdom());
         if (!kingdom.isKing(senderTown.getName())) {
-            player.sendMessage("§cOnly the capital's mayor can invite towns!");
+            player.sendMessage(MessageUtils.get("kingdom.only_mayor"));
             return true;
         }
 
         if (!senderTown.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cYou must be the mayor to invite towns!");
+            player.sendMessage(MessageUtils.get("kingdom.only_mayor"));
             return true;
         }
 
@@ -191,23 +193,23 @@ public class KingdomCommand implements CommandExecutor, TabCompleter {
         Town targetTown = societiesManager.getTown(targetTownName);
 
         if (targetTown == null) {
-            player.sendMessage("§cTown not found!");
+            player.sendMessage(MessageUtils.get("commands.not_found").replace("{entity}", "Town"));
             return true;
         }
 
         if (targetTown.getKingdom() != null) {
-            player.sendMessage("§cThat town is already part of a kingdom!");
+            player.sendMessage(MessageUtils.get("kingdom.already_in_kingdom"));
             return true;
         }
 
         targetTown.setKingdom(kingdom.getName());
         kingdom.addTown(targetTownName);
 
-        player.sendMessage("§a✔ §6" + targetTownName + "§a has joined your kingdom!");
+        player.sendMessage(MessageUtils.get("kingdom.kingdom_created").replace("{kingdom}", targetTownName));
 
         Player targetMayor = plugin.getServer().getPlayer(targetTown.getMayor());
         if (targetMayor != null) {
-            targetMayor.sendMessage("§7[§6" + kingdom.getName() + "§7] §aYour town has been invited and joined §6" + kingdom.getName() + "§a!");
+            targetMayor.sendMessage(MessageUtils.format("alliance.invite_notify", Map.of("alliance", kingdom.getName())));
         }
 
         return true;
@@ -215,30 +217,30 @@ public class KingdomCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleVassalize(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /kingdom vassalize <kingdom>");
+            player.sendMessage(MessageUtils.get("kingdom.usage_vassalize"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou are not in a town!");
+            player.sendMessage(MessageUtils.get("kingdom.must_be_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (town.getKingdom() == null) {
-            player.sendMessage("§cYour town is not part of a kingdom!");
+            player.sendMessage(MessageUtils.get("kingdom.already_in_kingdom"));
             return true;
         }
 
         Kingdom kingdom = societiesManager.getKingdom(town.getKingdom());
         if (!kingdom.isKing(town.getName())) {
-            player.sendMessage("§cOnly the capital's mayor can vassalize kingdoms!");
+            player.sendMessage(MessageUtils.get("kingdom.only_mayor"));
             return true;
         }
 
         if (!town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cYou must be the mayor to vassalize kingdoms!");
+            player.sendMessage(MessageUtils.get("kingdom.only_mayor"));
             return true;
         }
 
@@ -246,30 +248,30 @@ public class KingdomCommand implements CommandExecutor, TabCompleter {
         Kingdom targetKingdom = societiesManager.getKingdom(targetKingdomName);
 
         if (targetKingdom == null) {
-            player.sendMessage("§cKingdom not found!");
+            player.sendMessage(MessageUtils.get("kingdom.kingdom_not_found"));
             return true;
         }
 
         if (targetKingdom.getName().equals(kingdom.getName())) {
-            player.sendMessage("§cYou cannot vassalize your own kingdom!");
+            player.sendMessage(MessageUtils.get("commands.invalid_number"));
             return true;
         }
 
         if (targetKingdom.getSuzerain() != null) {
-            player.sendMessage("§cThat kingdom is already a vassal of another kingdom!");
+            player.sendMessage(MessageUtils.get("kingdom.kingdom_not_found"));
             return true;
         }
 
         kingdom.addVassal(targetKingdomName);
         targetKingdom.setSuzerain(kingdom.getName());
 
-        player.sendMessage("§a✔ §6" + targetKingdomName + "§a is now your vassal!");
+        player.sendMessage(MessageUtils.format("kingdom.kingdom_created", Map.of("kingdom", targetKingdomName)));
 
         Town targetCapital = societiesManager.getTown(targetKingdom.getCapital());
         if (targetCapital != null) {
             Player targetKing = plugin.getServer().getPlayer(targetCapital.getMayor());
             if (targetKing != null) {
-                targetKing.sendMessage("§7[§6" + kingdom.getName() + "§7] §eYour kingdom is now a vassal of §6" + kingdom.getName() + "§e!");
+                targetKing.sendMessage(MessageUtils.format("kingdom.kingdom_info_header", Map.of("kingdom", kingdom.getName())));
             }
         }
 
@@ -280,29 +282,29 @@ public class KingdomCommand implements CommandExecutor, TabCompleter {
         Collection<Kingdom> kingdoms = societiesManager.getAllKingdoms();
 
         if (kingdoms.isEmpty()) {
-            player.sendMessage("§cNo kingdoms exist yet!");
+            player.sendMessage(MessageUtils.get("commands.not_found").replace("{entity}", "Kingdoms"));
             return true;
         }
 
-        player.sendMessage("§7§m----------§r §6Kingdoms §7(" + kingdoms.size() + ")§m----------");
+        player.sendMessage(MessageUtils.format("kingdom.kings_list_header", Map.of("count", String.valueOf(kingdoms.size()))));
 
         for (Kingdom kingdom : kingdoms) {
-            player.sendMessage("§e• §6" + kingdom.getName() + " §7- Capital: §e" + kingdom.getCapital() + " §7- Towns: §e" + kingdom.getTowns().size());
+            player.sendMessage(MessageUtils.format("kingdom.kings_list_item", Map.of("name", kingdom.getName(), "capital", kingdom.getCapital(), "count", String.valueOf(kingdom.getTowns().size()))));
         }
 
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("kingdom.kings_list_footer"));
 
         return true;
     }
 
     private void sendHelp(Player player) {
-        player.sendMessage("§7§m----------§r §6Kingdom Commands§7 §m----------");
-        player.sendMessage("§e/kingdom create <name>§7 - Create a kingdom");
-        player.sendMessage("§e/kingdom info [name]§7 - View kingdom info");
-        player.sendMessage("§e/kingdom invite <town>§7 - Invite a town");
-        player.sendMessage("§e/kingdom vassalize <kingdom>§7 - Vassalize a kingdom");
-        player.sendMessage("§e/kingdom list§7 - List all kingdoms");
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("kingdom.help_header"));
+        player.sendMessage(MessageUtils.get("kingdom.help_create"));
+        player.sendMessage(MessageUtils.get("kingdom.help_info"));
+        player.sendMessage(MessageUtils.get("kingdom.help_invite"));
+        player.sendMessage(MessageUtils.get("kingdom.help_vassalize"));
+        player.sendMessage(MessageUtils.get("kingdom.help_list"));
+        player.sendMessage(MessageUtils.get("kingdom.help_footer"));
     }
 
     @Override

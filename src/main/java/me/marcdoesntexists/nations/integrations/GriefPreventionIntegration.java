@@ -16,6 +16,8 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
 import java.util.*;
 
+import me.marcdoesntexists.nations.economy.EconomyService;
+
 public class GriefPreventionIntegration {
     private static GriefPreventionIntegration instance;
     private final Nations plugin;
@@ -98,21 +100,48 @@ public class GriefPreventionIntegration {
 
             Claim newClaim = createResult.claim;
 
+            // Try to charge the player first via external economy
+            EconomyService econ = EconomyService.getInstance();
+            boolean chargedFromPlayer = false;
+            if (econ != null) {
+                chargedFromPlayer = econ.withdrawFromPlayer(player.getUniqueId(), cost);
+            }
+
+            if (!chargedFromPlayer) {
+                // fallback to town treasury
+                if (town.getBalance() >= cost) {
+                    town.removeMoney(cost);
+                } else {
+                    // rollback GP claim creation
+                    griefPrevention.dataStore.deleteClaim(newClaim, true);
+                    return new ClaimResult(false, "Not enough money to pay for the claim (player/town).");
+                }
+            }
+
+            // record mapping and also update town internal claim list so GUI and other systems see it
             townClaims.computeIfAbsent(town.getName(), k -> new HashSet<>())
                     .add(newClaim.getID());
             claimToTown.put(newClaim.getID(), town.getName());
+
+            // add the internal chunk key to the town's claim set so GUI counts match
+            String chunkKey = chunk.getWorld().getName() + "," + chunk.getX() + "," + chunk.getZ();
+            town.getClaims().add(chunkKey);
 
             for (UUID memberId : town.getMembers()) {
                 newClaim.setPermission(memberId.toString(), ClaimPermission.Build);
                 newClaim.setPermission(memberId.toString(), ClaimPermission.Access);
             }
 
-            town.removeMoney(cost);
-
             griefPrevention.dataStore.saveClaim(newClaim);
+
+            // Refresh GUI so players viewing towns see updated counts
+            try { me.marcdoesntexists.nations.gui.NationsGUI.refreshGUIsForCategory("TOWNS"); } catch (Throwable ignored) {}
 
             plugin.getLogger().info("Town " + town.getName() + " claimed chunk at " +
                     chunk.getX() + "," + chunk.getZ() + " (GP Claim ID: " + newClaim.getID() + ")");
+
+            // Persist town immediately
+            try { plugin.getDataManager().saveTown(town); } catch (Throwable ignored) {}
 
             return new ClaimResult(true, "Chunk claimed successfully! (GP Claim #" + newClaim.getID() + ")");
 
@@ -151,10 +180,20 @@ public class GriefPreventionIntegration {
             claims.remove(claim.getID());
             claimToTown.remove(claim.getID());
 
+            // remove internal chunk key from town's claim set
+            String chunkKey = chunk.getWorld().getName() + "," + chunk.getX() + "," + chunk.getZ();
+            town.getClaims().remove(chunkKey);
+
             int refund = calculateClaimCost(town) / 2;
             town.addMoney(refund);
 
+            // Refresh GUI so town claim counts are updated
+            try { me.marcdoesntexists.nations.gui.NationsGUI.refreshGUIsForCategory("TOWNS"); } catch (Throwable ignored) {}
+
             plugin.getLogger().info("Town " + town.getName() + " unclaimed GP Claim #" + claim.getID());
+
+            // Persist town immediately
+            try { plugin.getDataManager().saveTown(town); } catch (Throwable ignored) {}
 
             return new ClaimResult(true, "Claim removed! Refund: " + refund + " coins");
 

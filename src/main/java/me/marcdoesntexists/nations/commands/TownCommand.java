@@ -5,6 +5,8 @@ import me.marcdoesntexists.nations.managers.DataManager;
 import me.marcdoesntexists.nations.managers.SocietiesManager;
 import me.marcdoesntexists.nations.societies.Town;
 import me.marcdoesntexists.nations.utils.PlayerData;
+import me.marcdoesntexists.nations.economy.EconomyService;
+import me.marcdoesntexists.nations.utils.MessageUtils;
 import org.bukkit.Chunk;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -25,17 +27,19 @@ public class TownCommand implements CommandExecutor, TabCompleter {
     private final Nations plugin;
     private final DataManager dataManager;
     private final SocietiesManager societiesManager;
+    private final EconomyService economyService;
 
     public TownCommand(Nations plugin) {
         this.plugin = plugin;
         this.dataManager = plugin.getDataManager();
         this.societiesManager = plugin.getSocietiesManager();
+        this.economyService = EconomyService.getInstance();
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage("§cThis command can only be used by players!");
+            sender.sendMessage(MessageUtils.get("commands.player_only"));
             return true;
         }
 
@@ -79,29 +83,49 @@ public class TownCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleCreate(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /town create <name>");
+            player.sendMessage(MessageUtils.get("town.usage_create"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() != null) {
-            player.sendMessage("§cYou are already in a town!");
+            player.sendMessage(MessageUtils.get("town.already_in_town"));
             return true;
         }
 
         String townName = args[1];
 
         if (societiesManager.getTown(townName) != null) {
-            player.sendMessage("§cA town with this name already exists!");
+            player.sendMessage(MessageUtils.get("town.already_exists"));
+            return true;
+        }
+
+        // Try to charge the player for town creation
+        boolean charged = true;
+        if (economyService != null) {
+            charged = economyService.withdrawFromPlayer(player.getUniqueId(), TOWN_CREATION_COST);
+        }
+
+        if (!charged) {
+            player.sendMessage(MessageUtils.format("town.not_enough_money", java.util.Map.of("needed", String.valueOf(TOWN_CREATION_COST), "have", String.valueOf(0))));
             return true;
         }
 
         Town newTown = new Town(townName, player.getUniqueId());
+        // Credit the town with the creation fee as starting balance
+        newTown.addMoney(TOWN_CREATION_COST);
+
         societiesManager.registerTown(newTown);
         data.setTown(townName);
 
-        player.sendMessage("§a✔ Town §6" + townName + "§a created successfully!");
-        player.sendMessage("§7Use §e/town claim§7 to claim your first chunk!");
+        // Persist immediately
+        try {
+            plugin.getDataManager().saveTown(newTown);
+            plugin.getDataManager().savePlayerData(player.getUniqueId());
+        } catch (Throwable ignored) {}
+
+        player.sendMessage(MessageUtils.format("town.created", java.util.Map.of("name", townName)));
+        player.sendMessage(MessageUtils.get("town.created_hint"));
 
         return true;
     }
@@ -112,7 +136,7 @@ public class TownCommand implements CommandExecutor, TabCompleter {
         if (args.length < 2) {
             PlayerData data = dataManager.getPlayerData(player.getUniqueId());
             if (data.getTown() == null) {
-                player.sendMessage("§cYou are not in a town! Usage: /town info <name>");
+                player.sendMessage(MessageUtils.get("town.not_in_town_usage"));
                 return true;
             }
             townName = data.getTown();
@@ -122,78 +146,78 @@ public class TownCommand implements CommandExecutor, TabCompleter {
 
         Town town = societiesManager.getTown(townName);
         if (town == null) {
-            player.sendMessage("§cTown not found!");
+            player.sendMessage(MessageUtils.get("town.not_found"));
             return true;
         }
 
-        player.sendMessage("§7§m----------§r §6" + town.getName() + "§7 §m----------");
-        player.sendMessage("§eMayor: §6" + plugin.getServer().getOfflinePlayer(town.getMayor()).getName());
-        player.sendMessage("§eMembers: §6" + town.getMembers().size());
-        player.sendMessage("§eClaims: §6" + town.getClaims().size());
-        player.sendMessage("§eBalance: §6$" + town.getBalance());
+        player.sendMessage(MessageUtils.format("town.info.header", java.util.Map.of("name", town.getName())));
+        player.sendMessage(MessageUtils.format("town.info.mayor", java.util.Map.of("mayor", plugin.getServer().getOfflinePlayer(town.getMayor()).getName())));
+        player.sendMessage(MessageUtils.format("town.info.members", java.util.Map.of("count", String.valueOf(town.getMembers().size()))));
+        player.sendMessage(MessageUtils.format("town.info.claims", java.util.Map.of("count", String.valueOf(town.getClaims().size()))));
+        player.sendMessage(MessageUtils.format("town.info.balance", java.util.Map.of("balance", String.valueOf(town.getBalance()))));
         if (town.getKingdom() != null) {
-            player.sendMessage("§eKingdom: §6" + town.getKingdom());
+            player.sendMessage(MessageUtils.format("town.info.kingdom", java.util.Map.of("kingdom", town.getKingdom())));
         }
-        player.sendMessage("§eLevel: §6" + town.getProgressionLevel());
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.format("town.info.level", java.util.Map.of("level", String.valueOf(town.getProgressionLevel()))));
+        player.sendMessage(MessageUtils.get("town.info.footer"));
 
         return true;
     }
 
     private boolean handleInvite(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /town invite <player>");
+            player.sendMessage(MessageUtils.get("town.usage_invite"));
             return true;
         }
 
         PlayerData senderData = dataManager.getPlayerData(player.getUniqueId());
         if (senderData.getTown() == null) {
-            player.sendMessage("§cYou are not in a town!");
+            player.sendMessage(MessageUtils.get("town.not_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(senderData.getTown());
         if (!town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cOnly the mayor can invite players!");
+            player.sendMessage(MessageUtils.get("town.only_mayor"));
             return true;
         }
 
         Player target = plugin.getServer().getPlayer(args[1]);
         if (target == null) {
-            player.sendMessage("§cPlayer not found!");
+            player.sendMessage(MessageUtils.get("commands.not_found").replace("{entity}", "Player"));
             return true;
         }
 
         PlayerData targetData = dataManager.getPlayerData(target.getUniqueId());
         if (targetData.getTown() != null) {
-            player.sendMessage("§cThat player is already in a town!");
+            player.sendMessage(MessageUtils.get("town.player_already_in_town"));
             return true;
         }
 
         targetData.addTownInvite(town.getName());
 
-        player.sendMessage("§a✔ Invited §6" + target.getName() + "§a to your town!");
-        target.sendMessage("§7[§6" + town.getName() + "§7] §eYou have been invited to join §6" + town.getName() + "§e!");
-        target.sendMessage("§7Type §e/town accept " + town.getName() + "§7 to join!");
+        player.sendMessage(MessageUtils.format("town.invite_sent", java.util.Map.of("player", target.getName(), "town", town.getName())));
+        target.sendMessage(MessageUtils.format("town.invite_receive", java.util.Map.of("town", town.getName())));
+        target.sendMessage(MessageUtils.format("town.invite_accept_hint", java.util.Map.of("town", town.getName())));
 
         return true;
     }
 
     private boolean handleAccept(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /town accept <town>");
+            player.sendMessage(MessageUtils.get("town.usage_accept"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() != null) {
-            player.sendMessage("§cYou are already in a town!");
+            player.sendMessage(MessageUtils.get("town.already_in_town"));
             return true;
         }
 
         String townName = args[1];
         if (!data.getTownInvites().contains(townName)) {
-            player.sendMessage("§cYou don't have an invite from that town!");
+            player.sendMessage(MessageUtils.get("town.no_invite"));
             return true;
         }
 
@@ -208,11 +232,11 @@ public class TownCommand implements CommandExecutor, TabCompleter {
         data.setTown(townName);
         data.removeTownInvite(townName);
 
-        player.sendMessage("§a✔ You have joined §6" + townName + "§a!");
+        player.sendMessage(MessageUtils.format("town.joined", java.util.Map.of("town", townName)));
 
         Player mayor = plugin.getServer().getPlayer(town.getMayor());
         if (mayor != null) {
-            mayor.sendMessage("§a✔ §6" + player.getName() + "§a has joined your town!");
+            mayor.sendMessage(MessageUtils.format("town.notify_join", java.util.Map.of("player", player.getName(), "town", townName)));
         }
 
         return true;
@@ -220,44 +244,44 @@ public class TownCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleKick(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /town kick <player>");
+            player.sendMessage(MessageUtils.get("town.usage_kick"));
             return true;
         }
 
         PlayerData senderData = dataManager.getPlayerData(player.getUniqueId());
         if (senderData.getTown() == null) {
-            player.sendMessage("§cYou are not in a town!");
+            player.sendMessage(MessageUtils.get("town.not_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(senderData.getTown());
         if (!town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cOnly the mayor can kick players!");
+            player.sendMessage(MessageUtils.get("town.only_mayor"));
             return true;
         }
 
         Player target = plugin.getServer().getPlayer(args[1]);
         if (target == null) {
-            player.sendMessage("§cPlayer not found!");
+            player.sendMessage(MessageUtils.get("commands.not_found").replace("{entity}", "Player"));
             return true;
         }
 
+        PlayerData targetData = dataManager.getPlayerData(target.getUniqueId());
         if (!town.getMembers().contains(target.getUniqueId())) {
-            player.sendMessage("§cThat player is not in your town!");
+            player.sendMessage(MessageUtils.get("town.player_not_in_your_town"));
             return true;
         }
 
         if (town.isMayor(target.getUniqueId())) {
-            player.sendMessage("§cYou cannot kick yourself!");
+            player.sendMessage(MessageUtils.get("town.cannot_kick_self"));
             return true;
         }
 
         town.removeMember(target.getUniqueId());
-        PlayerData targetData = dataManager.getPlayerData(target.getUniqueId());
         targetData.setTown(null);
 
-        player.sendMessage("§a✔ Kicked §6" + target.getName() + "§a from the town!");
-        target.sendMessage("§c✘ You have been kicked from §6" + town.getName() + "§c!");
+        player.sendMessage(MessageUtils.format("town.kick_success", java.util.Map.of("player", target.getName(), "town", town.getName())));
+        target.sendMessage(MessageUtils.format("town.kicked_notify", java.util.Map.of("town", town.getName())));
 
         return true;
     }
@@ -265,25 +289,25 @@ public class TownCommand implements CommandExecutor, TabCompleter {
     private boolean handleLeave(Player player, String[] args) {
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou are not in a town!");
+            player.sendMessage(MessageUtils.get("town.not_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
 
         if (town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cYou cannot leave your own town! Use /town disband instead.");
+            player.sendMessage(MessageUtils.get("town.cannot_leave_mayor"));
             return true;
         }
 
         town.removeMember(player.getUniqueId());
         data.setTown(null);
 
-        player.sendMessage("§a✔ You have left §6" + town.getName() + "§a!");
+        player.sendMessage(MessageUtils.format("town.left", java.util.Map.of("town", town.getName())));
 
         Player mayor = plugin.getServer().getPlayer(town.getMayor());
         if (mayor != null) {
-            mayor.sendMessage("§c✘ §6" + player.getName() + "§c has left the town!");
+            mayor.sendMessage(MessageUtils.format("town.notify_left", java.util.Map.of("player", player.getName(), "town", town.getName())));
         }
 
         return true;
@@ -292,13 +316,13 @@ public class TownCommand implements CommandExecutor, TabCompleter {
     private boolean handleClaim(Player player, String[] args) {
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou are not in a town!");
+            player.sendMessage(MessageUtils.get("town.not_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (!town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cOnly the mayor can claim chunks!");
+            player.sendMessage(MessageUtils.get("town.only_mayor_claim"));
             return true;
         }
 
@@ -308,9 +332,9 @@ public class TownCommand implements CommandExecutor, TabCompleter {
                 plugin.getHybridClaimManager().claimChunk(player, town, chunk);
 
         if (result.isSuccess()) {
-            player.sendMessage("§a✔ " + result.getMessage());
+            player.sendMessage(MessageUtils.get("town.claim_success_prefix") + result.getMessage());
         } else {
-            player.sendMessage("§c✘ " + result.getMessage());
+            player.sendMessage(MessageUtils.get("town.claim_fail_prefix") + result.getMessage());
         }
 
         return true;
@@ -319,13 +343,13 @@ public class TownCommand implements CommandExecutor, TabCompleter {
     private boolean handleUnclaim(Player player, String[] args) {
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou are not in a town!");
+            player.sendMessage(MessageUtils.get("town.not_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (!town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cOnly the mayor can unclaim chunks!");
+            player.sendMessage(MessageUtils.get("town.only_mayor_claim"));
             return true;
         }
 
@@ -335,9 +359,9 @@ public class TownCommand implements CommandExecutor, TabCompleter {
                 plugin.getHybridClaimManager().unclaimChunk(town, chunk);
 
         if (result.isSuccess()) {
-            player.sendMessage("§a✔ " + result.getMessage());
+            player.sendMessage(MessageUtils.get("town.claim_success_prefix") + result.getMessage());
         } else {
-            player.sendMessage("§c✘ " + result.getMessage());
+            player.sendMessage(MessageUtils.get("town.claim_fail_prefix") + result.getMessage());
         }
 
         return true;
@@ -345,13 +369,13 @@ public class TownCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleDeposit(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /town deposit <amount>");
+            player.sendMessage(MessageUtils.get("town.usage_deposit"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou are not in a town!");
+            player.sendMessage(MessageUtils.get("town.not_in_town"));
             return true;
         }
 
@@ -359,39 +383,54 @@ public class TownCommand implements CommandExecutor, TabCompleter {
         try {
             amount = Integer.parseInt(args[1]);
         } catch (NumberFormatException e) {
-            player.sendMessage("§cInvalid amount!");
+            player.sendMessage(MessageUtils.get("commands.invalid_number"));
             return true;
         }
 
         if (amount <= 0) {
-            player.sendMessage("§cAmount must be positive!");
+            player.sendMessage(MessageUtils.get("town.amount_must_be_positive"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
+
+        // Try to withdraw from player's external account (Vault/Essentials) first
+        boolean success = economyService.withdrawFromPlayer(player.getUniqueId(), amount);
+        if (!success) {
+            player.sendMessage(MessageUtils.get("town.withdraw_external_failed"));
+            return true;
+        }
+
+        // Add to town treasury
         town.addMoney(amount);
 
-        player.sendMessage("§a✔ Deposited §6$" + amount + "§a to town!");
-        player.sendMessage("§eNew town balance: §6$" + town.getBalance());
+        // Persist immediately
+        try {
+            plugin.getDataManager().saveTown(town);
+            plugin.getDataManager().savePlayerMoney(player.getUniqueId());
+        } catch (Throwable ignored) {}
+
+        player.sendMessage(MessageUtils.format("town.deposit_success", java.util.Map.of("amount", String.valueOf(amount))));
+        player.sendMessage(MessageUtils.format("town.new_balance", java.util.Map.of("balance", String.valueOf(town.getBalance()))));
 
         return true;
     }
 
     private boolean handleWithdraw(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /town withdraw <amount>");
+            player.sendMessage(MessageUtils.get("town.usage_withdraw"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou are not in a town!");
+            player.sendMessage(MessageUtils.get("town.not_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (!town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cOnly the mayor can withdraw money!");
+            player.sendMessage(MessageUtils.get("town.only_mayor"));
             return true;
         }
 
@@ -399,15 +438,34 @@ public class TownCommand implements CommandExecutor, TabCompleter {
         try {
             amount = Integer.parseInt(args[1]);
         } catch (NumberFormatException e) {
-            player.sendMessage("§cInvalid amount!");
+            player.sendMessage(MessageUtils.get("commands.invalid_number"));
             return true;
         }
 
         if (town.removeMoney(amount)) {
-            player.sendMessage("§a✔ Withdrew §6$" + amount + "§a from town!");
-            player.sendMessage("§eNew town balance: §6$" + town.getBalance());
+            // Try to deposit to player's external account
+            boolean depositOk = economyService.depositToPlayer(player.getUniqueId(), amount);
+            if (!depositOk) {
+                // Rollback town withdrawal if external deposit failed
+                town.addMoney(amount);
+
+                // Persist town change
+                try { plugin.getDataManager().saveTown(town); } catch (Throwable ignored) {}
+
+                player.sendMessage(MessageUtils.get("town.deposit_failed_external"));
+                return true;
+            }
+
+            // Persist both town and player data
+            try {
+                plugin.getDataManager().saveTown(town);
+                plugin.getDataManager().savePlayerMoney(player.getUniqueId());
+            } catch (Throwable ignored) {}
+
+            player.sendMessage(MessageUtils.format("town.withdraw_success", java.util.Map.of("amount", String.valueOf(amount))));
+            player.sendMessage(MessageUtils.format("town.new_balance", java.util.Map.of("balance", String.valueOf(town.getBalance()))));
         } else {
-            player.sendMessage("§cInsufficient funds! Town balance: §6$" + town.getBalance());
+            player.sendMessage(MessageUtils.format("town.insufficient_funds", java.util.Map.of("balance", String.valueOf(town.getBalance()))));
         }
 
         return true;
@@ -417,36 +475,36 @@ public class TownCommand implements CommandExecutor, TabCompleter {
         Collection<Town> towns = societiesManager.getAllTowns();
 
         if (towns.isEmpty()) {
-            player.sendMessage("§cNo towns exist yet!");
+            player.sendMessage(MessageUtils.get("town.no_towns_exist"));
             return true;
         }
 
-        player.sendMessage("§7§m----------§r §6Towns §7(" + towns.size() + ")§m----------");
+        player.sendMessage(MessageUtils.format("town.list_header", java.util.Map.of("count", String.valueOf(towns.size()))));
 
         for (Town town : towns) {
             String mayorName = plugin.getServer().getOfflinePlayer(town.getMayor()).getName();
-            player.sendMessage("§e• §6" + town.getName() + " §7- Mayor: §e" + mayorName + " §7- Members: §e" + town.getMembers().size());
+            player.sendMessage(MessageUtils.format("town.list_item", java.util.Map.of("name", town.getName(), "mayor", mayorName, "members", String.valueOf(town.getMembers().size()))));
         }
 
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("town.list_footer"));
 
         return true;
     }
 
     private void sendHelp(Player player) {
-        player.sendMessage("§7§m----------§r §6Town Commands§7 §m----------");
-        player.sendMessage("§e/town create <name>§7 - Create a town");
-        player.sendMessage("§e/town info [name]§7 - View town info");
-        player.sendMessage("§e/town invite <player>§7 - Invite a player");
-        player.sendMessage("§e/town accept <town>§7 - Accept town invite");
-        player.sendMessage("§e/town kick <player>§7 - Kick a player");
-        player.sendMessage("§e/town leave§7 - Leave your town");
-        player.sendMessage("§e/town claim§7 - Claim current chunk");
-        player.sendMessage("§e/town unclaim§7 - Unclaim current chunk");
-        player.sendMessage("§e/town deposit <amount>§7 - Deposit money");
-        player.sendMessage("§e/town withdraw <amount>§7 - Withdraw money");
-        player.sendMessage("§e/town list§7 - List all towns");
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("town.help.header"));
+        player.sendMessage(MessageUtils.get("town.help.create"));
+        player.sendMessage(MessageUtils.get("town.help.info"));
+        player.sendMessage(MessageUtils.get("town.help.invite"));
+        player.sendMessage(MessageUtils.get("town.help.accept"));
+        player.sendMessage(MessageUtils.get("town.help.kick"));
+        player.sendMessage(MessageUtils.get("town.help.leave"));
+        player.sendMessage(MessageUtils.get("town.help.claim"));
+        player.sendMessage(MessageUtils.get("town.help.unclaim"));
+        player.sendMessage(MessageUtils.get("town.help.deposit"));
+        player.sendMessage(MessageUtils.get("town.help.withdraw"));
+        player.sendMessage(MessageUtils.get("town.help.list"));
+        player.sendMessage(MessageUtils.get("town.help.footer"));
     }
 
     @Override

@@ -6,6 +6,7 @@ import me.marcdoesntexists.nations.managers.SettlementEvolutionManager;
 import me.marcdoesntexists.nations.managers.SocietiesManager;
 import me.marcdoesntexists.nations.societies.Kingdom;
 import me.marcdoesntexists.nations.societies.Town;
+import me.marcdoesntexists.nations.utils.MessageUtils;
 import me.marcdoesntexists.nations.utils.PlayerData;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -16,6 +17,7 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -36,7 +38,7 @@ public class EvolveCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage("§cThis command can only be used by players!");
+            sender.sendMessage(MessageUtils.get("commands.player_only"));
             return true;
         }
 
@@ -67,21 +69,21 @@ public class EvolveCommand implements CommandExecutor, TabCompleter {
     private boolean handleCheck(Player player, String[] args) {
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town!");
+            player.sendMessage(MessageUtils.get("evolution.must_be_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (!town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cOnly the mayor can check evolution requirements!");
+            player.sendMessage(MessageUtils.get("evolution.only_mayor"));
             return true;
         }
 
-        player.sendMessage("§7§m----------§r §6Evolution Check§7 §m----------");
+        player.sendMessage(MessageUtils.get("evolution.evolution_check_header"));
 
         // Check Town -> Kingdom
         if (town.getKingdom() == null) {
-            player.sendMessage("§e§lTown → Kingdom Requirements:");
+            player.sendMessage(MessageUtils.get("evolution.town_to_kingdom_header"));
 
             int minClaims = plugin.getConfigurationManager().getSettlementsConfig()
                     .getInt("settlement-evolution.town-to-kingdom.minimum-claims", 100);
@@ -94,19 +96,19 @@ public class EvolveCommand implements CommandExecutor, TabCompleter {
             boolean hasPop = town.getMembers().size() >= minPop;
             boolean hasFunds = town.getBalance() >= minTreasury;
 
-            player.sendMessage((hasClaims ? "§a✔" : "§c✘") + " §7Claims: §e" + town.getClaims().size() + "§7/§6" + minClaims);
-            player.sendMessage((hasPop ? "§a✔" : "§c✘") + " §7Population: §e" + town.getMembers().size() + "§7/§6" + minPop);
-            player.sendMessage((hasFunds ? "§a✔" : "§c✘") + " §7Treasury: §e$" + town.getBalance() + "§7/§6$" + minTreasury);
+            player.sendMessage((hasClaims ? MessageUtils.get("evolution.requirement_met") : MessageUtils.get("evolution.requirement_unmet")).replace("{label}", "Claims: §e" + town.getClaims().size() + "§7/§6" + minClaims));
+            player.sendMessage((hasPop ? MessageUtils.get("evolution.requirement_met") : MessageUtils.get("evolution.requirement_unmet")).replace("{label}", "Population: §e" + town.getMembers().size() + "§7/§6" + minPop));
+            player.sendMessage((hasFunds ? MessageUtils.get("evolution.requirement_met") : MessageUtils.get("evolution.requirement_unmet")).replace("{label}", "Treasury: §e$" + town.getBalance() + "§7/§6$" + minTreasury));
 
             boolean canEvolve = evolutionManager.canEvolveToKingdom(town);
 
             if (canEvolve) {
-                player.sendMessage("");
-                player.sendMessage("§a✔ Your town can evolve to a Kingdom!");
-                player.sendMessage("§7Use §e/evolve kingdom <name>§7 to evolve!");
+                player.sendMessage(MessageUtils.get("general.empty"));
+                player.sendMessage(MessageUtils.get("evolution.can_evolve_town"));
+                player.sendMessage(MessageUtils.get("evolution.evolve_use_kingdom"));
             } else {
-                player.sendMessage("");
-                player.sendMessage("§c✘ Requirements not met yet!");
+                player.sendMessage(MessageUtils.get("general.empty"));
+                player.sendMessage(MessageUtils.get("evolution.requirement_unmet").replace("{label}", "Requirements not met yet!"));
             }
         } else {
             // Check Kingdom -> Empire
@@ -117,7 +119,7 @@ public class EvolveCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            player.sendMessage("§e§lKingdom → Empire Requirements:");
+            player.sendMessage(MessageUtils.get("evolution.kingdom_to_empire_header"));
 
             int minClaims = plugin.getConfigurationManager().getSettlementsConfig()
                     .getInt("settlement-evolution.kingdom-to-empire.minimum-claims", 500);
@@ -143,23 +145,23 @@ public class EvolveCommand implements CommandExecutor, TabCompleter {
             boolean hasFunds = true; // Placeholder
             boolean hasVassals = kingdom.getVassals().size() >= minVassals;
 
-            player.sendMessage((hasClaims ? "§a✔" : "§c✘") + " §7Total Claims: §e" + totalClaims + "§7/§6" + minClaims);
-            player.sendMessage((hasPop ? "§a✔" : "§c✘") + " §7Total Population: §e" + totalPop + "§7/§6" + minPop);
-            player.sendMessage((hasVassals ? "§a✔" : "§c✘") + " §7Vassal Kingdoms: §e" + kingdom.getVassals().size() + "§7/§6" + minVassals);
+            player.sendMessage((hasClaims ? MessageUtils.get("evolution.requirement_met") : MessageUtils.get("evolution.requirement_unmet")).replace("{label}", "Total Claims: §e" + totalClaims + "§7/§6" + minClaims));
+            player.sendMessage((hasPop ? MessageUtils.get("evolution.requirement_met") : MessageUtils.get("evolution.requirement_unmet")).replace("{label}", "Total Population: §e" + totalPop + "§7/§6" + minPop));
+            player.sendMessage((hasVassals ? MessageUtils.get("evolution.requirement_met") : MessageUtils.get("evolution.requirement_unmet")).replace("{label}", "Vassal Kingdoms: §e" + kingdom.getVassals().size() + "§7/§6" + minVassals));
 
             boolean canEvolve = evolutionManager.canEvolveToEmpire(kingdom);
 
             if (canEvolve) {
-                player.sendMessage("");
-                player.sendMessage("§a✔ Your kingdom can evolve to an Empire!");
-                player.sendMessage("§7Use §e/evolve empire <name>§7 to evolve!");
+                player.sendMessage(MessageUtils.get("general.empty"));
+                player.sendMessage(MessageUtils.get("evolution.can_evolve_kingdom"));
+                player.sendMessage(MessageUtils.get("evolution.evolve_use_empire"));
             } else {
-                player.sendMessage("");
-                player.sendMessage("§c✘ Requirements not met yet!");
+                player.sendMessage(MessageUtils.get("general.empty"));
+                player.sendMessage(MessageUtils.get("evolution.requirement_unmet").replace("{label}", "Requirements not met yet!"));
             }
         }
 
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("general.prefix") + " §7§m--------------------------------");
 
         return true;
     }
@@ -167,62 +169,64 @@ public class EvolveCommand implements CommandExecutor, TabCompleter {
     private boolean handleKingdom(Player player, String[] args) {
         // /evolve kingdom <name>
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /evolve kingdom <name>");
+            player.sendMessage(MessageUtils.get("evolution.usage_kingdom"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town!");
+            player.sendMessage(MessageUtils.get("evolution.must_be_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (!town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cOnly the mayor can evolve the town!");
+            player.sendMessage(MessageUtils.get("evolution.only_mayor"));
             return true;
         }
 
         if (town.getKingdom() != null) {
-            player.sendMessage("§cYour town is already part of a kingdom!");
+            player.sendMessage(MessageUtils.get("evolution.town_already_in_kingdom"));
             return true;
         }
 
         if (!evolutionManager.canEvolveToKingdom(town)) {
-            player.sendMessage("§cYour town doesn't meet the requirements!");
-            player.sendMessage("§7Use §e/evolve check§7 to see requirements");
+            player.sendMessage(MessageUtils.get("evolution.town_not_meet_requirements"));
+            player.sendMessage(MessageUtils.get("evolution.use_check_hint"));
             return true;
         }
 
         String kingdomName = args[1];
 
         if (societiesManager.getKingdom(kingdomName) != null) {
-            player.sendMessage("§cA kingdom with this name already exists!");
+            player.sendMessage(MessageUtils.get("evolution.kingdom_already_exists"));
             return true;
         }
 
         if (evolutionManager.evolveToKingdom(town, kingdomName)) {
-            player.sendMessage("§a§l✔ EVOLUTION SUCCESSFUL!");
+            player.sendMessage(MessageUtils.get("evolution.evolved_kingdom_success"));
+            player.sendMessage(MessageUtils.get("general.empty"));
+            player.sendMessage(MessageUtils.format("evolution.evolved_kingdom_announcement", Map.of("town", town.getName(), "kingdom", kingdomName)));
+            player.sendMessage(MessageUtils.get("general.empty"));
+            player.sendMessage(MessageUtils.get("evolution.evolved_kingdom_member_title"));
+            player.sendMessage(MessageUtils.format("evolution.evolved_kingdom_member_message", Map.of("kingdom", kingdomName)));
             player.sendMessage("");
-            player.sendMessage("§6" + town.getName() + " §7has evolved into the Kingdom of §6" + kingdomName + "§7!");
-            player.sendMessage("");
-            player.sendMessage("§eYour town is now the capital of the kingdom!");
-            player.sendMessage("§7You can now:");
-            player.sendMessage("§7 • Invite other towns to join: §e/kingdom invite <town>");
-            player.sendMessage("§7 • Declare wars: §e/war declare <kingdom>");
-            player.sendMessage("§7 • Form alliances: §e/alliance create <name>");
-            player.sendMessage("§7 • Take vassals: §e/feudal vassal <kingdom>");
+            // Capabilities - keep concise
+            player.sendMessage(MessageUtils.format("evolution.evolved_info_list", Map.of("count", "", "label", "Invite other towns: /kingdom invite <town>")));
+            player.sendMessage(MessageUtils.format("evolution.evolved_info_list", Map.of("count", "", "label", "Declare wars: /war declare <kingdom>")));
+            player.sendMessage(MessageUtils.format("evolution.evolved_info_list", Map.of("count", "", "label", "Form alliances: /alliance create <name>")));
+            player.sendMessage(MessageUtils.format("evolution.evolved_info_list", Map.of("count", "", "label", "Take vassals: /feudal vassal <kingdom>")));
 
             // Broadcast to all town members
             for (UUID memberId : town.getMembers()) {
                 Player member = plugin.getServer().getPlayer(memberId);
                 if (member != null && !member.equals(player)) {
-                    member.sendMessage("§a§l✔ EVOLUTION!");
-                    member.sendMessage("§7Your town has evolved into the Kingdom of §6" + kingdomName + "§7!");
+                    member.sendMessage(MessageUtils.get("evolution.evolved_kingdom_member_title"));
+                    member.sendMessage(MessageUtils.format("evolution.evolved_kingdom_member_message", Map.of("kingdom", kingdomName)));
                 }
             }
         } else {
-            player.sendMessage("§cFailed to evolve to kingdom!");
+            player.sendMessage(MessageUtils.get("evolution.failed_evolve_kingdom"));
         }
 
         return true;
@@ -231,58 +235,61 @@ public class EvolveCommand implements CommandExecutor, TabCompleter {
     private boolean handleEmpire(Player player, String[] args) {
         // /evolve empire <name>
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /evolve empire <name>");
+            player.sendMessage(MessageUtils.get("evolution.usage_empire"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town!");
+            player.sendMessage(MessageUtils.get("evolution.must_be_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (town.getKingdom() == null) {
-            player.sendMessage("§cYour town must be part of a kingdom!");
+            player.sendMessage(MessageUtils.get("war.must_be_in_kingdom"));
             return true;
         }
 
         Kingdom kingdom = societiesManager.getKingdom(town.getKingdom());
         if (!kingdom.isKing(town.getName())) {
-            player.sendMessage("§cOnly the capital's mayor can evolve the kingdom!");
+            player.sendMessage(MessageUtils.get("evolution.only_mayor"));
             return true;
         }
 
         if (!town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cYou must be the mayor!");
+            player.sendMessage(MessageUtils.get("evolution.only_mayor"));
             return true;
         }
 
         if (kingdom.getEmpire() != null) {
-            player.sendMessage("§cYour kingdom is already part of an empire!");
+            player.sendMessage(MessageUtils.get("evolution.kingdom_already_in_empire"));
             return true;
         }
 
         if (!evolutionManager.canEvolveToEmpire(kingdom)) {
-            player.sendMessage("§cYour kingdom doesn't meet the requirements!");
-            player.sendMessage("§7Use §e/evolve check§7 to see requirements");
+            player.sendMessage(MessageUtils.get("evolution.kingdom_not_meet_requirements"));
+            player.sendMessage(MessageUtils.get("evolution.use_check_hint"));
             return true;
         }
 
         String empireName = args[1];
 
         if (societiesManager.getEmpire(empireName) != null) {
-            player.sendMessage("§cAn empire with this name already exists!");
+            player.sendMessage(MessageUtils.get("evolution.empire_already_exists"));
             return true;
         }
 
         if (evolutionManager.evolveToEmpire(kingdom, empireName)) {
-            player.sendMessage("§d§l✔ ASCENSION!");
+            player.sendMessage(MessageUtils.get("evolution.evolved_empire_success"));
+            player.sendMessage(MessageUtils.get("general.empty"));
+            player.sendMessage(MessageUtils.format("evolution.evolved_empire_announcement", Map.of("kingdom", kingdom.getName(), "empire", empireName)));
+            player.sendMessage(MessageUtils.get("general.empty"));
+            player.sendMessage(MessageUtils.get("evolution.evolved_empire_member_title"));
+            player.sendMessage(MessageUtils.format("evolution.evolved_empire_member_message", Map.of("empire", empireName)));
             player.sendMessage("");
-            player.sendMessage("§6" + kingdom.getName() + " §7has ascended to become the §d" + empireName + " §7Empire!");
+            player.sendMessage(MessageUtils.get("evolution.evolved_info_list").replace("{count}", String.valueOf(0)).replace("{label}", "Towns/Pop/Vassals below"));
             player.sendMessage("");
-            player.sendMessage("§eYour kingdom is now the ruling kingdom of the empire!");
-            player.sendMessage("§7The empire now spans:");
 
             int totalTowns = 0;
             int totalPop = 0;
@@ -294,9 +301,9 @@ public class EvolveCommand implements CommandExecutor, TabCompleter {
                 }
             }
 
-            player.sendMessage("§7 • §6" + totalTowns + "§7 towns");
-            player.sendMessage("§7 • §6" + totalPop + "§7 citizens");
-            player.sendMessage("§7 • §6" + kingdom.getVassals().size() + "§7 vassal kingdoms");
+            player.sendMessage(MessageUtils.format("evolution.evolved_info_list", Map.of("count", String.valueOf(totalTowns), "label", "towns")));
+            player.sendMessage(MessageUtils.format("evolution.evolved_info_list", Map.of("count", String.valueOf(totalPop), "label", "citizens")));
+            player.sendMessage(MessageUtils.format("evolution.evolved_info_list", Map.of("count", String.valueOf(kingdom.getVassals().size()), "label", "vassal kingdoms")));
 
             // Broadcast to all kingdom
             for (String townName : kingdom.getTowns()) {
@@ -305,47 +312,47 @@ public class EvolveCommand implements CommandExecutor, TabCompleter {
                     for (UUID memberId : t.getMembers()) {
                         Player member = plugin.getServer().getPlayer(memberId);
                         if (member != null && !member.equals(player)) {
-                            member.sendMessage("§d§l✔ ASCENSION!");
-                            member.sendMessage("§7Your kingdom has become the §d" + empireName + " §7Empire!");
+                            member.sendMessage(MessageUtils.get("evolution.evolved_empire_member_title"));
+                            member.sendMessage(MessageUtils.format("evolution.evolved_empire_member_message", Map.of("empire", empireName)));
                         }
                     }
                 }
             }
         } else {
-            player.sendMessage("§cFailed to evolve to empire!");
+            player.sendMessage(MessageUtils.get("evolution.failed_evolve_empire"));
         }
 
         return true;
     }
 
     private boolean handleInfo(Player player, String[] args) {
-        player.sendMessage("§7§m----------§r §6Evolution Info§7 §m----------");
+        player.sendMessage(MessageUtils.get("evolution.info_header"));
         player.sendMessage("");
-        player.sendMessage("§e§lSettlement Hierarchy:");
-        player.sendMessage("§71. §6Town §7→ Basic settlement");
-        player.sendMessage("§72. §6Kingdom §7→ Town + vassals + warfare");
-        player.sendMessage("§73. §dEmpire §7→ Kingdom + multiple kingdoms");
+        player.sendMessage(MessageUtils.get("evolution.info_hierarchy_title"));
+        player.sendMessage(MessageUtils.get("evolution.info_hierarchy_1"));
+        player.sendMessage(MessageUtils.get("evolution.info_hierarchy_2"));
+        player.sendMessage(MessageUtils.get("evolution.info_hierarchy_3"));
         player.sendMessage("");
-        player.sendMessage("§e§lEvolution Benefits:");
-        player.sendMessage("§7• §aIncreased claim limits");
-        player.sendMessage("§7• §aNew diplomatic options");
-        player.sendMessage("§7• §aVassal management");
-        player.sendMessage("§7• §aWarfare capabilities");
-        player.sendMessage("§7• §aEmpire-wide bonuses");
+        player.sendMessage(MessageUtils.get("evolution.info_benefits_title"));
+        player.sendMessage(MessageUtils.get("evolution.info_benefit_1"));
+        player.sendMessage(MessageUtils.get("evolution.info_benefit_2"));
+        player.sendMessage(MessageUtils.get("evolution.info_benefit_3"));
+        player.sendMessage(MessageUtils.get("evolution.info_benefit_4"));
+        player.sendMessage(MessageUtils.get("evolution.info_benefit_5"));
         player.sendMessage("");
-        player.sendMessage("§7Use §e/evolve check§7 to see your requirements!");
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("evolution.info_check_hint"));
+        player.sendMessage(MessageUtils.get("evolution.info_footer"));
 
         return true;
     }
 
     private void sendHelp(Player player) {
-        player.sendMessage("§7§m----------§r §6Evolution Commands§7 §m----------");
-        player.sendMessage("§e/evolve check§7 - Check evolution requirements");
-        player.sendMessage("§e/evolve kingdom <name>§7 - Evolve to Kingdom");
-        player.sendMessage("§e/evolve empire <name>§7 - Evolve to Empire");
-        player.sendMessage("§e/evolve info§7 - View evolution system info");
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("evolution.help_header"));
+        player.sendMessage(MessageUtils.get("evolution.help_check"));
+        player.sendMessage(MessageUtils.get("evolution.help_kingdom"));
+        player.sendMessage(MessageUtils.get("evolution.help_empire"));
+        player.sendMessage(MessageUtils.get("evolution.help_info"));
+        player.sendMessage(MessageUtils.get("evolution.help_footer"));
     }
 
     @Override

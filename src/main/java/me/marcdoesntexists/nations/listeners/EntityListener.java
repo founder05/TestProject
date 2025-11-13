@@ -5,6 +5,8 @@ import me.marcdoesntexists.nations.managers.ClaimManager;
 import me.marcdoesntexists.nations.managers.SocietiesManager;
 import me.marcdoesntexists.nations.societies.Town;
 import me.marcdoesntexists.nations.utils.Claim;
+import me.marcdoesntexists.nations.utils.MessageUtils;
+import java.util.Map;
 import org.bukkit.Chunk;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
@@ -42,7 +44,7 @@ public class EntityListener implements Listener {
         if (claim != null) {
             if (!claim.isPvpEnabled()) {
                 event.setCancelled(true);
-                attacker.sendMessage("§c✘ PvP is disabled in §6" + claim.getTownName() + "§c!");
+                attacker.sendMessage(MessageUtils.format("entity.pvp_disabled", Map.of("town", claim.getTownName())));
                 return;
             }
 
@@ -51,7 +53,7 @@ public class EntityListener implements Listener {
                 if (town.getMembers().contains(attacker.getUniqueId()) &&
                         town.getMembers().contains(victim.getUniqueId())) {
                     event.setCancelled(true);
-                    attacker.sendMessage("§c✘ You cannot attack your own town members!");
+                    attacker.sendMessage(MessageUtils.get("entity.cannot_attack_members"));
                 }
             }
         }
@@ -59,11 +61,26 @@ public class EntityListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onEntityExplode(EntityExplodeEvent event) {
-        Chunk chunk = event.getLocation().getChunk();
-        Claim claim = claimManager.getClaimAt(chunk);
-
-        if (claim != null) {
-            if (!claim.isExplosionsEnabled()) {
+        // Prevent explosions from destroying blocks inside claims that have explosions disabled.
+        // Instead of cancelling the whole event (which could prevent legitimate destruction elsewhere),
+        // filter out protected blocks so TNT ignited at claim borders can't damage protected territory.
+        try {
+            event.blockList().removeIf(block -> {
+                try {
+                    Chunk bChunk = block.getLocation().getChunk();
+                    Claim c = claimManager.getClaimAt(bChunk);
+                    return c != null && !c.isExplosionsEnabled();
+                } catch (Exception ex) {
+                    return false;
+                }
+            });
+            // If after filtering there are no blocks left, cancel to avoid further processing
+            if (event.blockList().isEmpty()) event.setCancelled(true);
+        } catch (Throwable t) {
+            // fallback: if something goes wrong, preserve previous behaviour per-location
+            Chunk chunk = event.getLocation().getChunk();
+            Claim claim = claimManager.getClaimAt(chunk);
+            if (claim != null && !claim.isExplosionsEnabled()) {
                 event.blockList().clear();
                 event.setCancelled(true);
             }

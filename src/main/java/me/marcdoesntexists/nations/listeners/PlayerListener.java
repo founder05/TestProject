@@ -4,12 +4,15 @@ import me.marcdoesntexists.nations.Nations;
 import me.marcdoesntexists.nations.economy.EconomyService;
 import me.marcdoesntexists.nations.managers.ClaimVisualizer;
 import me.marcdoesntexists.nations.managers.DataManager;
+import me.marcdoesntexists.nations.utils.MessageUtils;
 import me.marcdoesntexists.nations.utils.PlayerData;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+
+import java.util.Map;
 
 public class PlayerListener implements Listener {
 
@@ -37,9 +40,9 @@ public class PlayerListener implements Listener {
         } catch (Exception ignored) {}
 
         if (data.getTown() != null) {
-            player.sendMessage("§7[§6Nations§7] §eWelcome back to §6" + data.getTown() + "§e!");
+            player.sendMessage(MessageUtils.format("town.welcome_back", Map.of("town", data.getTown())));
         } else {
-            player.sendMessage("§7[§6Nations§7] §eType §6/town create <name>§e to start your own town!");
+            player.sendMessage(MessageUtils.get("commands.town_create_hint"));
         }
     }
 

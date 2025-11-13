@@ -7,6 +7,7 @@ import me.marcdoesntexists.nations.managers.DataManager;
 import me.marcdoesntexists.nations.managers.LawManager;
 import me.marcdoesntexists.nations.managers.SocietiesManager;
 import me.marcdoesntexists.nations.societies.Town;
+import me.marcdoesntexists.nations.utils.MessageUtils;
 import me.marcdoesntexists.nations.utils.PlayerData;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -41,7 +42,7 @@ public class TrialCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage("§cThis command can only be used by players!");
+            sender.sendMessage(MessageUtils.get("commands.player_only"));
             return true;
         }
 
@@ -57,7 +58,7 @@ public class TrialCommand implements CommandExecutor, TabCompleter {
         switch (subCommand) {
             case "start":
                 if (!player.hasPermission("nations.trial.start")) {
-                    player.sendMessage("§cYou do not have permission to start trials.");
+                    player.sendMessage(MessageUtils.get("trial.no_permission_start"));
                     return true;
                 }
                 return handleStart(player, args);
@@ -66,7 +67,7 @@ public class TrialCommand implements CommandExecutor, TabCompleter {
             case "arrest":
             case "release":
                 if (!player.hasPermission("nations.trial.judge")) {
-                    player.sendMessage("§cYou do not have permission to judge or sentence.");
+                    player.sendMessage(MessageUtils.get("trial.no_permission_judge"));
                     return true;
                 }
                 if (subCommand.equals("verdict")) return handleVerdict(player, args);
@@ -91,19 +92,19 @@ public class TrialCommand implements CommandExecutor, TabCompleter {
     private boolean handleStart(Player player, String[] args) {
         // /trial start <crimeId> <defendant>
         if (args.length < 3) {
-            player.sendMessage("§cUsage: /trial start <crimeId> <defendant>");
+            player.sendMessage(MessageUtils.get("trial.usage_start"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town to start trials!");
+            player.sendMessage(MessageUtils.get("trial.must_be_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (!town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cOnly the mayor can start trials!");
+            player.sendMessage(MessageUtils.get("trial.only_mayor"));
             return true;
         }
 
@@ -119,28 +120,28 @@ public class TrialCommand implements CommandExecutor, TabCompleter {
         }
 
         if (crime == null) {
-            player.sendMessage("§cCrime not found!");
+            player.sendMessage(MessageUtils.get("trial.crime_not_found"));
             return true;
         }
 
         Player defendant = plugin.getServer().getPlayer(args[2]);
         if (defendant == null) {
-            player.sendMessage("§cDefendant not online!");
+            player.sendMessage(MessageUtils.get("trial.defendant_offline"));
             return true;
         }
 
         if (justiceService.startTrial(crime, player.getUniqueId(), defendant.getUniqueId())) {
-            player.sendMessage("§a✔ Trial started!");
-            player.sendMessage("§7Judge: §e" + player.getName());
-            player.sendMessage("§7Defendant: §e" + defendant.getName());
-            player.sendMessage("§7Crime: §c" + crime.getCrimeType().getDisplayName());
+            player.sendMessage(MessageUtils.get("trial.started_player"));
+            player.sendMessage(MessageUtils.format("trial.started_judge", Map.of("judge", player.getName())));
+            player.sendMessage(MessageUtils.format("trial.started_defendant", Map.of("defendant", defendant.getName())));
+            player.sendMessage(MessageUtils.format("trial.started_charge", Map.of("crime", crime.getCrimeType().getDisplayName())));
 
-            defendant.sendMessage("§c⚖ You are on trial!");
-            defendant.sendMessage("§7Judge: §e" + player.getName());
-            defendant.sendMessage("§7Charge: §c" + crime.getCrimeType().getDisplayName());
-            defendant.sendMessage("§7Maximum Fine: §6$" + crime.getCrimeType().getBaseFine());
+            defendant.sendMessage(MessageUtils.get("trial.started_notify_defendant"));
+            defendant.sendMessage(MessageUtils.format("trial.notify_judge", Map.of("judge", player.getName())));
+            defendant.sendMessage(MessageUtils.format("trial.notify_charge", Map.of("charge", crime.getCrimeType().getDisplayName())));
+            defendant.sendMessage(MessageUtils.format("trial.notify_max_fine", Map.of("fine", String.valueOf((int)crime.getCrimeType().getBaseFine()))));
         } else {
-            player.sendMessage("§cFailed to start trial!");
+            player.sendMessage(MessageUtils.get("trial.failed_start"));
         }
 
         return true;
@@ -149,7 +150,7 @@ public class TrialCommand implements CommandExecutor, TabCompleter {
     private boolean handleVerdict(Player player, String[] args) {
         // /trial verdict <trialId> <guilty|not_guilty>
         if (args.length < 3) {
-            player.sendMessage("§cUsage: /trial verdict <trialId> <guilty|not_guilty>");
+            player.sendMessage(MessageUtils.get("trial.usage_verdict"));
             return true;
         }
 
@@ -164,12 +165,12 @@ public class TrialCommand implements CommandExecutor, TabCompleter {
         }
 
         if (trial == null) {
-            player.sendMessage("§cTrial not found!");
+            player.sendMessage(MessageUtils.get("trial.not_found"));
             return true;
         }
 
         if (!trial.getJudgeId().equals(player.getUniqueId())) {
-            player.sendMessage("§cYou are not the judge of this trial!");
+            player.sendMessage(MessageUtils.get("trial.not_judge"));
             return true;
         }
 
@@ -185,21 +186,21 @@ public class TrialCommand implements CommandExecutor, TabCompleter {
         } else if (verdictStr.equals("not_guilty")) {
             verdict = PunishmentType.NOT_GUILTY;
         } else {
-            player.sendMessage("§cInvalid verdict! Use 'guilty' or 'not_guilty'");
+            player.sendMessage(MessageUtils.get("trial.invalid_verdict"));
             return true;
         }
 
-        player.sendMessage("§a✔ Verdict recorded: " + (verdict == PunishmentType.GUILTY ? "§cGUILTY" : "§aNOT GUILTY"));
-        player.sendMessage("§7Use §e/trial sentence <trialId> <punishment> <amount>§7 to apply sentence");
+        player.sendMessage(MessageUtils.format("trial.verdict_recorded", Map.of("verdict", verdict == PunishmentType.GUILTY ? MessageUtils.get("trial.guilty") : MessageUtils.get("trial.not_guilty"))));
+        player.sendMessage(MessageUtils.get("trial.verdict_next_steps"));
 
         Player defendant = plugin.getServer().getPlayer(trial.getDefendantId());
         if (defendant != null) {
             if (verdict == PunishmentType.GUILTY) {
-                defendant.sendMessage("§c⚖ You have been found GUILTY!");
-                defendant.sendMessage("§7Awaiting sentence...");
+                defendant.sendMessage(MessageUtils.get("trial.notify_guilty"));
+                defendant.sendMessage(MessageUtils.get("trial.notify_awaiting_sentence"));
             } else {
-                defendant.sendMessage("§a⚖ You have been found NOT GUILTY!");
-                defendant.sendMessage("§7You are free to go!");
+                defendant.sendMessage(MessageUtils.get("trial.notify_not_guilty"));
+                defendant.sendMessage(MessageUtils.get("trial.notify_free"));
             }
         }
 
@@ -209,8 +210,8 @@ public class TrialCommand implements CommandExecutor, TabCompleter {
     private boolean handleSentence(Player player, String[] args) {
         // /trial sentence <trialId> <punishment> <amount>
         if (args.length < 4) {
-            player.sendMessage("§cUsage: /trial sentence <trialId> <punishment> <amount>");
-            player.sendMessage("§7Punishments: FINE, IMPRISONMENT, BANISHMENT");
+            player.sendMessage(MessageUtils.get("trial.usage_sentence"));
+            player.sendMessage(MessageUtils.get("trial.punishments_list"));
             return true;
         }
 
@@ -225,12 +226,12 @@ public class TrialCommand implements CommandExecutor, TabCompleter {
         }
 
         if (trial == null) {
-            player.sendMessage("§cTrial not found!");
+            player.sendMessage(MessageUtils.get("trial.not_found"));
             return true;
         }
 
         if (!trial.getJudgeId().equals(player.getUniqueId())) {
-            player.sendMessage("§cYou are not the judge of this trial!");
+            player.sendMessage(MessageUtils.get("trial.not_judge"));
             return true;
         }
 
@@ -238,8 +239,8 @@ public class TrialCommand implements CommandExecutor, TabCompleter {
         try {
             punishment = PunishmentType.valueOf(args[2].toUpperCase());
         } catch (IllegalArgumentException e) {
-            player.sendMessage("§cInvalid punishment type!");
-            player.sendMessage("§7Valid types: FINE, IMPRISONMENT, BANISHMENT");
+            player.sendMessage(MessageUtils.get("trial.invalid_punishment"));
+            player.sendMessage(MessageUtils.get("trial.punishments_list"));
             return true;
         }
 
@@ -247,47 +248,47 @@ public class TrialCommand implements CommandExecutor, TabCompleter {
         try {
             amount = Double.parseDouble(args[3]);
         } catch (NumberFormatException e) {
-            player.sendMessage("§cInvalid amount!");
+            player.sendMessage(MessageUtils.get("trial.invalid_amount"));
             return true;
         }
 
-        String reason = args.length > 4 ? String.join(" ", Arrays.copyOfRange(args, 4, args.length)) : "No reason provided";
+        String reason = args.length > 4 ? String.join(" ", Arrays.copyOfRange(args, 4, args.length)) : MessageUtils.get("trial.no_reason_provided");
 
         if (justiceService.concludeTrial(trial, punishment, amount, reason)) {
-            player.sendMessage("§a✔ Sentence applied!");
-            player.sendMessage("§7Punishment: §c" + punishment.getDescription());
-            player.sendMessage("§7Amount: §6" + (int)amount);
-            player.sendMessage("§7Reason: §e" + reason);
+            player.sendMessage(MessageUtils.get("trial.sentence_applied"));
+            player.sendMessage(MessageUtils.format("trial.sentence_info", Map.of("punishment", punishment.getDescription(), "amount", String.valueOf((int)amount))));
+            player.sendMessage(MessageUtils.format("trial.sentence_reason", Map.of("reason", reason)));
 
             Player defendant = plugin.getServer().getPlayer(trial.getDefendantId());
             if (defendant != null) {
-                defendant.sendMessage("§c⚖ SENTENCE!");
-                defendant.sendMessage("§7Punishment: §c" + punishment.getDescription());
+                defendant.sendMessage(MessageUtils.get("trial.notify_sentence"));
+                defendant.sendMessage(MessageUtils.format("trial.notify_punishment", Map.of("punishment", punishment.getDescription())));
 
                 PlayerData defendantData = dataManager.getPlayerData(defendant.getUniqueId());
 
                 switch (punishment) {
                     case FINE:
-                        defendant.sendMessage("§7Fine: §6$" + (int)amount);
+                        defendant.sendMessage(MessageUtils.format("trial.notify_fine_amount", Map.of("amount", String.valueOf((int)amount))));
                         if (defendantData.removeMoney((int)amount)) {
-                            defendant.sendMessage("§c✘ Fine paid automatically!");
+                            defendant.sendMessage(MessageUtils.get("trial.fine_paid"));
+                            try { plugin.getDataManager().savePlayerMoney(defendant.getUniqueId()); } catch (Throwable ignored) {}
                         } else {
-                            defendant.sendMessage("§c✘ Insufficient funds! You now have a debt!");
+                            defendant.sendMessage(MessageUtils.get("trial.fine_unpaid"));
                         }
                         break;
 
                     case IMPRISONMENT:
-                        defendant.sendMessage("§7Duration: §c" + (int)amount + " hours");
-                        defendant.sendMessage("§c✘ You are now imprisoned!");
+                        defendant.sendMessage(MessageUtils.format("trial.notify_imprisonment", Map.of("hours", String.valueOf((int)amount))));
+                        defendant.sendMessage(MessageUtils.get("trial.notify_imprisoned"));
                         break;
 
                     case BANISHMENT:
-                        defendant.sendMessage("§7Duration: §c" + (int)amount + " days");
-                        defendant.sendMessage("§c✘ You are banished from this town!");
+                        defendant.sendMessage(MessageUtils.format("trial.notify_banishment", Map.of("days", String.valueOf((int)amount))));
+                        defendant.sendMessage(MessageUtils.get("trial.notify_banished"));
                         break;
                 }
 
-                defendant.sendMessage("§7Reason: §e" + reason);
+                defendant.sendMessage(MessageUtils.format("trial.notify_reason", Map.of("reason", reason)));
             }
 
             // Update criminal record
@@ -296,7 +297,7 @@ public class TrialCommand implements CommandExecutor, TabCompleter {
                 criminal.addFine(amount);
             }
         } else {
-            player.sendMessage("§cFailed to apply sentence!");
+            player.sendMessage(MessageUtils.get("trial.failed_sentence"));
         }
 
         return true;
@@ -304,7 +305,7 @@ public class TrialCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleInfo(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /trial info <trialId>");
+            player.sendMessage(MessageUtils.get("trial.usage_info"));
             return true;
         }
 
@@ -319,31 +320,31 @@ public class TrialCommand implements CommandExecutor, TabCompleter {
         }
 
         if (trial == null) {
-            player.sendMessage("§cTrial not found!");
+            player.sendMessage(MessageUtils.get("trial.not_found"));
             return true;
         }
 
         String judgeName = plugin.getServer().getOfflinePlayer(trial.getJudgeId()).getName();
         String defendantName = plugin.getServer().getOfflinePlayer(trial.getDefendantId()).getName();
 
-        player.sendMessage("§7§m----------§r §c⚖ Trial Info§7 §m----------");
-        player.sendMessage("§eID: §6" + trial.getTrialId().toString().substring(0, 8));
-        player.sendMessage("§eJudge: §6" + judgeName);
-        player.sendMessage("§eDefendant: §6" + defendantName);
-        player.sendMessage("§eCrime: §c" + trial.getCrime().getCrimeType().getDisplayName());
-        player.sendMessage("§eStatus: §6" + trial.getStatus().name());
+        player.sendMessage(MessageUtils.get("trial.info_header"));
+        player.sendMessage(MessageUtils.format("trial.info_id", Map.of("id", trial.getTrialId().toString().substring(0, 8))));
+        player.sendMessage(MessageUtils.format("trial.info_judge", Map.of("judge", judgeName)));
+        player.sendMessage(MessageUtils.format("trial.info_defendant", Map.of("defendant", defendantName)));
+        player.sendMessage(MessageUtils.format("trial.info_crime", Map.of("crime", trial.getCrime().getCrimeType().getDisplayName())));
+        player.sendMessage(MessageUtils.format("trial.info_status", Map.of("status", trial.getStatus().name())));
 
         if (trial.getVerdict() != null) {
-            player.sendMessage("§eVerdict: §6" + trial.getVerdict().getDescription());
+            player.sendMessage(MessageUtils.format("trial.info_verdict", Map.of("verdict", trial.getVerdict().getDescription())));
             if (trial.getPunishment() > 0) {
-                player.sendMessage("§ePunishment Amount: §6" + (int)trial.getPunishment());
+                player.sendMessage(MessageUtils.format("trial.info_punishment_amount", Map.of("amount", String.valueOf((int)trial.getPunishment()))));
             }
             if (trial.getReason() != null) {
-                player.sendMessage("§eReason: §e" + trial.getReason());
+                player.sendMessage(MessageUtils.format("trial.info_reason", Map.of("reason", trial.getReason())));
             }
         }
 
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("trial.info_footer"));
 
         return true;
     }
@@ -352,7 +353,7 @@ public class TrialCommand implements CommandExecutor, TabCompleter {
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
 
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town!");
+            player.sendMessage(MessageUtils.get("trial.must_be_in_town"));
             return true;
         }
 
@@ -365,19 +366,19 @@ public class TrialCommand implements CommandExecutor, TabCompleter {
                 .toList();
 
         if (townTrials.isEmpty()) {
-            player.sendMessage("§aNo active trials!");
+            player.sendMessage(MessageUtils.get("trial.list_none"));
             return true;
         }
 
-        player.sendMessage("§7§m----------§r §c⚖ Active Trials§7 (" + townTrials.size() + ")§m----------");
+        player.sendMessage(MessageUtils.format("trial.list_header", Map.of("count", String.valueOf(townTrials.size()))));
 
         for (Trial trial : townTrials) {
             String defendantName = plugin.getServer().getOfflinePlayer(trial.getDefendantId()).getName();
-            player.sendMessage("§c• §e" + defendantName + " §7- §c" + trial.getCrime().getCrimeType().getDisplayName());
-            player.sendMessage("§7  Status: §6" + trial.getStatus().name() + " §7| ID: §e" + trial.getTrialId().toString().substring(0, 8));
+            player.sendMessage(MessageUtils.format("trial.list_item", Map.of("defendant", defendantName, "charge", trial.getCrime().getCrimeType().getDisplayName(), "status", trial.getStatus().name(), "id", trial.getTrialId().toString().substring(0, 8))));
+            player.sendMessage(MessageUtils.format("trial.list_item_status", Map.of("status", trial.getStatus().name(), "id", trial.getTrialId().toString().substring(0, 8))));
         }
 
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("trial.list_footer"));
 
         return true;
     }
@@ -386,7 +387,7 @@ public class TrialCommand implements CommandExecutor, TabCompleter {
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
 
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town!");
+            player.sendMessage(MessageUtils.get("trial.must_be_in_town"));
             return true;
         }
 
@@ -397,94 +398,92 @@ public class TrialCommand implements CommandExecutor, TabCompleter {
                 .toList();
 
         if (townCriminals.isEmpty()) {
-            player.sendMessage("§aNo active criminals in your town!");
+            player.sendMessage(MessageUtils.get("trial.criminals_none"));
             return true;
         }
 
-        player.sendMessage("§7§m----------§r §cCriminals§7 (" + townCriminals.size() + ")§m----------");
+        player.sendMessage(MessageUtils.format("trial.criminals_header", Map.of("count", String.valueOf(townCriminals.size()))));
 
         for (Criminal criminal : townCriminals) {
             String criminalName = plugin.getServer().getOfflinePlayer(criminal.getCriminalId()).getName();
-            player.sendMessage("§c• §e" + criminalName);
-            player.sendMessage("§7  Wanted Level: §c" + criminal.getWantedLevel() +
-                    " §7| Total Fines: §6$" + (int)criminal.getTotalFines() +
-                    " §7| Arrested: " + (criminal.isArrested() ? "§aYes" : "§cNo"));
+            player.sendMessage(MessageUtils.format("trial.criminal_item", Map.of("criminal", criminalName)));
+            player.sendMessage(MessageUtils.format("trial.criminal_stats", Map.of("wanted", String.valueOf(criminal.getWantedLevel()), "fines", String.valueOf((int)criminal.getTotalFines()), "arrested", criminal.isArrested() ? MessageUtils.get("yes") : MessageUtils.get("no"))));
         }
 
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("trial.criminals_footer"));
 
         return true;
     }
 
     private boolean handleArrest(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /trial arrest <player>");
+            player.sendMessage(MessageUtils.get("trial.usage_arrest"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town!");
+            player.sendMessage(MessageUtils.get("trial.must_be_in_town"));
             return true;
         }
 
         Player target = plugin.getServer().getPlayer(args[1]);
         if (target == null) {
-            player.sendMessage("§cPlayer not found!");
+            player.sendMessage(MessageUtils.get("trial.player_not_found"));
             return true;
         }
 
         justiceService.arrestCriminal(target.getUniqueId());
 
-        player.sendMessage("§a✔ §e" + target.getName() + "§a arrested!");
-        target.sendMessage("§c✘ You have been arrested by §e" + player.getName() + "§c!");
+        player.sendMessage(MessageUtils.format("trial.arrested_player", Map.of("player", target.getName())));
+        target.sendMessage(MessageUtils.format("trial.arrested_notify", Map.of("by", player.getName())));
 
         return true;
     }
 
     private boolean handleRelease(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /trial release <player>");
+            player.sendMessage(MessageUtils.get("trial.usage_release"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town!");
+            player.sendMessage(MessageUtils.get("trial.must_be_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (!town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cOnly the mayor can release criminals!");
+            player.sendMessage(MessageUtils.get("trial.only_mayor_release"));
             return true;
         }
 
         Player target = plugin.getServer().getPlayer(args[1]);
         if (target == null) {
-            player.sendMessage("§cPlayer not found!");
+            player.sendMessage(MessageUtils.get("trial.player_not_found"));
             return true;
         }
 
         justiceService.releaseCriminal(target.getUniqueId());
 
-        player.sendMessage("§a✔ §e" + target.getName() + "§a released!");
-        target.sendMessage("§a✔ You have been released by §e" + player.getName() + "§a!");
+        player.sendMessage(MessageUtils.format("trial.released_player", Map.of("player", target.getName())));
+        target.sendMessage(MessageUtils.format("trial.released_notify", Map.of("by", player.getName())));
 
         return true;
     }
 
     private void sendHelp(Player player) {
-        player.sendMessage("§7§m----------§r §c⚖ Trial Commands§7 §m----------");
-        player.sendMessage("§e/trial start <crimeId> <defendant>§7 - Start trial");
-        player.sendMessage("§e/trial verdict <id> <guilty|not_guilty>§7 - Verdict");
-        player.sendMessage("§e/trial sentence <id> <type> <amt>§7 - Sentence");
-        player.sendMessage("§e/trial info <id>§7 - View trial info");
-        player.sendMessage("§e/trial list§7 - List active trials");
-        player.sendMessage("§e/trial criminals§7 - List criminals");
-        player.sendMessage("§e/trial arrest <player>§7 - Arrest player");
-        player.sendMessage("§e/trial release <player>§7 - Release player");
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("trial.help_header"));
+        player.sendMessage(MessageUtils.get("trial.help_start"));
+        player.sendMessage(MessageUtils.get("trial.help_verdict"));
+        player.sendMessage(MessageUtils.get("trial.help_sentence"));
+        player.sendMessage(MessageUtils.get("trial.help_info"));
+        player.sendMessage(MessageUtils.get("trial.help_list"));
+        player.sendMessage(MessageUtils.get("trial.help_criminals"));
+        player.sendMessage(MessageUtils.get("trial.help_arrest"));
+        player.sendMessage(MessageUtils.get("trial.help_release"));
+        player.sendMessage(MessageUtils.get("trial.help_footer"));
     }
 
     @Override

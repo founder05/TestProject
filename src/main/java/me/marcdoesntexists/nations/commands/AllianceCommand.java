@@ -7,6 +7,7 @@ import me.marcdoesntexists.nations.societies.Alliance;
 import me.marcdoesntexists.nations.societies.Kingdom;
 import me.marcdoesntexists.nations.societies.Town;
 import me.marcdoesntexists.nations.utils.PlayerData;
+import me.marcdoesntexists.nations.utils.MessageUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class AllianceCommand implements CommandExecutor, TabCompleter {
@@ -34,7 +36,7 @@ public class AllianceCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage("§cThis command can only be used by players!");
+            sender.sendMessage(MessageUtils.get("alliance.player_only"));
             return true;
         }
 
@@ -68,30 +70,30 @@ public class AllianceCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleCreate(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /alliance create <name>");
+            player.sendMessage(MessageUtils.get("alliance.usage_create"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town to create an alliance!");
+            player.sendMessage(MessageUtils.get("alliance.must_be_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (town.getKingdom() == null) {
-            player.sendMessage("§cYour town must be part of a kingdom to create an alliance!");
+            player.sendMessage(MessageUtils.get("alliance.must_be_in_kingdom"));
             return true;
         }
 
         Kingdom kingdom = societiesManager.getKingdom(town.getKingdom());
         if (!kingdom.isKing(town.getName())) {
-            player.sendMessage("§cOnly the capital's mayor can create an alliance!");
+            player.sendMessage(MessageUtils.get("alliance.only_capital_mayor"));
             return true;
         }
 
         if (!town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cYou must be the mayor to create an alliance!");
+            player.sendMessage(MessageUtils.get("alliance.must_be_mayor"));
             return true;
         }
 
@@ -99,7 +101,7 @@ public class AllianceCommand implements CommandExecutor, TabCompleter {
 
         for (Alliance a : societiesManager.getAlliances()) {
             if (a.getName().equalsIgnoreCase(allianceName)) {
-                player.sendMessage("§cAn alliance with this name already exists!");
+                player.sendMessage(MessageUtils.get("alliance.alliance_exists"));
                 return true;
             }
         }
@@ -108,38 +110,38 @@ public class AllianceCommand implements CommandExecutor, TabCompleter {
         societiesManager.registerAlliance(alliance);
         kingdom.joinAlliance(allianceName);
 
-        player.sendMessage("§a✔ Alliance §6" + allianceName + "§a created successfully!");
-        player.sendMessage("§7Your kingdom is now the leader of this alliance.");
+        player.sendMessage(MessageUtils.format("alliance.alliance_created", Map.of("alliance", allianceName)));
+        player.sendMessage(MessageUtils.get("alliance.alliance_now_leader"));
 
         return true;
     }
 
     private boolean handleInvite(Player player, String[] args) {
         if (args.length < 3) {
-            player.sendMessage("§cUsage: /alliance invite <alliance> <kingdom>");
+            player.sendMessage(MessageUtils.get("alliance.usage_invite"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town!");
+            player.sendMessage(MessageUtils.get("alliance.must_be_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (town.getKingdom() == null) {
-            player.sendMessage("§cYour town must be part of a kingdom!");
+            player.sendMessage(MessageUtils.get("alliance.must_be_in_kingdom"));
             return true;
         }
 
         Kingdom kingdom = societiesManager.getKingdom(town.getKingdom());
         if (!kingdom.isKing(town.getName())) {
-            player.sendMessage("§cOnly the capital's mayor can invite to an alliance!");
+            player.sendMessage(MessageUtils.get("alliance.only_capital_mayor"));
             return true;
         }
 
         if (!town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cYou must be the mayor!");
+            player.sendMessage(MessageUtils.get("alliance.must_be_mayor"));
             return true;
         }
 
@@ -154,12 +156,12 @@ public class AllianceCommand implements CommandExecutor, TabCompleter {
         }
 
         if (alliance == null) {
-            player.sendMessage("§cAlliance not found!");
+            player.sendMessage(MessageUtils.get("alliance.alliance_not_found"));
             return true;
         }
 
         if (!alliance.getLeader().equals(kingdom.getName())) {
-            player.sendMessage("§cOnly the alliance leader can invite kingdoms!");
+            player.sendMessage(MessageUtils.get("alliance.only_leader_can_invite"));
             return true;
         }
 
@@ -167,25 +169,25 @@ public class AllianceCommand implements CommandExecutor, TabCompleter {
         Kingdom targetKingdom = societiesManager.getKingdom(targetKingdomName);
 
         if (targetKingdom == null) {
-            player.sendMessage("§cKingdom not found!");
+            player.sendMessage(MessageUtils.format("commands.not_found", Map.of("entity","Kingdom")));
             return true;
         }
 
         if (alliance.isMember(targetKingdomName)) {
-            player.sendMessage("§cThat kingdom is already in this alliance!");
+            player.sendMessage(MessageUtils.get("alliance.already_in_alliance"));
             return true;
         }
 
         alliance.addInvite(targetKingdomName);
 
-        player.sendMessage("§a✔ Invited §6" + targetKingdomName + "§a to the alliance!");
+        player.sendMessage(MessageUtils.format("alliance.invite_success", Map.of("kingdom", targetKingdomName)));
 
         Town targetCapital = societiesManager.getTown(targetKingdom.getCapital());
         if (targetCapital != null) {
             Player targetKing = plugin.getServer().getPlayer(targetCapital.getMayor());
             if (targetKing != null) {
-                targetKing.sendMessage("§7[§6" + allianceName + "§7] §eYour kingdom has been invited to join §6" + allianceName + "§e!");
-                targetKing.sendMessage("§7Use §e/alliance accept " + allianceName + "§7 to join!");
+                targetKing.sendMessage(MessageUtils.format("alliance.invite_notify", Map.of("alliance", allianceName)));
+                targetKing.sendMessage(MessageUtils.format("alliance.invite_hint", Map.of("alliance", allianceName)));
             }
         }
 
@@ -194,30 +196,30 @@ public class AllianceCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleAccept(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /alliance accept <alliance>");
+            player.sendMessage(MessageUtils.get("alliance.usage_accept"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town!");
+            player.sendMessage(MessageUtils.get("alliance.must_be_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (town.getKingdom() == null) {
-            player.sendMessage("§cYour town must be part of a kingdom!");
+            player.sendMessage(MessageUtils.get("alliance.must_be_in_kingdom"));
             return true;
         }
 
         Kingdom kingdom = societiesManager.getKingdom(town.getKingdom());
         if (!kingdom.isKing(town.getName())) {
-            player.sendMessage("§cOnly the capital's mayor can accept alliance invites!");
+            player.sendMessage(MessageUtils.get("alliance.only_capital_mayor"));
             return true;
         }
 
         if (!town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cYou must be the mayor!");
+            player.sendMessage(MessageUtils.get("alliance.must_be_mayor"));
             return true;
         }
 
@@ -232,12 +234,12 @@ public class AllianceCommand implements CommandExecutor, TabCompleter {
         }
 
         if (alliance == null) {
-            player.sendMessage("§cAlliance not found!");
+            player.sendMessage(MessageUtils.get("alliance.alliance_not_found"));
             return true;
         }
 
         if (!alliance.hasInvite(kingdom.getName())) {
-            player.sendMessage("§cYou don't have an invite to this alliance!");
+            player.sendMessage(MessageUtils.get("alliance.alliance_not_found"));
             return true;
         }
 
@@ -245,7 +247,7 @@ public class AllianceCommand implements CommandExecutor, TabCompleter {
         alliance.addMember(kingdom.getName());
         kingdom.joinAlliance(allianceName);
 
-        player.sendMessage("§a✔ Your kingdom has joined §6" + allianceName + "§a!");
+        player.sendMessage(MessageUtils.format("alliance.joined_alliance", Map.of("alliance", allianceName)));
 
         return true;
     }
@@ -253,29 +255,29 @@ public class AllianceCommand implements CommandExecutor, TabCompleter {
     private boolean handleLeave(Player player, String[] args) {
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town!");
+            player.sendMessage(MessageUtils.get("alliance.must_be_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (town.getKingdom() == null) {
-            player.sendMessage("§cYour town must be part of a kingdom!");
+            player.sendMessage(MessageUtils.get("alliance.must_be_in_kingdom"));
             return true;
         }
 
         Kingdom kingdom = societiesManager.getKingdom(town.getKingdom());
         if (!kingdom.isKing(town.getName())) {
-            player.sendMessage("§cOnly the capital's mayor can leave alliances!");
+            player.sendMessage(MessageUtils.get("alliance.only_capital_mayor"));
             return true;
         }
 
         if (!town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cYou must be the mayor!");
+            player.sendMessage(MessageUtils.get("alliance.must_be_mayor"));
             return true;
         }
 
         if (kingdom.getAlliances().isEmpty()) {
-            player.sendMessage("§cYour kingdom is not in any alliance!");
+            player.sendMessage(MessageUtils.get("alliance.not_in_any_alliance"));
             return true;
         }
 
@@ -284,25 +286,25 @@ public class AllianceCommand implements CommandExecutor, TabCompleter {
         for (Alliance a : societiesManager.getAlliances()) {
             if (a.getName().equalsIgnoreCase(allianceName)) {
                 if (a.getLeader().equals(kingdom.getName())) {
-                    player.sendMessage("§cYou cannot leave an alliance you lead! Disband it instead.");
+                    player.sendMessage(MessageUtils.get("alliance.cannot_leave_leader"));
                     return true;
                 }
 
                 a.removeMember(kingdom.getName());
                 kingdom.leaveAlliance(allianceName);
 
-                player.sendMessage("§a✔ Your kingdom has left §6" + allianceName + "§a!");
+                player.sendMessage(MessageUtils.format("alliance.left_alliance", Map.of("alliance", allianceName)));
                 return true;
             }
         }
 
-        player.sendMessage("§cAlliance not found!");
+        player.sendMessage(MessageUtils.get("alliance.alliance_not_found"));
         return true;
     }
 
     private boolean handleInfo(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /alliance info <name>");
+            player.sendMessage(MessageUtils.get("alliance.usage_info"));
             return true;
         }
 
@@ -317,20 +319,20 @@ public class AllianceCommand implements CommandExecutor, TabCompleter {
         }
 
         if (alliance == null) {
-            player.sendMessage("§cAlliance not found!");
+            player.sendMessage(MessageUtils.get("alliance.alliance_not_found"));
             return true;
         }
 
-        player.sendMessage("§7§m----------§r §6" + alliance.getName() + "§7 §m----------");
-        player.sendMessage("§eLeader: §6" + alliance.getLeader());
-        player.sendMessage("§eMembers: §6" + alliance.getMemberCount());
-        player.sendMessage("§7Member Kingdoms:");
+        player.sendMessage(MessageUtils.format("alliance.info_header", Map.of("alliance", alliance.getName())));
+        player.sendMessage(MessageUtils.format("alliance.info_leader", Map.of("leader", alliance.getLeader())));
+        player.sendMessage(MessageUtils.format("alliance.info_members", Map.of("count", String.valueOf(alliance.getMemberCount()))));
+        player.sendMessage(MessageUtils.get("alliance.info_footer"));
 
         for (String member : alliance.getMembers()) {
-            player.sendMessage("§7  • §e" + member);
+            player.sendMessage(MessageUtils.format("alliance.info_member_list_item", Map.of("name", member)));
         }
 
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("alliance.info_footer"));
 
         return true;
     }
@@ -339,30 +341,30 @@ public class AllianceCommand implements CommandExecutor, TabCompleter {
         Collection<Alliance> alliances = societiesManager.getAlliances();
 
         if (alliances.isEmpty()) {
-            player.sendMessage("§cNo alliances exist yet!");
+            player.sendMessage(MessageUtils.get("alliance.list_empty"));
             return true;
         }
 
-        player.sendMessage("§7§m----------§r §6Alliances §7(" + alliances.size() + ")§m----------");
+        player.sendMessage(MessageUtils.format("alliance.list_header", Map.of("count", String.valueOf(alliances.size()))));
 
         for (Alliance alliance : alliances) {
-            player.sendMessage("§e• §6" + alliance.getName() + " §7- Leader: §e" + alliance.getLeader() + " §7- Members: §e" + alliance.getMemberCount());
+            player.sendMessage(MessageUtils.format("alliance.list_item", Map.of("name", alliance.getName(), "leader", alliance.getLeader(), "count", String.valueOf(alliance.getMemberCount()))));
         }
 
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("alliance.list_footer"));
 
         return true;
     }
 
     private void sendHelp(Player player) {
-        player.sendMessage("§7§m----------§r §6Alliance Commands§7 §m----------");
-        player.sendMessage("§e/alliance create <name>§7 - Create an alliance");
-        player.sendMessage("§e/alliance invite <alliance> <kingdom>§7 - Invite a kingdom");
-        player.sendMessage("§e/alliance accept <alliance>§7 - Accept invite");
-        player.sendMessage("§e/alliance leave§7 - Leave alliance");
-        player.sendMessage("§e/alliance info <name>§7 - View alliance info");
-        player.sendMessage("§e/alliance list§7 - List all alliances");
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("alliance.help_header"));
+        player.sendMessage(MessageUtils.get("alliance.help_create"));
+        player.sendMessage(MessageUtils.get("alliance.help_invite"));
+        player.sendMessage(MessageUtils.get("alliance.help_accept"));
+        player.sendMessage(MessageUtils.get("alliance.help_leave"));
+        player.sendMessage(MessageUtils.get("alliance.help_info"));
+        player.sendMessage(MessageUtils.get("alliance.help_list"));
+        player.sendMessage(MessageUtils.get("alliance.help_footer"));
     }
 
     @Override

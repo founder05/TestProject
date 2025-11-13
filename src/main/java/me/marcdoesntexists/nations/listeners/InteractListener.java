@@ -6,6 +6,7 @@ import me.marcdoesntexists.nations.managers.HybridClaimManager;
 import me.marcdoesntexists.nations.managers.SocietiesManager;
 import me.marcdoesntexists.nations.societies.Town;
 import me.marcdoesntexists.nations.utils.Claim;
+import me.marcdoesntexists.nations.utils.MessageUtils;
 import org.bukkit.Chunk;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -17,6 +18,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public class InteractListener implements Listener {
 
@@ -107,7 +109,7 @@ public class InteractListener implements Listener {
 
                 if (town == null || !town.getMembers().contains(player.getUniqueId())) {
                     event.setCancelled(true);
-                    player.sendMessage("§c✘ You cannot access containers in §6" + townName + "§c!");
+                    player.sendMessage(MessageUtils.format("errors.generic", Map.of("error", MessageUtils.format("interact.cannot_access", Map.of("town", townName)))));
                     return;
                 }
             }
@@ -124,7 +126,7 @@ public class InteractListener implements Listener {
 
                 if (town == null || !town.getMembers().contains(player.getUniqueId())) {
                     event.setCancelled(true);
-                    player.sendMessage("§c✘ You cannot access containers in §6" + claim.getTownName() + "§c!");
+                    player.sendMessage(MessageUtils.format("errors.generic", Map.of("error", MessageUtils.format("interact.cannot_access", Map.of("town", claim.getTownName())))));
                     return;
                 }
             }
@@ -134,7 +136,7 @@ public class InteractListener implements Listener {
 
                 if (town == null || !town.getMembers().contains(player.getUniqueId())) {
                     event.setCancelled(true);
-                    player.sendMessage("§c✘ You cannot interact with blocks in §6" + claim.getTownName() + "§c!");
+                    player.sendMessage(MessageUtils.format("errors.generic", Map.of("error", MessageUtils.format("interact.cannot_interact", Map.of("town", claim.getTownName())))));
 
                 }
             }

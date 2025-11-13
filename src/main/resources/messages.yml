@@ -1,0 +1,235 @@
+general:
+  prefix: "§8[§6Nations§8]"
+  no_permission: "{prefix} §cNon hai il permesso per eseguire questo comando."
+  unknown_command: "{prefix} §cComando non riconosciuto."
+
+visualizer:
+  enabled: "{prefix} §aVisualizer attivato per la città {town}."
+  disabled: "{prefix} §cVisualizer disattivato."
+  unavailable: "{prefix} §cVisualizer non disponibile su questo server."
+
+actionbar:
+  wilderness: "§7Sei in una zona selvaggia"
+  your_territory: "§aSei nel territorio di §6{town}"
+  foreign_territory: "§cSei nel territorio di §6{town}"
+
+town:
+  welcome_back: "{prefix} §aBentornato in {town}!"
+  not_found: "{prefix} §cCittà non trovata."
+  usage_create: "{prefix} §eUso: /town create <name>"
+  already_in_town: "{prefix} §cSei già in una città."
+  already_exists: "{prefix} §cUna città con questo nome esiste già."
+  not_enough_money: "{prefix} §cFondi insufficienti: serve {needed}, hai {have}"
+  created: "{prefix} §aCittà {name} creata con successo."
+  created_hint: "{prefix} §7Usa /town info {name} per maggiori dettagli."
+  not_in_town_usage: "{prefix} §cNon sei in una città. Usa /town create per crearne una."
+  info:
+    header: "{prefix} §6Informazioni città: {name}"
+    mayor: "§eSindaco: §f{mayor}"
+    members: "§eMembri: §f{count}"
+    claims: "§eClaims: §f{count}"
+    balance: "§eTesoro: §f${balance}"
+    kingdom: "§eRegno: §f{kingdom}"
+    level: "§eLivello: §f{level}"
+    footer: "{prefix} §7Fine informazioni città"
+  usage_invite: "{prefix} §eUso: /town invite <player>"
+  not_in_town: "{prefix} §cNon sei in una città."
+  only_mayor: "{prefix} §cSolo il sindaco può eseguire questa azione."
+  player_already_in_town: "{prefix} §cIl giocatore è già in una città."
+  invite_sent: "{prefix} §aInvito inviato a {player} per entrare in {town}."
+  invite_receive: "{prefix} §eHai ricevuto un invito per unirti a {town}."
+  invite_accept_hint: "{prefix} §eUsa /town accept {town} per unirti."
+  usage_accept: "{prefix} §eUso: /town accept <townName>"
+  no_invite: "{prefix} §cNon hai inviti per questa città."
+  usage_kick: "{prefix} §eUso: /town kick <player>"
+  player_not_in_your_town: "{prefix} §cQuel giocatore non è nella tua città."
+  cannot_kick_self: "{prefix} §cNon puoi cacciare te stesso."
+  cannot_leave_mayor: "{prefix} §cIl sindaco non può lasciare la città."
+  left: "{prefix} §aHai lasciato la città {town}."
+  notify_left: "{prefix} §e{player} ha lasciato la città {town}."
+  claim_success_prefix: "{prefix} §aClaim eseguito: "
+  claim_fail_prefix: "{prefix} §cClaim fallito: "
+  kick_success: "{prefix} §a{player} è stato rimosso da {town}."
+  kicked_notify: "{prefix} §cSei stato rimosso dalla città {town}."
+
+# Alliance messages (complete list usate nel codice)
+alliance:
+  player_only: "{prefix} §cQuesto comando può essere usato solo da un giocatore."
+  usage_create: "{prefix} §eUso: /alliance create <name>"
+  must_be_in_town: "{prefix} §cDevi essere in una città per creare o gestire alleanze."
+  must_be_in_kingdom: "{prefix} §cLa tua città deve appartenere a un regno per eseguire questa azione."
+  only_capital_mayor: "{prefix} §cSolo la capitale può eseguire questa azione."
+  must_be_mayor: "{prefix} §cDevi essere il sindaco per eseguire questa azione."
+  alliance_exists: "{prefix} §cUn'alleanza con questo nome esiste già."
+  alliance_created: "{prefix} §aAlleanza {alliance} creata con successo."
+  alliance_now_leader: "{prefix} §aSei ora leader dell'alleanza."
+  usage_invite: "{prefix} §eUso: /alliance invite <alliance> <kingdom>"
+  alliance_not_found: "{prefix} §cAlleanza non trovata."
+  only_leader_can_invite: "{prefix} §cSolo il leader dell'alleanza può invitare altri regni."
+  already_in_alliance: "{prefix} §cQuesto regno è già membro dell'alleanza."
+  invite_success: "{prefix} §aInvito inviato a {kingdom}."
+  invite_notify: "{prefix} §eSei stato invitato dall'alleanza {alliance}."
+  invite_hint: "{prefix} §eUsa /alliance accept {alliance} per entrare."
+  usage_accept: "{prefix} §eUso: /alliance accept <alliance>"
+  joined_alliance: "{prefix} §aHai unito il regno all'alleanza {alliance}."
+  not_in_any_alliance: "{prefix} §cNon sei membro di nessuna alleanza."
+  cannot_leave_leader: "{prefix} §cIl leader non può lasciare l'alleanza."
+  left_alliance: "{prefix} §aHai lasciato l'alleanza {alliance}."
+  usage_info: "{prefix} §eUso: /alliance info <alliance>"
+  info_header: "{prefix} §6Informazioni alleanza: {alliance}"
+  info_leader: "§eLeader: §f{leader}"
+  info_members: "§eMembri: §f{count}"
+  info_member_list_item: "§7- {name}"
+  info_footer: "{prefix} §7Fine informazioni alleanza"
+  list_empty: "{prefix} §cNessuna alleanza esistente."
+  list_header: "{prefix} §6Elenco alleanze ({count})"
+  list_item: "§6{name} §7(leader: {leader}) - {count} membri"
+  list_footer: "{prefix} §7Fine elenco alleanze"
+  help_header: "{prefix} §6Comandi alleanza"
+  help_create: "{prefix} §e/alliance create <name> - Crea una nuova alleanza"
+  help_invite: "{prefix} §e/alliance invite <alliance> <kingdom> - Invita un regno"
+  help_accept: "{prefix} §e/alliance accept <alliance> - Accetta un invito"
+  help_leave: "{prefix} §e/alliance leave - Lascia l'alleanza"
+  help_info: "{prefix} §e/alliance info <alliance> - Mostra info alleanza"
+  help_list: "{prefix} §e/alliance list - Lista alleanze"
+  help_footer: "{prefix} §7Fine guida alleanza"
+
+leaderboard:
+  title_default: "{prefix} §6Classifica"
+  no_results: "{prefix} §cNessun risultato disponibile per questa classifica."
+  open_sound_missing: "{prefix} §eSuono di apertura non trovato: {sound}"
+  click_sound_missing: "{prefix} §eSuono di click non trovato: {sound}"
+
+chat:
+  format: "§7[{channel}] {player}: {message}"
+  not_in_town: "{prefix} §cNon sei in una città."
+  town_data_not_found: "{prefix} §cDati della città non trovati."
+  not_in_kingdom: "{prefix} §cNon sei in un regno."
+  kingdom_data_not_found: "{prefix} §cDati del regno non trovati."
+  not_in_empire: "{prefix} §cNon sei in un impero."
+  empire_data_not_found: "{prefix} §cDati dell'impero non trovati."
+  not_in_religion: "{prefix} §cNon sei in una religione."
+  religion_data_not_found: "{prefix} §cDati della religione non trovati."
+  spy_prefix: "{prefix} §7[SPY] "
+
+entity:
+  cannot_attack_members: "{prefix} §cNon puoi attaccare i membri della tua città/regno/impero."
+  pvp_disabled: "{prefix} §cIl PvP è disattivato in questa area ({town})."
+
+block:
+  cannot_break: "{prefix} §cNon puoi rompere blocchi nella città di {town}."
+  cannot_place: "{prefix} §cNon puoi piazzare blocchi nella città di {town}."
+
+errors:
+  generic: "{prefix} §cErrore: {error}"
+
+interact:
+  cannot_access: "Non puoi accedere alle proprietà di {town}."
+  cannot_interact: "Non puoi interagire con gli oggetti di {town}."
+
+jobs:
+  list_item: "§e - {display}"
+  joined: "{prefix} §aTi sei iscritto al lavoro {job}. Salario: {salary} (tassa: {tax}%)."
+  you_quit: "{prefix} §eHai lasciato il lavoro {job}."
+  info_footer: "{prefix} §7Usa /job per maggiori informazioni."
+
+law:
+  crime_recorded: "{prefix} §cCrimine registrato: {crime}"
+
+commands:
+  player_only: "{prefix} §cQuesto comando può essere usato solo da un giocatore."
+  not_found: "{prefix} §c{entity} non trovato."
+  savecheck_started: "{prefix} §aAvvio salvataggio forzato..."
+  savecheck_success: "{prefix} §aSalvataggio completato con successo."
+  savecheck_failed: "{prefix} §cSalvataggio fallito: {error}"
+  town_create_hint: "{prefix} §eDigita §6/town create <name> §eper creare la tua città!"
+
+save:
+  started: "{prefix} §aAvvio salvataggio dati..."
+  success: "{prefix} §aSalvataggio completato."
+  failed: "{prefix} §cSalvataggio fallito: {error}"
+
+# Treaty messages (usate in TreatyCommand)
+treaty:
+  usage_create: "{prefix} §eUso: /treaty create <kingdom> <type> <days>"
+  usage_types: "{prefix} §eTipi disponibili: PEACE, TRADE, NON_AGGRESSION"
+  must_be_in_town: "{prefix} §cDevi essere in una città per eseguire questo comando."
+  must_be_in_kingdom: "{prefix} §cLa tua città deve essere parte di un regno per eseguire questa azione."
+  only_capital_can_create: "{prefix} §cSolo la capitale può creare trattati."
+  must_be_mayor: "{prefix} §cDevi essere il sindaco per eseguire questa azione."
+  kingdom_not_found: "{prefix} §cRegno non trovato: {name}"
+  cannot_self: "{prefix} §cNon puoi creare un trattato con il tuo stesso regno."
+  invalid_type: "{prefix} §cTipo di trattato non valido."
+  duration_bounds: "{prefix} §cLa durata deve essere tra 1 e 365 giorni."
+  invalid_days: "{prefix} §cGiorni non validi forniti."
+  created: "{prefix} §aTrattato {name} creato con successo."
+  created_type: "{prefix} §aTipo: {type}"
+  created_duration: "{prefix} §aDurata (giorni): {days}"
+  created_between: "{prefix} §aTra: {a} ↔ {b}"
+  notify_proposed: "{prefix} §eIl regno {from} ha proposto un trattato."
+  notify_proposed_details: "{prefix} §eTipo: {type}, Durata: {days} giorni"
+  notify_proposed_accept: "{prefix} §aPer accettare: /treaty accept {name}"
+  create_failed: "{prefix} §cImpossibile creare il trattato."
+
+  accept_usage: "{prefix} §eUso: /treaty accept <treatyName>"
+  not_found: "{prefix} §cTrattato non trovato."
+  not_pending: "{prefix} §cQuesto trattato non è in attesa."
+  not_involved: "{prefix} §cIl tuo regno non è coinvolto in questo trattato."
+  only_capital_accept: "{prefix} §cSolo la capitale può accettare questo trattato."
+  accept_success: "{prefix} §aTrattato {name} accettato."
+  accept_active_days: "{prefix} §aGiorni rimanenti: {days}"
+
+  info_header: "{prefix} §6Informazioni sul trattato"
+  info_line_name: "§eNome: §f{name}"
+  info_line_type: "§eTipo: §f{type}"
+  info_line_kingdoms: "§eRegni: §f{a} ↔ {b}"
+  info_line_status: "§eStato: §f{status}"
+  info_line_days: "§eGiorni rimanenti: §f{days}"
+  info_footer: "{prefix} §7Fine informazioni trattato"
+
+  list_header: "{prefix} §6Elenco trattati ({count})"
+  list_item_name: "§6{name}"
+  list_item_details: "§7Tipo: {type} · Stato: {status}"
+  list_item_between: "§7Tra: {a} ↔ {b}"
+  list_footer: "{prefix} §7Fine elenco trattati"
+
+  break_usage: "{prefix} §eUso: /treaty break <treatyName>"
+  break_success: "{prefix} §aTrattato {name} rimosso con successo."
+  break_failed: "{prefix} §cImpossibile rimuovere il trattato."
+  break_penalty: "{prefix} §cPenalità applicata per la rottura del trattato."
+
+  renew_usage: "{prefix} §eUso: /treaty renew <treatyName> <days>"
+  duration_invalid: "{prefix} §cLa durata deve essere un numero valido compreso tra 1 e 365."
+
+  status:
+    active: "§aAttivo"
+    expired: "§cScaduto"
+    pending: "§eIn attesa"
+    unknown: "§7{status}"
+
+# Teleport-to-my (tpmy) messages
+tpmy:
+  only_players: "{prefix} §cSolo i giocatori possono usare questo comando."
+  usage: "{prefix} §eUso: /tpmy <town|kingdom|empire>"
+  player_data_not_found: "{prefix} §cDati del giocatore non trovati."
+  town_data_not_found: "{prefix} §cDati della città non trovati."
+  world_not_found: "{prefix} §cMondo non trovato: {world}"
+  no_claims_town: "{prefix} §cLa tua città non ha claim."
+  no_claims_kingdom: "{prefix} §cIl regno non ha claim."
+  no_claims_empire: "{prefix} §cL'impero non ha claim."
+  teleported_town: "{prefix} §aTeletrasportato alla città: §6{town}"
+  teleported_kingdom: "{prefix} §aTeletrasportato al regno: §6{kingdom}"
+  teleported_empire: "{prefix} §aTeletrasportato all'impero: §6{empire}"
+  unknown_type: "{prefix} §cTipo sconosciuto: {type}"
+
+# Misc helper strings
+misc:
+  yes: "§aSì"
+  no: "§cNo"
+  unknown: "§7Sconosciuto"
+
+# GUI-related messages (missing keys referenced in code)
+gui:
+  leaderboard:
+    click_message: "{prefix} §6{board} §7- {name}: {value}"
+  town_verbose: "{prefix} §6{town} §7(Membro: {member})"

@@ -2,6 +2,7 @@ package me.marcdoesntexists.nations.commands;
 
 import me.marcdoesntexists.nations.Nations;
 import me.marcdoesntexists.nations.gui.NationsGUI;
+import me.marcdoesntexists.nations.utils.MessageUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -22,7 +23,7 @@ public class NationsGUICommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("§cThis command can only be used by players!");
+            sender.sendMessage(MessageUtils.get("commands.player_only"));
             return true;
         }
 
@@ -41,7 +42,7 @@ public class NationsGUICommand implements CommandExecutor, TabCompleter {
                 NationsGUI.openMainGUI(player, category);
                 break;
             default:
-                player.sendMessage("§cUsage: /nations [towns|kingdoms|empires]");
+                player.sendMessage(MessageUtils.get("commands.usage") + " §cUsage: /nations [towns|kingdoms|empires]");
                 break;
         }
 
@@ -58,4 +59,3 @@ public class NationsGUICommand implements CommandExecutor, TabCompleter {
         return new ArrayList<>();
     }
 }
-

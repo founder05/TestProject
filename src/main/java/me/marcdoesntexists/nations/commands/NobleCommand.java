@@ -6,6 +6,7 @@ import me.marcdoesntexists.nations.managers.SocietiesManager;
 import me.marcdoesntexists.nations.societies.NobleTier;
 import me.marcdoesntexists.nations.societies.Town;
 import me.marcdoesntexists.nations.utils.PlayerData;
+import me.marcdoesntexists.nations.utils.MessageUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -31,7 +32,7 @@ public class NobleCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage("§cThis command can only be used by players!");
+            sender.sendMessage(MessageUtils.get("noble.player_only"));
             return true;
         }
 
@@ -69,7 +70,7 @@ public class NobleCommand implements CommandExecutor, TabCompleter {
         if (args.length > 1) {
             target = plugin.getServer().getPlayer(args[1]);
             if (target == null) {
-                player.sendMessage("§cPlayer not found!");
+                player.sendMessage(MessageUtils.get("commands.not_found").replace("{entity}", "Player"));
                 return true;
             }
         }
@@ -77,22 +78,23 @@ public class NobleCommand implements CommandExecutor, TabCompleter {
         PlayerData data = dataManager.getPlayerData(target.getUniqueId());
         NobleTier tier = data.getNobleTier();
 
-        player.sendMessage("§7§m----------§r §6Noble Status§7 §m----------");
-        player.sendMessage("§ePlayer: §6" + target.getName());
-        player.sendMessage("§eTier: §6" + tier.name());
-        player.sendMessage("§eLevel: §6" + tier.getLevel());
-        player.sendMessage("§eTax Benefit: §a" + (tier.getTaxBenefitPercentage() * 100) + "%");
-        player.sendMessage("§eRequired Land Value: §6$" + tier.getRequiredLandValue());
-        player.sendMessage("§eSocial Class: §6" + data.getSocialClass());
+        player.sendMessage(MessageUtils.get("noble.info_header"));
+        player.sendMessage(MessageUtils.format("noble.info_player", Map.of("player", target.getName())));
+        player.sendMessage(MessageUtils.format("noble.info_tier", Map.of("tier", tier.name())));
+        player.sendMessage(MessageUtils.format("noble.info_level", Map.of("level", String.valueOf(tier.getLevel()))));
+        player.sendMessage(MessageUtils.format("noble.info_tax", Map.of("tax", String.valueOf((int)(tier.getTaxBenefitPercentage() * 100)))));
+
+        player.sendMessage(MessageUtils.format("noble.info_required_land", Map.of("value", String.valueOf(tier.getRequiredLandValue()))));
+        player.sendMessage(MessageUtils.format("noble.info_social_class", Map.of("class", data.getSocialClass())));
 
         if (tier != NobleTier.COMMONER && tier != NobleTier.KING) {
             NobleTier nextTier = NobleTier.getByLevel(tier.getLevel() + 1);
             player.sendMessage("");
-            player.sendMessage("§7Next Tier: §e" + nextTier.name());
-            player.sendMessage("§7Required: §6$" + nextTier.getRequiredLandValue());
+            player.sendMessage(MessageUtils.format("noble.info_next_tier", Map.of("next", nextTier.name())));
+            player.sendMessage(MessageUtils.format("noble.info_next_required", Map.of("required", String.valueOf(nextTier.getRequiredLandValue()))));
         }
 
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("noble.info_footer"));
 
         return true;
     }
@@ -100,38 +102,38 @@ public class NobleCommand implements CommandExecutor, TabCompleter {
     private boolean handlePromote(Player player, String[] args) {
         // /noble promote <player> <tier>
         if (args.length < 3) {
-            player.sendMessage("§cUsage: /noble promote <player> <tier>");
-            player.sendMessage("§7Tiers: KNIGHT, BARON, COUNT, DUKE, PRINCE, KING");
+            player.sendMessage(MessageUtils.get("noble.usage_promote"));
+            player.sendMessage(MessageUtils.get("noble.usage_promote_hint"));
             return true;
         }
 
         // permission check
         if (!player.hasPermission("nations.noble.promote")) {
-            player.sendMessage("§cYou do not have permission to promote players.");
+            player.sendMessage(MessageUtils.get("general.no_permission"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town to promote players!");
+            player.sendMessage(MessageUtils.get("noble.must_be_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (!town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cOnly the mayor can promote players!");
+            player.sendMessage(MessageUtils.get("noble.only_mayor"));
             return true;
         }
 
         Player target = plugin.getServer().getPlayer(args[1]);
         if (target == null) {
-            player.sendMessage("§cPlayer not found!");
+            player.sendMessage(MessageUtils.get("commands.not_found").replace("{entity}", "Player"));
             return true;
         }
 
         PlayerData targetData = dataManager.getPlayerData(target.getUniqueId());
         if (!targetData.getTown().equals(data.getTown())) {
-            player.sendMessage("§cThat player is not in your town!");
+            player.sendMessage(MessageUtils.get("noble.not_in_town"));
             return true;
         }
 
@@ -139,31 +141,30 @@ public class NobleCommand implements CommandExecutor, TabCompleter {
         try {
             newTier = NobleTier.valueOf(args[2].toUpperCase());
         } catch (IllegalArgumentException e) {
-            player.sendMessage("§cInvalid tier!");
-            player.sendMessage("§7Valid tiers: KNIGHT, BARON, COUNT, DUKE, PRINCE, KING");
+            player.sendMessage(MessageUtils.get("noble.invalid_tier"));
+            player.sendMessage(MessageUtils.get("noble.valid_tiers"));
             return true;
         }
 
         if (newTier == NobleTier.COMMONER) {
-            player.sendMessage("§cUse /noble demote to demote to commoner!");
+            player.sendMessage(MessageUtils.get("noble.use_demote"));
             return true;
         }
 
         // Check if promoter has authority
         NobleTier promoterTier = data.getNobleTier();
         if (promoterTier.getLevel() <= newTier.getLevel()) {
-            player.sendMessage("§cYou cannot promote someone to your level or higher!");
+            player.sendMessage(MessageUtils.get("noble.cannot_promote_higher"));
             return true;
         }
 
         targetData.setNobleTier(newTier);
         targetData.setSocialClass(newTier.name());
 
-        player.sendMessage("§a✔ §6" + target.getName() + "§a promoted to §6" + newTier.name() + "§a!");
-        target.sendMessage("§a✔ You have been promoted to §6" + newTier.name() + "§a!");
-        target.sendMessage("§7Benefits:");
-        target.sendMessage("§7 • Tax Reduction: §a" + (newTier.getTaxBenefitPercentage() * 100) + "%");
-        target.sendMessage("§7 • New Social Status: §6" + newTier.name());
+        player.sendMessage(MessageUtils.format("noble.promote_success", Map.of("player", target.getName(), "tier", newTier.name())));
+        target.sendMessage(MessageUtils.format("noble.promoted_notify", Map.of("tier", newTier.name())));
+        target.sendMessage(MessageUtils.format("noble.promoted_benefit_tax", Map.of("tax", String.valueOf((int)(newTier.getTaxBenefitPercentage() * 100)))));
+        target.sendMessage(MessageUtils.format("noble.promoted_benefit_status", Map.of("status", newTier.name())));
 
         return true;
     }
@@ -171,46 +172,46 @@ public class NobleCommand implements CommandExecutor, TabCompleter {
     private boolean handleDemote(Player player, String[] args) {
         // /noble demote <player>
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /noble demote <player>");
+            player.sendMessage(MessageUtils.get("noble.usage_demote"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town!");
+            player.sendMessage(MessageUtils.get("noble.must_be_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (!town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cOnly the mayor can demote players!");
+            player.sendMessage(MessageUtils.get("noble.only_mayor"));
             return true;
         }
 
         Player target = plugin.getServer().getPlayer(args[1]);
         if (target == null) {
-            player.sendMessage("§cPlayer not found!");
+            player.sendMessage(MessageUtils.get("commands.not_found").replace("{entity}", "Player"));
             return true;
         }
 
         PlayerData targetData = dataManager.getPlayerData(target.getUniqueId());
         if (!targetData.getTown().equals(data.getTown())) {
-            player.sendMessage("§cThat player is not in your town!");
+            player.sendMessage(MessageUtils.get("noble.not_in_town"));
             return true;
         }
 
         NobleTier currentTier = targetData.getNobleTier();
         if (currentTier == NobleTier.COMMONER) {
-            player.sendMessage("§cThat player is already a commoner!");
+            player.sendMessage(MessageUtils.get("noble.already_commoner"));
             return true;
         }
 
         targetData.setNobleTier(NobleTier.COMMONER);
         targetData.setSocialClass("Commoner");
 
-        player.sendMessage("§a✔ §6" + target.getName() + "§a demoted to §7Commoner");
-        target.sendMessage("§c✘ You have been demoted to §7Commoner");
-        target.sendMessage("§7You have lost your noble privileges!");
+        player.sendMessage(MessageUtils.format("noble.demote_success", Map.of("player", target.getName())));
+        target.sendMessage(MessageUtils.get("noble.demoted_notify"));
+        target.sendMessage(MessageUtils.get("noble.demoted_lost_privileges"));
 
         return true;
     }
@@ -219,7 +220,7 @@ public class NobleCommand implements CommandExecutor, TabCompleter {
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
 
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town!");
+            player.sendMessage(MessageUtils.get("noble.must_be_in_town"));
             return true;
         }
 
@@ -236,7 +237,7 @@ public class NobleCommand implements CommandExecutor, TabCompleter {
             nobleTiers.get(tier).add(memberId);
         }
 
-        player.sendMessage("§7§m----------§r §6Nobility of " + town.getName() + "§7 §m----------");
+        player.sendMessage(MessageUtils.format("noble.list_header", Map.of("town", town.getName())));
 
         for (NobleTier tier : NobleTier.values()) {
             if (tier == NobleTier.COMMONER) continue; // Skip commoners
@@ -244,25 +245,25 @@ public class NobleCommand implements CommandExecutor, TabCompleter {
             List<UUID> members = nobleTiers.get(tier);
             if (!members.isEmpty()) {
                 player.sendMessage("");
-                player.sendMessage("§e" + tier.name() + "§7 (" + members.size() + "):");
+                player.sendMessage(MessageUtils.format("noble.list_tier_header", Map.of("tier", tier.name(), "count", String.valueOf(members.size()))));
                 for (UUID memberId : members) {
                     String memberName = plugin.getServer().getOfflinePlayer(memberId).getName();
-                    player.sendMessage("§7 • §6" + memberName);
+                    player.sendMessage(MessageUtils.format("noble.list_member_item", Map.of("name", memberName)));
                 }
             }
         }
 
         int commonerCount = nobleTiers.get(NobleTier.COMMONER).size();
         player.sendMessage("");
-        player.sendMessage("§7Commoners: §e" + commonerCount);
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.format("noble.list_commoners", Map.of("count", String.valueOf(commonerCount))));
+        player.sendMessage(MessageUtils.get("noble.list_footer"));
 
         return true;
     }
 
     private boolean handleRequirements(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /noble requirements <tier>");
+            player.sendMessage(MessageUtils.get("noble.usage_requirements"));
             return true;
         }
 
@@ -270,15 +271,15 @@ public class NobleCommand implements CommandExecutor, TabCompleter {
         try {
             tier = NobleTier.valueOf(args[1].toUpperCase());
         } catch (IllegalArgumentException e) {
-            player.sendMessage("§cInvalid tier!");
-            player.sendMessage("§7Valid tiers: KNIGHT, BARON, COUNT, DUKE, PRINCE, KING");
+            player.sendMessage(MessageUtils.get("noble.invalid_tier"));
+            player.sendMessage(MessageUtils.get("noble.valid_tiers"));
             return true;
         }
 
-        player.sendMessage("§7§m----------§r §6" + tier.name() + " Requirements§7 §m----------");
-        player.sendMessage("§eLevel: §6" + tier.getLevel());
-        player.sendMessage("§eRequired Land Value: §6$" + tier.getRequiredLandValue());
-        player.sendMessage("§eTax Benefit: §a" + (tier.getTaxBenefitPercentage() * 100) + "%");
+        player.sendMessage(MessageUtils.format("noble.requirements_header", Map.of("tier", tier.name())));
+        player.sendMessage(MessageUtils.format("noble.requirements_level", Map.of("level", String.valueOf(tier.getLevel()))));
+        player.sendMessage(MessageUtils.format("noble.requirements_land", Map.of("value", String.valueOf(tier.getRequiredLandValue()))));
+        player.sendMessage(MessageUtils.format("noble.requirements_tax", Map.of("tax", String.valueOf((tier.getTaxBenefitPercentage() * 100)))));
 
         // Show requirements from social.yml
         String tierLower = tier.name().toLowerCase();
@@ -288,26 +289,26 @@ public class NobleCommand implements CommandExecutor, TabCompleter {
                 .getInt("social-classes.nobles." + tierLower + ".required-experience", 0);
 
         if (requiredWealth > 0) {
-            player.sendMessage("§eRequired Wealth: §6$" + requiredWealth);
+            player.sendMessage(MessageUtils.format("noble.requirements_wealth", Map.of("amount", String.valueOf(requiredWealth))));
         }
         if (requiredExp > 0) {
-            player.sendMessage("§eRequired Experience: §6" + requiredExp);
+            player.sendMessage(MessageUtils.format("noble.requirements_exp", Map.of("amount", String.valueOf(requiredExp))));
         }
 
         player.sendMessage("");
-        player.sendMessage("§7Privileges:");
-        player.sendMessage("§7 • Reduced taxes");
-        player.sendMessage("§7 • Increased land claims");
-        player.sendMessage("§7 • Government positions access");
+        player.sendMessage(MessageUtils.get("noble.privileges_header"));
+        player.sendMessage(MessageUtils.format("noble.privilege_item", Map.of("text", "Reduced taxes")));
+        player.sendMessage(MessageUtils.format("noble.privilege_item", Map.of("text", "Increased land claims")));
+        player.sendMessage(MessageUtils.format("noble.privilege_item", Map.of("text", "Government positions access")));
 
         if (tier.getLevel() >= NobleTier.COUNT.getLevel()) {
-            player.sendMessage("§7 • Military command");
+            player.sendMessage(MessageUtils.format("noble.privilege_item", Map.of("text", "Military command")));
         }
         if (tier.getLevel() >= NobleTier.DUKE.getLevel()) {
-            player.sendMessage("§7 • Judicial authority");
+            player.sendMessage(MessageUtils.format("noble.privilege_item", Map.of("text", "Judicial authority")));
         }
 
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("noble.info_footer"));
 
         return true;
     }
@@ -317,7 +318,7 @@ public class NobleCommand implements CommandExecutor, TabCompleter {
         NobleTier currentTier = data.getNobleTier();
 
         if (currentTier == NobleTier.KING) {
-            player.sendMessage("§cYou are already at the highest noble tier!");
+            player.sendMessage(MessageUtils.get("noble.already_highest"));
             return true;
         }
 
@@ -333,22 +334,27 @@ public class NobleCommand implements CommandExecutor, TabCompleter {
         boolean hasWealth = data.getMoney() >= requiredWealth;
         boolean hasExp = data.getNobleTierExperience() >= requiredExp;
 
-        player.sendMessage("§7§m----------§r §6Upgrade to " + nextTier.name() + "§7 §m----------");
-        player.sendMessage((hasWealth ? "§a✔" : "§c✘") + " §7Wealth: §6$" + data.getMoney() + "§7/§6$" + requiredWealth);
-        player.sendMessage((hasExp ? "§a✔" : "§c✘") + " §7Experience: §6" + data.getNobleTierExperience() + "§7/§6" + requiredExp);
+        player.sendMessage(MessageUtils.format("noble.upgrade_header", Map.of("next", nextTier.name())));
+        player.sendMessage(MessageUtils.format("noble.upgrade_weath", Map.of("have", String.valueOf(data.getMoney()), "need", String.valueOf(requiredWealth), "ok", (hasWealth ? "true" : "false"))));
+        player.sendMessage(MessageUtils.format("noble.upgrade_exp", Map.of("have", String.valueOf(data.getNobleTierExperience()), "need", String.valueOf(requiredExp), "ok", (hasExp ? "true" : "false"))));
 
         if (hasWealth && hasExp) {
             data.removeMoney(requiredWealth);
+            // persist player money immediately
+            try { plugin.getDataManager().savePlayerMoney(player.getUniqueId()); } catch (Throwable ignored) {}
+
             data.setNobleTier(nextTier);
             data.setSocialClass(nextTier.name());
             data.setNobleTierExperience(0);
 
+            // persist full player data (tier changed)
+            try { plugin.getDataManager().savePlayerData(player.getUniqueId()); } catch (Throwable ignored) {}
+
             player.sendMessage("");
-            player.sendMessage("§a§l✔ PROMOTED!");
-            player.sendMessage("§7You are now a §6" + nextTier.name() + "§7!");
-            player.sendMessage("§7New Benefits:");
-            player.sendMessage("§7 • Tax Reduction: §a" + (nextTier.getTaxBenefitPercentage() * 100) + "%");
-            player.sendMessage("§7 • Increased Social Standing");
+            player.sendMessage(MessageUtils.get("noble.upgrade_promoted_title"));
+            player.sendMessage(MessageUtils.format("noble.upgrade_now", Map.of("tier", nextTier.name())));
+            player.sendMessage(MessageUtils.get("noble.upgrade_benefit_status"));
+            player.sendMessage(MessageUtils.format("noble.upgrade_benefit_tax", Map.of("tax", String.valueOf((nextTier.getTaxBenefitPercentage() * 100)))));
 
             // Broadcast to town
             if (data.getTown() != null) {
@@ -357,32 +363,32 @@ public class NobleCommand implements CommandExecutor, TabCompleter {
                     for (UUID memberId : town.getMembers()) {
                         Player member = plugin.getServer().getPlayer(memberId);
                         if (member != null && !member.equals(player)) {
-                            member.sendMessage("§6" + player.getName() + " §7has been promoted to §6" + nextTier.name() + "§7!");
+                            member.sendMessage(MessageUtils.format("noble.promoted_broadcast", Map.of("player", player.getName(), "tier", nextTier.name())));
                         }
                     }
                 }
             }
         } else {
             player.sendMessage("");
-            player.sendMessage("§c✘ Requirements not met!");
-            player.sendMessage("§7Complete the requirements above to upgrade");
+            player.sendMessage(MessageUtils.get("noble.requirements_not_met"));
+            player.sendMessage(MessageUtils.get("noble.requirements_help"));
         }
 
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("noble.info_footer"));
 
         return true;
     }
 
     private void sendHelp(Player player) {
-        player.sendMessage("§7§m----------§r §6Noble Commands§7 §m----------");
-        player.sendMessage("§e/noble info [player]§7 - View noble status");
-        player.sendMessage("§e/noble promote <player> <tier>§7 - Promote player");
-        player.sendMessage("§e/noble demote <player>§7 - Demote player");
-        player.sendMessage("§e/noble list§7 - List town nobility");
-        player.sendMessage("§e/noble requirements <tier>§7 - View requirements");
-        player.sendMessage("§e/noble upgrade§7 - Upgrade your tier");
-        player.sendMessage("§7§m--------------------------------");
-        player.sendMessage("§7Tiers: KNIGHT → BARON → COUNT → DUKE → PRINCE → KING");
+        player.sendMessage(MessageUtils.get("noble.help.header"));
+        player.sendMessage(MessageUtils.get("noble.help.info"));
+        player.sendMessage(MessageUtils.get("noble.help.promote"));
+        player.sendMessage(MessageUtils.get("noble.help.demote"));
+        player.sendMessage(MessageUtils.get("noble.help.list"));
+        player.sendMessage(MessageUtils.get("noble.help.requirements"));
+        player.sendMessage(MessageUtils.get("noble.help.upgrade"));
+        player.sendMessage(MessageUtils.get("noble.help.footer"));
+        player.sendMessage(MessageUtils.get("noble.help.tiers"));
     }
 
     @Override

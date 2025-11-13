@@ -5,6 +5,8 @@ import me.marcdoesntexists.nations.managers.ClaimManager;
 import me.marcdoesntexists.nations.managers.SocietiesManager;
 import me.marcdoesntexists.nations.societies.Town;
 import me.marcdoesntexists.nations.utils.Claim;
+import me.marcdoesntexists.nations.utils.MessageUtils;
+import java.util.Map;
 import org.bukkit.Chunk;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -42,7 +44,7 @@ public class BlockListener implements Listener {
 
             if (town == null || !town.getMembers().contains(player.getUniqueId())) {
                 event.setCancelled(true);
-                player.sendMessage("§c✘ You cannot break blocks in §6" + claim.getTownName() + "§c!");
+                player.sendMessage(MessageUtils.format("block.cannot_break", Map.of("town", claim.getTownName())));
                 return;
             }
         }
@@ -64,7 +66,7 @@ public class BlockListener implements Listener {
 
             if (town == null || !town.getMembers().contains(player.getUniqueId())) {
                 event.setCancelled(true);
-                player.sendMessage("§c✘ You cannot place blocks in §6" + claim.getTownName() + "§c!");
+                player.sendMessage(MessageUtils.format("block.cannot_place", Map.of("town", claim.getTownName())));
                 return;
             }
         }

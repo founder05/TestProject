@@ -23,3 +23,17 @@ features:
   enable-feudal-system: true
   enable-legal-system: true
   enable-military: true
+
+# File save atomic options
+save:
+  tmp-dir: ""          # empty => use system tmp (recommended). Set absolute path to override.
+  max-attempts: 12
+  initial-backoff-ms: 200
+  max-backoff-ms: 4000
+
+# Visualizer configuration (particle fallback and cleanup behavior)
+visualizer:
+  particle: "END_ROD"        # Particle enum name used by the particle visualizer
+  spacing: 4                  # Block spacing between visual markers when using particles
+  refresh-ticks: 40           # How often (ticks) the particle visualizer refreshes
+  cleanup-on-enable: true     # Attempt to remove residual marker entities on plugin enable

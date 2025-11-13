@@ -7,6 +7,8 @@ import me.marcdoesntexists.nations.societies.FeudalService;
 import me.marcdoesntexists.nations.societies.Kingdom;
 import me.marcdoesntexists.nations.societies.Town;
 import me.marcdoesntexists.nations.utils.PlayerData;
+import me.marcdoesntexists.nations.utils.MessageUtils;
+import me.marcdoesntexists.nations.economy.EconomyService;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -17,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class FeudalCommand implements CommandExecutor, TabCompleter {
@@ -25,18 +28,20 @@ public class FeudalCommand implements CommandExecutor, TabCompleter {
     private final DataManager dataManager;
     private final SocietiesManager societiesManager;
     private final FeudalService feudalService;
+    private final EconomyService economyService;
 
     public FeudalCommand(Nations plugin) {
         this.plugin = plugin;
         this.dataManager = plugin.getDataManager();
         this.societiesManager = plugin.getSocietiesManager();
         this.feudalService = plugin.getFeudalService();
+        this.economyService = EconomyService.getInstance();
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage("§cThis command can only be used by players!");
+            sender.sendMessage(MessageUtils.get("commands.player_only"));
             return true;
         }
 
@@ -71,30 +76,30 @@ public class FeudalCommand implements CommandExecutor, TabCompleter {
     private boolean handleVassal(Player player, String[] args) {
         // /feudal vassal <kingdom>
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /feudal vassal <kingdom>");
+            player.sendMessage(MessageUtils.get("feudal.usage_vassal"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town!");
+            player.sendMessage(MessageUtils.get("military.must_be_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (town.getKingdom() == null) {
-            player.sendMessage("§cYour town must be part of a kingdom!");
+            player.sendMessage(MessageUtils.get("kingdom.must_be_in_town"));
             return true;
         }
 
         Kingdom kingdom = societiesManager.getKingdom(town.getKingdom());
         if (!kingdom.isKing(town.getName())) {
-            player.sendMessage("§cOnly the capital's mayor can manage vassals!");
+            player.sendMessage(MessageUtils.get("kingdom.only_capital_mayor"));
             return true;
         }
 
         if (!town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cYou must be the mayor!");
+            player.sendMessage(MessageUtils.get("kingdom.only_mayor"));
             return true;
         }
 
@@ -102,17 +107,17 @@ public class FeudalCommand implements CommandExecutor, TabCompleter {
         Kingdom targetKingdom = societiesManager.getKingdom(targetKingdomName);
 
         if (targetKingdom == null) {
-            player.sendMessage("§cKingdom not found!");
+            player.sendMessage(MessageUtils.get("kingdom.kingdom_not_found"));
             return true;
         }
 
         if (targetKingdom.getName().equals(kingdom.getName())) {
-            player.sendMessage("§cYou cannot vassalize your own kingdom!");
+            player.sendMessage(MessageUtils.get("commands.invalid_number"));
             return true;
         }
 
         if (targetKingdom.getSuzerain() != null) {
-            player.sendMessage("§cThat kingdom is already a vassal of §6" + targetKingdom.getSuzerain() + "§c!");
+            player.sendMessage(MessageUtils.get("feudal.already_vassal").replace("{suzerain}", targetKingdom.getSuzerain()));
             return true;
         }
 
@@ -121,21 +126,21 @@ public class FeudalCommand implements CommandExecutor, TabCompleter {
         String obligations = "Military support in wars, tribute payment";
 
         if (feudalService.createFeudalRelationship(kingdom.getName(), targetKingdom.getName(), tributeAmount, obligations)) {
-            player.sendMessage("§a✔ §6" + targetKingdomName + "§a is now your vassal!");
-            player.sendMessage("§7Tribute: §6$" + (int) tributeAmount + "§7/week");
-            player.sendMessage("§7Obligations: §e" + obligations);
+            player.sendMessage(MessageUtils.format("feudal.vassal_success", Map.of("target", targetKingdomName)));
+            player.sendMessage(MessageUtils.format("feudal.vassal_tribute", Map.of("amount", String.valueOf((int) tributeAmount))));
+            player.sendMessage(MessageUtils.format("feudal.vassal_obligations", Map.of("obligations", obligations)));
 
             // Notify vassal
             Town vassalCapital = societiesManager.getTown(targetKingdom.getCapital());
             if (vassalCapital != null) {
                 Player vassalKing = plugin.getServer().getPlayer(vassalCapital.getMayor());
                 if (vassalKing != null) {
-                    vassalKing.sendMessage("§7[§6Feudal§7] §eYour kingdom is now a vassal of §6" + kingdom.getName());
-                    vassalKing.sendMessage("§7Tribute: §6$" + (int) tributeAmount + "§7/week");
+                    vassalKing.sendMessage(MessageUtils.format("feudal.vassal_notify", Map.of("kingdom", kingdom.getName())));
+                    vassalKing.sendMessage(MessageUtils.format("feudal.vassal_tribute", Map.of("amount", String.valueOf((int) tributeAmount))));
                 }
             }
         } else {
-            player.sendMessage("§cFailed to create feudal relationship!");
+            player.sendMessage(MessageUtils.get("feudal.create_failed"));
         }
 
         return true;
@@ -144,26 +149,26 @@ public class FeudalCommand implements CommandExecutor, TabCompleter {
     private boolean handleTribute(Player player, String[] args) {
         // /feudal tribute <pay|set> [amount]
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /feudal tribute <pay|set> [amount]");
+            player.sendMessage(MessageUtils.get("feudal.usage_tribute"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town!");
+            player.sendMessage(MessageUtils.get("military.must_be_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (town.getKingdom() == null) {
-            player.sendMessage("§cYour town must be part of a kingdom!");
+            player.sendMessage(MessageUtils.get("kingdom.must_be_in_town"));
             return true;
         }
 
         Kingdom kingdom = societiesManager.getKingdom(town.getKingdom());
 
         if (!kingdom.isKing(town.getName()) || !town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cOnly the capital's mayor can manage tribute!");
+            player.sendMessage(MessageUtils.get("feudal.only_capital_mayor"));
             return true;
         }
 
@@ -171,18 +176,21 @@ public class FeudalCommand implements CommandExecutor, TabCompleter {
 
         if (action.equals("pay")) {
             if (kingdom.getSuzerain() == null) {
-                player.sendMessage("§cYour kingdom is not a vassal!");
+                player.sendMessage(MessageUtils.get("feudal.not_vassal"));
                 return true;
             }
 
             double amount = kingdom.getTributeAmount();
             if (amount <= 0) {
-                player.sendMessage("§cNo tribute amount set!");
+                player.sendMessage(MessageUtils.get("feudal.no_tribute_set"));
                 return true;
             }
 
             if (feudalService.payTribute(kingdom.getName(), kingdom.getSuzerain(), amount)) {
-                player.sendMessage("§a✔ Paid tribute of §6$" + (int) amount + "§a to §6" + kingdom.getSuzerain());
+                player.sendMessage(MessageUtils.format("feudal.paid_tribute", Map.of("amount", String.valueOf((int) amount), "to", kingdom.getSuzerain())));
+
+                // Persist kingdom (its treasury changed)
+                try { plugin.getDataManager().saveKingdom(kingdom); } catch (Throwable ignored) {}
 
                 // Notify suzerain
                 Kingdom suzerain = societiesManager.getKingdom(kingdom.getSuzerain());
@@ -191,17 +199,17 @@ public class FeudalCommand implements CommandExecutor, TabCompleter {
                     if (suzCapital != null) {
                         Player suzKing = plugin.getServer().getPlayer(suzCapital.getMayor());
                         if (suzKing != null) {
-                            suzKing.sendMessage("§a✔ §6" + kingdom.getName() + "§a paid tribute: §6$" + (int) amount);
+                            suzKing.sendMessage(MessageUtils.format("feudal.suzerain_notify", Map.of("kingdom", kingdom.getName(), "amount", String.valueOf((int) amount))));
                         }
                     }
                 }
             } else {
-                player.sendMessage("§cFailed to pay tribute! Insufficient funds!");
+                player.sendMessage(MessageUtils.get("feudal.pay_failed_insufficient"));
             }
 
         } else if (action.equals("set")) {
             if (args.length < 3) {
-                player.sendMessage("§cUsage: /feudal tribute set <amount>");
+                player.sendMessage(MessageUtils.get("feudal.usage_tribute_set"));
                 return true;
             }
 
@@ -209,19 +217,19 @@ public class FeudalCommand implements CommandExecutor, TabCompleter {
             try {
                 amount = Integer.parseInt(args[2]);
                 if (amount < 0) {
-                    player.sendMessage("§cAmount must be positive!");
+                    player.sendMessage(MessageUtils.get("feudal.amount_positive"));
                     return true;
                 }
             } catch (NumberFormatException e) {
-                player.sendMessage("§cInvalid amount!");
+                player.sendMessage(MessageUtils.get("commands.invalid_number"));
                 return true;
             }
 
             kingdom.setTributeAmount(amount);
-            player.sendMessage("§a✔ Tribute amount set to §6$" + amount);
+            player.sendMessage(MessageUtils.format("feudal.tribute_set_success", Map.of("amount", String.valueOf(amount))));
 
         } else {
-            player.sendMessage("§cUsage: /feudal tribute <pay|set> [amount]");
+            player.sendMessage(MessageUtils.get("feudal.usage_tribute"));
         }
 
         return true;
@@ -230,35 +238,35 @@ public class FeudalCommand implements CommandExecutor, TabCompleter {
     private boolean handleRebel(Player player, String[] args) {
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town!");
+            player.sendMessage(MessageUtils.get("military.must_be_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (town.getKingdom() == null) {
-            player.sendMessage("§cYour town must be part of a kingdom!");
+            player.sendMessage(MessageUtils.get("kingdom.must_be_in_town"));
             return true;
         }
 
         Kingdom kingdom = societiesManager.getKingdom(town.getKingdom());
 
         if (!kingdom.isKing(town.getName()) || !town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cOnly the capital's mayor can rebel!");
+            player.sendMessage(MessageUtils.get("feudal.only_capital_mayor"));
             return true;
         }
 
         if (kingdom.getSuzerain() == null) {
-            player.sendMessage("§cYour kingdom is not a vassal!");
+            player.sendMessage(MessageUtils.get("feudal.not_vassal"));
             return true;
         }
 
         String suzerainName = kingdom.getSuzerain();
 
-        player.sendMessage("§c⚔ Attempting rebellion against §6" + suzerainName + "§c...");
+        player.sendMessage(MessageUtils.format("feudal.rebel_attempt", Map.of("suzerain", suzerainName)));
 
         if (feudalService.betrayVassal(kingdom.getName(), suzerainName)) {
-            player.sendMessage("§a✔ Rebellion successful! Your kingdom is now independent!");
-            player.sendMessage("§7You are no longer a vassal of §6" + suzerainName);
+            player.sendMessage(MessageUtils.get("feudal.rebel_success"));
+            player.sendMessage(MessageUtils.format("feudal.rebel_no_longer_vassal", Map.of("suzerain", suzerainName)));
 
             // Notify suzerain
             Kingdom suzerain = societiesManager.getKingdom(suzerainName);
@@ -267,15 +275,15 @@ public class FeudalCommand implements CommandExecutor, TabCompleter {
                 if (suzCapital != null) {
                     Player suzKing = plugin.getServer().getPlayer(suzCapital.getMayor());
                     if (suzKing != null) {
-                        suzKing.sendMessage("§c⚔ §6" + kingdom.getName() + "§c has successfully rebelled!");
-                        suzKing.sendMessage("§7They are no longer your vassal!");
+                        suzKing.sendMessage(MessageUtils.format("feudal.rebel_notify", Map.of("kingdom", kingdom.getName())));
+                        suzKing.sendMessage(MessageUtils.get("feudal.rebel_notify_removed"));
                     }
                 }
             }
         } else {
-            player.sendMessage("§c✘ Rebellion failed!");
-            player.sendMessage("§7Your kingdom remains a vassal of §6" + suzerainName);
-            player.sendMessage("§7Diplomatic penalties may apply!");
+            player.sendMessage(MessageUtils.get("feudal.rebel_failed"));
+            player.sendMessage(MessageUtils.format("feudal.rebel_failed_status", Map.of("suzerain", suzerainName)));
+            player.sendMessage(MessageUtils.get("feudal.rebel_failed_penalties"));
         }
 
         return true;
@@ -284,25 +292,25 @@ public class FeudalCommand implements CommandExecutor, TabCompleter {
     private boolean handleIndependence(Player player, String[] args) {
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town!");
+            player.sendMessage(MessageUtils.get("military.must_be_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (town.getKingdom() == null) {
-            player.sendMessage("§cYour town must be part of a kingdom!");
+            player.sendMessage(MessageUtils.get("kingdom.must_be_in_town"));
             return true;
         }
 
         Kingdom kingdom = societiesManager.getKingdom(town.getKingdom());
 
         if (!kingdom.isKing(town.getName()) || !town.isMayor(player.getUniqueId())) {
-            player.sendMessage("§cOnly the capital's mayor can declare independence!");
+            player.sendMessage(MessageUtils.get("feudal.only_capital_mayor"));
             return true;
         }
 
         if (kingdom.getSuzerain() == null) {
-            player.sendMessage("§cYour kingdom is already independent!");
+            player.sendMessage(MessageUtils.get("feudal.already_independent"));
             return true;
         }
 
@@ -310,18 +318,34 @@ public class FeudalCommand implements CommandExecutor, TabCompleter {
 
         // Independence costs money (peaceful breakaway)
         int cost = 50000;
-        if (kingdom.getBalance() < cost) {
-            player.sendMessage("§cInsufficient funds! Need §6$" + cost + "§c for peaceful independence!");
-            player.sendMessage("§7Current balance: §6$" + kingdom.getBalance());
-            player.sendMessage("§7Tip: Use §e/feudal rebel§7 for a risky free alternative!");
-            return true;
+
+        // First try to charge the player directly (external economy)
+        boolean chargedPlayer = false;
+        if (economyService != null) {
+            chargedPlayer = economyService.withdrawFromPlayer(player.getUniqueId(), cost);
         }
 
-        kingdom.removeMoney(cost);
+        if (!chargedPlayer) {
+            // fallback to kingdom treasury
+            if (kingdom.getBalance() < cost) {
+                player.sendMessage(MessageUtils.format("feudal.insufficient_funds", Map.of("cost", String.valueOf(cost), "balance", String.valueOf(kingdom.getBalance()))));
+                player.sendMessage(MessageUtils.get("feudal.rebel_tip"));
+                return true;
+            }
 
-        if (feudalService.endFeudalRelationship(kingdom.getName(), suzerainName)) {
-            player.sendMessage("§a✔ Your kingdom is now independent!");
-            player.sendMessage("§7Cost: §6$" + cost);
+            kingdom.removeMoney(cost);
+            // persist kingdom immediately
+            try { plugin.getDataManager().saveKingdom(kingdom); } catch (Throwable ignored) {}
+        }
+
+        boolean endOk = feudalService.endFeudalRelationship(kingdom.getName(), suzerainName);
+
+        if (endOk) {
+            player.sendMessage(MessageUtils.get("feudal.independence_success"));
+            player.sendMessage(MessageUtils.format("feudal.independence_cost", Map.of("cost", String.valueOf(cost))));
+
+            // Persist kingdom after successful independence (state changed)
+            try { plugin.getDataManager().saveKingdom(kingdom); } catch (Throwable ignored) {}
 
             // Notify suzerain
             Kingdom suzerain = societiesManager.getKingdom(suzerainName);
@@ -330,15 +354,21 @@ public class FeudalCommand implements CommandExecutor, TabCompleter {
                 if (suzCapital != null) {
                     Player suzKing = plugin.getServer().getPlayer(suzCapital.getMayor());
                     if (suzKing != null) {
-                        suzKing.sendMessage("§7[§6Feudal§7] §6" + kingdom.getName() + "§7 has peacefully gained independence");
-                        suzKing.sendMessage("§7They paid §6$" + cost + "§7 for their freedom");
-                    }
-                }
-            }
-        } else {
-            kingdom.addMoney(cost); // Refund
-            player.sendMessage("§cFailed to gain independence!");
-        }
+                        suzKing.sendMessage(MessageUtils.format("feudal.suzerain_independence_notify", Map.of("kingdom", kingdom.getName(), "cost", String.valueOf(cost))));
+                     }
+                 }
+             }
+         } else {
+            // rollback if we charged player directly
+             if (chargedPlayer) {
+                 economyService.depositToPlayer(player.getUniqueId(), cost);
+                 try { plugin.getDataManager().savePlayerMoney(player.getUniqueId()); } catch (Throwable ignored) {}
+             } else {
+                 kingdom.addMoney(cost); // Refund
+                 try { plugin.getDataManager().saveKingdom(kingdom); } catch (Throwable ignored) {}
+             }
+            player.sendMessage(MessageUtils.get("feudal.independence_failed"));
+         }
 
         return true;
     }
@@ -346,42 +376,42 @@ public class FeudalCommand implements CommandExecutor, TabCompleter {
     private boolean handleInfo(Player player, String[] args) {
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town!");
+            player.sendMessage(MessageUtils.get("military.must_be_in_town"));
             return true;
         }
 
         Town town = societiesManager.getTown(data.getTown());
         if (town.getKingdom() == null) {
-            player.sendMessage("§cYour town must be part of a kingdom!");
+            player.sendMessage(MessageUtils.get("kingdom.must_be_in_town"));
             return true;
         }
 
         Kingdom kingdom = societiesManager.getKingdom(town.getKingdom());
 
-        player.sendMessage("§7§m----------§r §6Feudal Info§7 §m----------");
-        player.sendMessage("§eKingdom: §6" + kingdom.getName());
+        player.sendMessage(MessageUtils.get("feudal.info_header"));
+        player.sendMessage(MessageUtils.format("feudal.info_kingdom", Map.of("kingdom", kingdom.getName())));
 
         if (kingdom.getSuzerain() != null) {
-            player.sendMessage("§eStatus: §cVassal");
-            player.sendMessage("§eSuzerain: §6" + kingdom.getSuzerain());
-            player.sendMessage("§eTribute: §6$" + kingdom.getTributeAmount() + "§7/week");
+            player.sendMessage(MessageUtils.get("feudal.info_status_vassal"));
+            player.sendMessage(MessageUtils.format("feudal.info_suzerain", Map.of("suzerain", kingdom.getSuzerain())));
+            player.sendMessage(MessageUtils.format("feudal.info_tribute", Map.of("amount", String.valueOf(kingdom.getTributeAmount()))));
         } else {
-            player.sendMessage("§eStatus: §aIndependent");
+            player.sendMessage(MessageUtils.get("feudal.info_status_independent"));
         }
 
         if (!kingdom.getVassals().isEmpty()) {
-            player.sendMessage("§eVassals: §6" + kingdom.getVassals().size());
+            player.sendMessage(MessageUtils.format("feudal.info_vassals", Map.of("count", String.valueOf(kingdom.getVassals().size()))));
             for (String vassal : kingdom.getVassals()) {
                 Kingdom vassalKingdom = societiesManager.getKingdom(vassal);
                 if (vassalKingdom != null) {
-                    player.sendMessage("§7  • §e" + vassal + " §7(Tribute: §6$" + vassalKingdom.getTributeAmount() + "§7/week)");
+                    player.sendMessage(MessageUtils.format("feudal.info_vassal_item", Map.of("vassal", vassal, "tribute", String.valueOf(vassalKingdom.getTributeAmount()))));
                 }
             }
         } else {
-            player.sendMessage("§eVassals: §7None");
+            player.sendMessage(MessageUtils.get("feudal.info_vassals_none"));
         }
 
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("feudal.info_footer"));
 
         return true;
     }
@@ -400,35 +430,34 @@ public class FeudalCommand implements CommandExecutor, TabCompleter {
             }
         }
 
-        player.sendMessage("§7§m----------§r §6Feudal System§7 §m----------");
-        player.sendMessage("§eTotal Kingdoms: §6" + kingdoms.size());
-        player.sendMessage("§eIndependent: §a" + independentCount);
-        player.sendMessage("§eVassals: §c" + vassalCount);
-        player.sendMessage("");
+        player.sendMessage(MessageUtils.get("feudal.list_header"));
+        player.sendMessage(MessageUtils.format("feudal.list_total", Map.of("total", String.valueOf(kingdoms.size()))));
+        player.sendMessage(MessageUtils.format("feudal.list_independent", Map.of("count", String.valueOf(independentCount))));
+        player.sendMessage(MessageUtils.format("feudal.list_vassals", Map.of("count", String.valueOf(vassalCount))));
+        player.sendMessage(MessageUtils.get("general.empty"));
 
-        // Show independent kingdoms with vassals
-        player.sendMessage("§6Major Powers:");
+        player.sendMessage(MessageUtils.get("feudal.list_major_powers_header"));
         for (Kingdom k : kingdoms) {
             if (k.getSuzerain() == null && !k.getVassals().isEmpty()) {
-                player.sendMessage("§e• §6" + k.getName() + " §7- Vassals: §e" + k.getVassals().size());
+                player.sendMessage(MessageUtils.format("feudal.list_major_power_item", Map.of("name", k.getName(), "count", String.valueOf(k.getVassals().size()))));
             }
         }
 
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("feudal.list_footer"));
 
         return true;
     }
 
     private void sendHelp(Player player) {
-        player.sendMessage("§7§m----------§r §6Feudal Commands§7 §m----------");
-        player.sendMessage("§e/feudal vassal <kingdom>§7 - Make kingdom vassal");
-        player.sendMessage("§e/feudal tribute pay§7 - Pay tribute to suzerain");
-        player.sendMessage("§e/feudal tribute set <amount>§7 - Set tribute amount");
-        player.sendMessage("§e/feudal rebel§7 - Attempt rebellion (risky)");
-        player.sendMessage("§e/feudal independence§7 - Buy independence (costly)");
-        player.sendMessage("§e/feudal info§7 - View feudal status");
-        player.sendMessage("§e/feudal list§7 - List feudal system");
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("feudal.help_header"));
+        player.sendMessage(MessageUtils.get("feudal.help_vassal"));
+        player.sendMessage(MessageUtils.get("feudal.help_tribute_pay"));
+        player.sendMessage(MessageUtils.get("feudal.help_tribute_set"));
+        player.sendMessage(MessageUtils.get("feudal.help_rebel"));
+        player.sendMessage(MessageUtils.get("feudal.help_independence"));
+        player.sendMessage(MessageUtils.get("feudal.help_info"));
+        player.sendMessage(MessageUtils.get("feudal.help_list"));
+        player.sendMessage(MessageUtils.get("feudal.help_footer"));
     }
 
     @Override

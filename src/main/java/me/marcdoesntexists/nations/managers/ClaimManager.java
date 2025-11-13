@@ -36,6 +36,10 @@ public class ClaimManager {
     }
 
     public ClaimResult claimChunk(Chunk chunk, Town town) {
+        return claimChunk(chunk, town, false);
+    }
+
+    public ClaimResult claimChunk(Chunk chunk, Town town, boolean paymentHandled) {
         String chunkKey = getChunkKey(chunk);
 
         if (claims.containsKey(chunkKey)) {
@@ -48,7 +52,7 @@ public class ClaimManager {
         }
 
         int claimCost = calculateClaimCost(town);
-        if (town.getBalance() < claimCost) {
+        if (!paymentHandled && town.getBalance() < claimCost) {
             return new ClaimResult(false, "Not enough money! Need " + claimCost + " coins. Town has " + town.getBalance() + " coins.");
         }
 
@@ -70,7 +74,17 @@ public class ClaimManager {
         townClaims.computeIfAbsent(town.getName(), k -> new HashSet<>()).add(chunkKey);
         town.getClaims().add(chunkKey);
 
-        town.removeMoney(claimCost);
+        if (!paymentHandled) {
+            town.removeMoney(claimCost);
+        }
+
+        // Notify GUI refresh so players viewing the towns category see updated claim counts
+        try {
+            me.marcdoesntexists.nations.gui.NationsGUI.refreshGUIsForCategory("TOWNS");
+        } catch (Throwable ignored) {}
+
+        // Persist town immediately
+        try { plugin.getDataManager().saveTown(town); } catch (Throwable ignored) {}
 
         return new ClaimResult(true, "Chunk claimed successfully! Cost: " + claimCost + " coins");
     }
@@ -98,6 +112,14 @@ public class ClaimManager {
 
         int refund = calculateClaimCost(town) / 2;
         town.addMoney(refund);
+
+        // Refresh GUI so town claim counts are updated
+        try {
+            me.marcdoesntexists.nations.gui.NationsGUI.refreshGUIsForCategory("TOWNS");
+        } catch (Throwable ignored) {}
+
+        // Persist town immediately
+        try { plugin.getDataManager().saveTown(town); } catch (Throwable ignored) {}
 
         return new ClaimResult(true, "Chunk unclaimed! Refund: " + refund + " coins");
     }
@@ -143,7 +165,7 @@ public class ClaimManager {
         return claim != null && claim.getTownName().equals(townName);
     }
 
-    private int calculateClaimCost(Town town) {
+    int calculateClaimCost(Town town) {
         int baseCost = plugin.getConfigurationManager()
                 .getSettlementsConfig()
                 .getInt("settlements.towns.claim-cost", 1000);
@@ -250,6 +272,31 @@ public class ClaimManager {
         stats.put("total_claims", claims.size());
         stats.put("total_towns_with_claims", townClaims.size());
         return stats;
+    }
+
+    /**
+     * Register claims stored inside a Town object into the ClaimManager internal maps.
+     * This is used after loading towns from disk so the runtime claim index is populated.
+     */
+    public void registerTownClaims(Town town) {
+        if (town == null) return;
+        Set<String> claimKeys = town.getClaims();
+        if (claimKeys == null || claimKeys.isEmpty()) return;
+
+        for (String key : claimKeys) {
+            if (key == null || key.isEmpty()) continue;
+            if (claims.containsKey(key)) continue;
+            try {
+                String[] parts = key.split(",");
+                if (parts.length < 3) continue;
+                String world = parts[0];
+                int cx = Integer.parseInt(parts[1]);
+                int cz = Integer.parseInt(parts[2]);
+                Claim claim = new Claim(key, town.getName(), world, cx, cz);
+                claims.put(key, claim);
+                townClaims.computeIfAbsent(town.getName(), k -> new HashSet<>()).add(key);
+            } catch (Exception ignored) {}
+        }
     }
 
     public static class ClaimResult {

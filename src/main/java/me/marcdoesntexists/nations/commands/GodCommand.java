@@ -5,15 +5,16 @@ import me.marcdoesntexists.nations.managers.DataManager;
 import me.marcdoesntexists.nations.managers.SocietiesManager;
 import me.marcdoesntexists.nations.societies.*;
 import me.marcdoesntexists.nations.utils.PlayerData;
+import me.marcdoesntexists.nations.utils.MessageUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.Optional;
 
 @SuppressWarnings("unused")
 public class GodCommand implements CommandExecutor, TabCompleter {
@@ -33,7 +34,7 @@ public class GodCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage("§cThis command can only be used by players!");
+            sender.sendMessage(MessageUtils.get("commands.player_only"));
             return true;
         }
 
@@ -70,32 +71,32 @@ public class GodCommand implements CommandExecutor, TabCompleter {
     private boolean handleCreate(Player player, String[] args) {
         // /god create <name> <domain> <description...>
         if (args.length < 4) {
-            player.sendMessage("§cUsage: /god create <name> <domain> <description...>");
-            player.sendMessage("§7Example: /god create Zeus Lightning God of thunder and sky");
+            player.sendMessage(MessageUtils.format("commands.usage", Map.of("usage","/god create <name> <domain> <description...>")));
+            player.sendMessage(MessageUtils.get("commands.usage") + " §7Example: /god create Zeus Lightning God of thunder and sky");
             return true;
         }
 
         // permission check
         if (!player.hasPermission("nations.god.create")) {
-            player.sendMessage("§cYou do not have permission to create gods.");
+            player.sendMessage(MessageUtils.get("general.no_permission"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getReligion() == null) {
-            player.sendMessage("§cYou must be part of a religion to create a god!");
-            player.sendMessage("§7Use §e/religion create <name>§7 first!");
+            player.sendMessage(MessageUtils.get("general.player_only"));
+            player.sendMessage(MessageUtils.get("commands.usage") + " §7Use §e/religion create <name>§7 first!");
             return true;
         }
 
         Religion religion = societiesManager.getReligion(data.getReligion());
         if (religion == null) {
-            player.sendMessage("§cReligion not found!");
+            player.sendMessage(MessageUtils.format("commands.not_found", Map.of("entity","Religion")));
             return true;
         }
 
         if (!religion.getFounder().equals(player.getUniqueId())) {
-            player.sendMessage("§cOnly the religion founder can create gods!");
+            player.sendMessage(MessageUtils.get("god.only_founder"));
             return true;
         }
 
@@ -108,7 +109,7 @@ public class GodCommand implements CommandExecutor, TabCompleter {
                 .count();
 
         if (currentGods >= maxGods) {
-            player.sendMessage("§cMaximum gods per religion reached! (§6" + maxGods + "§c)");
+            player.sendMessage(MessageUtils.format("god.max_gods_reached", Map.of("max", String.valueOf(maxGods))));
             return true;
         }
 
@@ -122,7 +123,7 @@ public class GodCommand implements CommandExecutor, TabCompleter {
 
         // Check if god already exists
         if (societiesManager.getGod(godName) != null) {
-            player.sendMessage("§cA god with this name already exists!");
+            player.sendMessage(MessageUtils.get("commands.not_found").replace("{entity}", "God (already exists)"));
             return true;
         }
 
@@ -130,45 +131,47 @@ public class GodCommand implements CommandExecutor, TabCompleter {
                 .getInt("religion-system.gods.god-creation-cost", 2000);
 
         if (data.getMoney() < creationCost) {
-            player.sendMessage("§cInsufficient funds! Need §6$" + creationCost);
-            player.sendMessage("§7Your balance: §6$" + data.getMoney());
+            player.sendMessage(MessageUtils.format("town.not_enough_money", Map.of("needed", String.valueOf(creationCost), "have", String.valueOf(data.getMoney()))));
             return true;
         }
 
         if (religionService.createGod(godName, description, domain, player.getUniqueId(), data.getReligion())) {
-            data.removeMoney(creationCost);
+             data.removeMoney(creationCost);
 
-            player.sendMessage("§a✔ God §6" + godName + "§a created!");
-            player.sendMessage("§7Domain: §e" + domain);
-            player.sendMessage("§7Description: §e" + description);
-            player.sendMessage("§7Religion: §6" + religion.getName());
-            player.sendMessage("§7Cost: §6$" + creationCost);
+             // Persist player money immediately
+             try { plugin.getDataManager().savePlayerMoney(player.getUniqueId()); } catch (Throwable ignored) {}
+
+            player.sendMessage(MessageUtils.format("god.create_success", Map.of("name", godName)));
+            player.sendMessage(MessageUtils.format("god.info_domain", Map.of("domain", domain)));
+            player.sendMessage(MessageUtils.format("god.info_description", Map.of("description", description)));
+            player.sendMessage(MessageUtils.format("god.info_religion", Map.of("religion", religion.getName())));
+            player.sendMessage(MessageUtils.format("god.info_cost", Map.of("cost", String.valueOf(creationCost))));
 
             // Notify all followers
             for (UUID followerId : religion.getFollowers()) {
                 Player follower = plugin.getServer().getPlayer(followerId);
                 if (follower != null && !follower.equals(player)) {
-                    follower.sendMessage("§7[§6" + religion.getName() + "§7] §eA new god has been created: §6" + godName);
-                    follower.sendMessage("§7Domain: §e" + domain);
+                    follower.sendMessage(MessageUtils.format("god.notify_new_god_broadcast", Map.of("prefix", MessageUtils.get("general.prefix"), "religion", religion.getName(), "god", godName)));
+                    follower.sendMessage(MessageUtils.format("god.info_domain", Map.of("domain", domain)));
                 }
             }
-        } else {
-            player.sendMessage("§cFailed to create god!");
-        }
+         } else {
+            player.sendMessage(MessageUtils.get("errors.generic").replace("{error}", "Failed to create god"));
+         }
 
-        return true;
-    }
+         return true;
+     }
 
     private boolean handleWorship(Player player, String[] args) {
         // /god worship <name>
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /god worship <name>");
+            player.sendMessage(MessageUtils.format("commands.usage", Map.of("usage","/god worship <name>")));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getReligion() == null) {
-            player.sendMessage("§cYou must be part of a religion to worship gods!");
+            player.sendMessage(MessageUtils.get("god.must_be_in_religion"));
             return true;
         }
 
@@ -176,18 +179,18 @@ public class GodCommand implements CommandExecutor, TabCompleter {
         God god = societiesManager.getGod(godName);
 
         if (god == null) {
-            player.sendMessage("§cGod not found!");
+            player.sendMessage(MessageUtils.format("commands.not_found", Map.of("entity","God")));
             return true;
         }
 
         Religion religion = societiesManager.getReligion(data.getReligion());
         if (!god.getRelatedReligion().equals(religion)) {
-            player.sendMessage("§cThis god is not part of your religion!");
+            player.sendMessage(MessageUtils.get("god.not_part_of_religion"));
             return true;
         }
 
         if (god.getFollowers().contains(player.getUniqueId())) {
-            player.sendMessage("§cYou already worship §6" + godName + "§c!");
+            player.sendMessage(MessageUtils.format("god.already_worship", Map.of("god", godName)));
             return true;
         }
 
@@ -198,17 +201,17 @@ public class GodCommand implements CommandExecutor, TabCompleter {
         int currentAffinity = data.getGodAffinity(godName);
         data.setGodAffinity(godName, currentAffinity + affinityGain);
 
-        player.sendMessage("§a✔ You now worship §6" + godName + "§a!");
-        player.sendMessage("§7Domain: §e" + god.getDomain());
-        player.sendMessage("§7Affinity: §6" + data.getGodAffinity(godName));
+        player.sendMessage(MessageUtils.format("god.worship_success", Map.of("god", godName)));
+        player.sendMessage(MessageUtils.format("god.info_domain", Map.of("domain", god.getDomain())));
+        player.sendMessage(MessageUtils.format("god.info_affinity", Map.of("affinity", String.valueOf(data.getGodAffinity(godName)))));
 
-        return true;
-    }
+         return true;
+     }
 
     private boolean handleAltar(Player player, String[] args) {
         // /god altar <create|remove> <godName>
         if (args.length < 3) {
-            player.sendMessage("§cUsage: /god altar <create|remove> <godName>");
+            player.sendMessage(MessageUtils.format("commands.usage", Map.of("usage","/god altar <create|remove> <godName>")));
             return true;
         }
 
@@ -217,7 +220,7 @@ public class GodCommand implements CommandExecutor, TabCompleter {
 
         God god = societiesManager.getGod(godName);
         if (god == null) {
-            player.sendMessage("§cGod not found!");
+            player.sendMessage(MessageUtils.get("gods.not_found"));
             return true;
         }
 
@@ -225,7 +228,7 @@ public class GodCommand implements CommandExecutor, TabCompleter {
         Religion religion = societiesManager.getReligion(data.getReligion());
 
         if (religion == null || !god.getRelatedReligion().equals(religion)) {
-            player.sendMessage("§cThis god is not part of your religion!");
+            player.sendMessage(MessageUtils.get("god.not_part_of_religion"));
             return true;
         }
 
@@ -239,34 +242,37 @@ public class GodCommand implements CommandExecutor, TabCompleter {
                     .getInt("religion-system.religious-buildings.altar-construction-cost", 1000);
 
             if (data.getMoney() < altarCost) {
-                player.sendMessage("§cInsufficient funds! Need §6$" + altarCost);
+                player.sendMessage(MessageUtils.format("town.not_enough_money", Map.of("needed", String.valueOf(altarCost), "have", String.valueOf(data.getMoney()))));
                 return true;
             }
 
             if (religionService.addAltarToGod(godName, location)) {
                 data.removeMoney(altarCost);
 
+                // Persist player money immediately
+                try { plugin.getDataManager().savePlayerMoney(player.getUniqueId()); } catch (Throwable ignored) {}
+
                 int powerGain = plugin.getConfigurationManager().getReligionConfig()
                         .getInt("religion-system.gods.power-gain-per-action", 1);
                 religionService.addGodPower(godName, powerGain * 10); // Altars give more power
 
-                player.sendMessage("§a✔ Altar to §6" + godName + "§a built!");
-                player.sendMessage("§7Location: §e" + location);
-                player.sendMessage("§7Cost: §6$" + altarCost);
-                player.sendMessage("§7God power increased by §6" + (powerGain * 10));
-            } else {
-                player.sendMessage("§cFailed to create altar!");
-            }
+                player.sendMessage(MessageUtils.format("god.altar_built", Map.of("name", godName)));
+                player.sendMessage(MessageUtils.format("god.altar_location", Map.of("location", location)));
+                player.sendMessage(MessageUtils.format("god.altar_cost", Map.of("cost", String.valueOf(altarCost))));
+                player.sendMessage(MessageUtils.format("god.altar_power", Map.of("power", String.valueOf(powerGain * 10))));
+             } else {
+                player.sendMessage(MessageUtils.get("errors.generic").replace("{error}", "Failed to create altar"));
+             }
 
         } else if (action.equals("remove")) {
             if (god.hasAltar(location)) {
                 god.removeAltar(location);
-                player.sendMessage("§a✔ Altar removed!");
+                player.sendMessage(MessageUtils.get("god.altar_removed"));
             } else {
-                player.sendMessage("§cNo altar found at this location!");
+                player.sendMessage(MessageUtils.get("god.no_altar_found"));
             }
         } else {
-            player.sendMessage("§cUsage: /god altar <create|remove> <godName>");
+            player.sendMessage(MessageUtils.format("commands.usage", Map.of("usage","/god altar <create|remove> <godName>")));
         }
 
         return true;
@@ -275,7 +281,7 @@ public class GodCommand implements CommandExecutor, TabCompleter {
     private boolean handleSacrifice(Player player, String[] args) {
         // /god sacrifice <godName> <amount>
         if (args.length < 3) {
-            player.sendMessage("§cUsage: /god sacrifice <godName> <amount>");
+            player.sendMessage(MessageUtils.format("commands.usage", Map.of("usage","/god sacrifice <godName> <amount>")));
             return true;
         }
 
@@ -283,13 +289,13 @@ public class GodCommand implements CommandExecutor, TabCompleter {
         God god = societiesManager.getGod(godName);
 
         if (god == null) {
-            player.sendMessage("§cGod not found!");
+            player.sendMessage(MessageUtils.format("commands.not_found", Map.of("entity","God")));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (!god.getFollowers().contains(player.getUniqueId())) {
-            player.sendMessage("§cYou must worship §6" + godName + "§c to make sacrifices!");
+            player.sendMessage(MessageUtils.format("god.not_follower", Map.of("god", godName)));
             return true;
         }
 
@@ -297,20 +303,23 @@ public class GodCommand implements CommandExecutor, TabCompleter {
         try {
             amount = Integer.parseInt(args[2]);
             if (amount <= 0) {
-                player.sendMessage("§cAmount must be positive!");
+                player.sendMessage(MessageUtils.get("commands.invalid_number"));
                 return true;
             }
         } catch (NumberFormatException e) {
-            player.sendMessage("§cInvalid amount!");
+            player.sendMessage(MessageUtils.get("commands.invalid_number"));
             return true;
         }
 
         if (data.getMoney() < amount) {
-            player.sendMessage("§cInsufficient funds!");
+            player.sendMessage(MessageUtils.get("town.not_enough_money").replace("{needed}", String.valueOf(amount)).replace("{have}", String.valueOf(data.getMoney())));
             return true;
         }
 
         data.removeMoney(amount);
+
+        // Persist player money immediately
+        try { plugin.getDataManager().savePlayerMoney(player.getUniqueId()); } catch (Throwable ignored) {}
 
         // Calculate power gain (1 power per 10 coins)
         int powerGain = amount / 10;
@@ -321,17 +330,17 @@ public class GodCommand implements CommandExecutor, TabCompleter {
         int currentAffinity = data.getGodAffinity(godName);
         data.setGodAffinity(godName, currentAffinity + affinityGain);
 
-        player.sendMessage("§a✔ Sacrifice made to §6" + godName + "§a!");
-        player.sendMessage("§7Offering: §6$" + amount);
-        player.sendMessage("§7God power increased: §6+" + powerGain);
-        player.sendMessage("§7Your affinity increased: §6+" + affinityGain + " §7(Total: §6" + data.getGodAffinity(godName) + "§7)");
+        player.sendMessage(MessageUtils.format("god.sacrifice_success", Map.of("god", godName)));
+        player.sendMessage(MessageUtils.format("god.sacrifice_offering", Map.of("amount", String.valueOf(amount))));
+        player.sendMessage(MessageUtils.format("god.sacrifice_power", Map.of("power", String.valueOf(powerGain))));
+        player.sendMessage(MessageUtils.format("god.sacrifice_affinity", Map.of("affinity", String.valueOf(affinityGain), "total", String.valueOf(data.getGodAffinity(godName)))));
 
-        return true;
-    }
+         return true;
+     }
 
     private boolean handleInfo(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /god info <name>");
+            player.sendMessage(MessageUtils.format("commands.usage", Map.of("usage","/god info <name>")));
             return true;
         }
 
@@ -339,25 +348,25 @@ public class GodCommand implements CommandExecutor, TabCompleter {
         God god = societiesManager.getGod(godName);
 
         if (god == null) {
-            player.sendMessage("§cGod not found!");
+            player.sendMessage(MessageUtils.format("commands.not_found", Map.of("entity","God")));
             return true;
         }
 
-        player.sendMessage("§7§m----------§r §6" + god.getName() + "§7 §m----------");
-        player.sendMessage("§eDomain: §6" + god.getDomain());
-        player.sendMessage("§eDescription: §7" + god.getDescription());
-        player.sendMessage("§eReligion: §6" + god.getRelatedReligion().getName());
-        player.sendMessage("§ePower: §6" + god.getPower());
-        player.sendMessage("§eFollowers: §6" + god.getFollowerCount());
-        player.sendMessage("§eAltars: §6" + god.getAltars().size());
+        player.sendMessage(MessageUtils.format("god.info_header", Map.of("name", god.getName())));
+        player.sendMessage(MessageUtils.format("god.info_domain", Map.of("domain", god.getDomain())));
+        player.sendMessage(MessageUtils.format("god.info_description", Map.of("description", god.getDescription())));
+        player.sendMessage(MessageUtils.format("god.info_religion", Map.of("religion", god.getRelatedReligion().getName())));
+        player.sendMessage(MessageUtils.format("god.info_power", Map.of("power", String.valueOf(god.getPower()))));
+        player.sendMessage(MessageUtils.format("god.info_followers", Map.of("count", String.valueOf(god.getFollowerCount()))));
+        player.sendMessage(MessageUtils.format("god.info_altars", Map.of("count", String.valueOf(god.getAltars().size()))));
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (god.getFollowers().contains(player.getUniqueId())) {
-            player.sendMessage("§aYou worship this god!");
-            player.sendMessage("§7Your affinity: §6" + data.getGodAffinity(godName));
+            player.sendMessage(MessageUtils.get("god.you_worship"));
+            player.sendMessage(MessageUtils.format("god.info_affinity", Map.of("affinity", String.valueOf(data.getGodAffinity(godName)))));
         }
 
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("god.info_footer"));
 
         return true;
     }
@@ -366,63 +375,60 @@ public class GodCommand implements CommandExecutor, TabCompleter {
         Collection<God> gods = societiesManager.getAllGods();
 
         if (gods.isEmpty()) {
-            player.sendMessage("§cNo gods exist yet!");
+            player.sendMessage(MessageUtils.get("god.list_empty"));
             return true;
         }
 
-        player.sendMessage("§7§m----------§r §6Gods §7(" + gods.size() + ")§m----------");
+        player.sendMessage(MessageUtils.format("god.list_header", Map.of("count", String.valueOf(gods.size()))));
 
         for (God god : gods) {
-            player.sendMessage("§e• §6" + god.getName() + " §7- §e" + god.getDomain());
-            player.sendMessage("§7  Religion: §6" + god.getRelatedReligion().getName() +
-                    " §7| Power: §6" + god.getPower() +
-                    " §7| Followers: §6" + god.getFollowerCount());
+            player.sendMessage(MessageUtils.format("god.list_item", Map.of("name", god.getName(), "domain", god.getDomain(), "religion", god.getRelatedReligion().getName(), "power", String.valueOf(god.getPower()), "followers", String.valueOf(god.getFollowerCount()))));
         }
 
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("god.list_footer"));
 
         return true;
     }
 
     private boolean handleFollowers(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /god followers <name>");
+            player.sendMessage(MessageUtils.format("commands.usage", Map.of("usage","/god followers <name>")));
             return true;
         }
 
-        String godName = args[1];
-        God god = societiesManager.getGod(godName);
+         String godName = args[1];
+         God god = societiesManager.getGod(godName);
 
-        if (god == null) {
-            player.sendMessage("§cGod not found!");
-            return true;
-        }
+         if (god == null) {
+            player.sendMessage(MessageUtils.format("commands.not_found", Map.of("entity","God")));
+             return true;
+         }
 
-        player.sendMessage("§7§m----------§r §6Followers of " + god.getName() + "§7 §m----------");
-        player.sendMessage("§eTotal: §6" + god.getFollowerCount());
-        player.sendMessage("");
+        player.sendMessage(MessageUtils.format("god.followers_header", Map.of("name", god.getName())));
+        player.sendMessage(MessageUtils.format("god.followers_total", Map.of("count", String.valueOf(god.getFollowerCount()))));
+        player.sendMessage(MessageUtils.get("general.empty"));
 
-        for (UUID followerId : god.getFollowers()) {
-            String followerName = plugin.getServer().getOfflinePlayer(followerId).getName();
-            player.sendMessage("§7• §e" + followerName);
-        }
+         for (UUID followerId : god.getFollowers()) {
+            String followerName = Optional.ofNullable(plugin.getServer().getOfflinePlayer(followerId).getName()).orElse(followerId.toString());
+            player.sendMessage(MessageUtils.format("god.followers_item", Map.of("name", followerName)));
+         }
 
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("god.followers_footer"));
 
-        return true;
-    }
+         return true;
+     }
 
     private void sendHelp(Player player) {
-        player.sendMessage("§7§m----------§r §6God Commands§7 §m----------");
-        player.sendMessage("§e/god create <name> <domain> <desc...>§7 - Create god");
-        player.sendMessage("§e/god worship <name>§7 - Worship a god");
-        player.sendMessage("§e/god altar create <name>§7 - Build altar");
-        player.sendMessage("§e/god altar remove <name>§7 - Remove altar");
-        player.sendMessage("§e/god sacrifice <name> <$>§7 - Make sacrifice");
-        player.sendMessage("§e/god info <name>§7 - View god info");
-        player.sendMessage("§e/god list§7 - List all gods");
-        player.sendMessage("§e/god followers <name>§7 - View followers");
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("god.help.header"));
+        player.sendMessage(MessageUtils.get("god.help.create"));
+        player.sendMessage(MessageUtils.get("god.help.worship"));
+        player.sendMessage(MessageUtils.get("god.help.altar_create"));
+        player.sendMessage(MessageUtils.get("god.help.altar_remove"));
+        player.sendMessage(MessageUtils.get("god.help.sacrifice"));
+        player.sendMessage(MessageUtils.get("god.help.info"));
+        player.sendMessage(MessageUtils.get("god.help.list"));
+        player.sendMessage(MessageUtils.get("god.help.followers"));
+        player.sendMessage(MessageUtils.get("god.help.footer"));
     }
 
     @Override

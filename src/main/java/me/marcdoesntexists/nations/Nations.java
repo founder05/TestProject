@@ -20,6 +20,7 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.NamespacedKey;
 
 import java.lang.reflect.Method;
 import java.util.logging.Level;
@@ -79,6 +80,34 @@ public final class Nations extends JavaPlugin {
 
         startAutoSaveTasks();
 
+        // Cleanup any residual visualizer entities from previous crashes or plugin runs
+        try {
+            boolean doCleanup = getConfig().getBoolean("visualizer.cleanup-on-enable", true);
+            if (doCleanup) {
+                NamespacedKey cleanupKey = new NamespacedKey(this, "nations_visual_marker");
+                Bukkit.getWorlds().forEach(w -> w.getEntities().forEach(e -> {
+                    try {
+                        // ArmorStand markers created by visualizers
+                        if (e instanceof org.bukkit.entity.ArmorStand) {
+                            Byte val = e.getPersistentDataContainer().get(cleanupKey, org.bukkit.persistence.PersistentDataType.BYTE);
+                            if (val != null && val == (byte)1) e.remove();
+                        }
+                        // BlockDisplay / custom displays: try by class name to keep compatibility
+                        else if (e.getClass().getSimpleName().equals("BlockDisplay")) {
+                            // best-effort: remove any BlockDisplay that contains our key in PDC
+                            try {
+                                Byte val = e.getPersistentDataContainer().get(cleanupKey, org.bukkit.persistence.PersistentDataType.BYTE);
+                                if (val != null && val == (byte)1) e.remove();
+                            } catch (Throwable ignored) {}
+                        }
+                    } catch (Throwable ignored) {}
+                }));
+
+                // If claimVisualizer exists, ask it to stop all visualizations and remove any tracked entities
+                try { if (claimVisualizer != null) claimVisualizer.stopAll(); } catch (Throwable ignored) {}
+            }
+        } catch (Throwable t) { getLogger().warning("Failed to run visualizer cleanup on enable: " + t.getMessage()); }
+
         getLogger().info("Nations plugin has been enabled!");
         getLogger().info("Version: " + getPluginVersion());
         getLogger().info("All services initialized and running!");
@@ -100,7 +129,14 @@ public final class Nations extends JavaPlugin {
             dataManager = DataManager.getInstance(this);
             societiesManager = SocietiesManager.getInstance();
             economyManager = EconomyManager.getInstance();
-            claimVisualizer = new ClaimVisualizer(this);
+            // Initialize claim visualizer depending on whether ProtocolLib is installed
+            if (Bukkit.getPluginManager().getPlugin("ProtocolLib") != null) {
+                claimVisualizer = new ProtocolLibClaimVisualizer(this);
+                getLogger().info("ProtocolLib detected: using ProtocolLibClaimVisualizer for showclaims");
+            } else {
+                claimVisualizer = new ParticleClaimVisualizer(this);
+                getLogger().info("ProtocolLib not found: using ParticleClaimVisualizer as fallback for showclaims");
+            }
             lawManager = LawManager.getInstance();
             militaryManager = MilitaryManager.getInstance();
             claimManager = ClaimManager.getInstance(this);
@@ -153,8 +189,10 @@ public final class Nations extends JavaPlugin {
         pm.registerEvents(new BlockListener(this), this);
         pm.registerEvents(new MoveListener(this), this);
         pm.registerEvents(new NationsGUI(), this);
+        pm.registerEvents(new LeaderboardClickListener(this), this);
         pm.registerEvents(new EntityListener(this), this);
         pm.registerEvents(new InteractListener(this), this);
+        pm.registerEvents(new me.marcdoesntexists.nations.listeners.ChatChannelListener(this), this);
 
         getLogger().info("Event listeners registered");
     }
@@ -204,8 +242,16 @@ public final class Nations extends JavaPlugin {
         NobleCommand nobleCommand = new NobleCommand(this);
         safeRegisterCommand("noble", nobleCommand, nobleCommand);
 
+        // Leaderboard command
+        me.marcdoesntexists.nations.commands.LeaderboardCommand leaderboardCommand = new me.marcdoesntexists.nations.commands.LeaderboardCommand(this);
+        safeRegisterCommand("leaderboard", leaderboardCommand, leaderboardCommand);
+
         GodCommand godCommand = new GodCommand(this);
         safeRegisterCommand("god", godCommand, godCommand);
+
+        // Save check admin command
+        SaveCheckCommand saveCheckCommand = new SaveCheckCommand(this);
+        safeRegisterCommand("savecheck", saveCheckCommand, null);
 
         // Nations GUI command
         me.marcdoesntexists.nations.commands.NationsGUICommand nationsGuiCommand = new me.marcdoesntexists.nations.commands.NationsGUICommand(this);
@@ -214,6 +260,14 @@ public final class Nations extends JavaPlugin {
         // Save-exempt command
         me.marcdoesntexists.nations.commands.SaveExemptCommand saveExemptCommand = new me.marcdoesntexists.nations.commands.SaveExemptCommand(this);
         safeRegisterCommand("saveexempt", saveExemptCommand, null);
+
+        // Chat channel command
+        me.marcdoesntexists.nations.commands.ChannelCommand channelCommand = new me.marcdoesntexists.nations.commands.ChannelCommand(this);
+        safeRegisterCommand("channel", channelCommand, channelCommand);
+
+        // Teleport to your town/kingdom/empire
+        me.marcdoesntexists.nations.commands.TpMyCommand tpMyCommand = new me.marcdoesntexists.nations.commands.TpMyCommand(this);
+        safeRegisterCommand("tpmy", tpMyCommand, tpMyCommand);
 
         // Auto-register remaining commands declared in plugin.yml but not registered above
         autoRegisterRemainingCommands();
@@ -226,10 +280,8 @@ public final class Nations extends JavaPlugin {
         try {
             for (String cmdName : getDescription().getCommands().keySet()) {
                 PluginCommand pc = getCommand(cmdName);
-                if (pc == null) continue; // not declared
-                continue; // already registered
-
-                // Build class name: e.g. 'treaty' -> 'TreatyCommand'
+                if (pc == null) {
+                }
             }
         } catch (Throwable t) {
             getLogger().warning("Error while auto-registering commands: " + t.getMessage());
@@ -500,6 +552,11 @@ public final class Nations extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        // Ensure claim visualizer stops and cleans up entities/tasks
+        try {
+            if (claimVisualizer != null) claimVisualizer.stopAll();
+        } catch (Throwable ignored) {}
+
         if (dataManager != null) {
             getLogger().info("Saving all data before shutdown...");
             dataManager.saveAllData();
@@ -529,29 +586,17 @@ public final class Nations extends JavaPlugin {
         return dataManager;
     }
 
-    public SocietiesManager getSocietiesManager() {
-        return societiesManager;
-    }
+    public SocietiesManager getSocietiesManager() { return societiesManager; }
 
-    public EconomyManager getEconomyManager() {
-        return economyManager;
-    }
+    public EconomyManager getEconomyManager() { return economyManager; }
 
-    public LawManager getLawManager() {
-        return lawManager;
-    }
+    public LawManager getLawManager() { return lawManager; }
 
-    public MilitaryManager getMilitaryManager() {
-        return militaryManager;
-    }
+    public MilitaryManager getMilitaryManager() { return militaryManager; }
 
-    public ClaimManager getClaimManager() {
-        return claimManager;
-    }
+    public ClaimManager getClaimManager() { return claimManager; }
 
-    public HybridClaimManager getHybridClaimManager() {
-        return hybridClaimManager;
-    }
+    public HybridClaimManager getHybridClaimManager() { return hybridClaimManager; }
 
     // Service getters
     public EconomyService getEconomyService() {

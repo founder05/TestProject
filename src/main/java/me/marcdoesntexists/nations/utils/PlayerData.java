@@ -21,6 +21,8 @@ public class PlayerData {
     private long nobleTierExperience = 0;
     private long jobExperience = 0;
     private long classExperience = 0;
+    // Chat channel preference (GLOBAL, TOWN, KINGDOM, EMPIRE, RELIGION, ALLIANCE)
+    private String chatChannel = "GLOBAL";
 
     public PlayerData() {
         this(0);
@@ -185,5 +187,14 @@ public class PlayerData {
 
     public void removeTownInvite(String townName) {
         townInvites.remove(townName);
+    }
+
+    public String getChatChannel() {
+        return chatChannel == null ? "GLOBAL" : chatChannel;
+    }
+
+    public void setChatChannel(String channel) {
+        if (channel == null) channel = "GLOBAL";
+        this.chatChannel = channel.toUpperCase();
     }
 }

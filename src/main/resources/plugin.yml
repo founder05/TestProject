@@ -72,13 +72,33 @@ commands:
     description: "Open Nations GUI"
     usage: "/nations [towns|kingdoms|empires]"
 
+  leaderboard:
+    description: "Open leaderboards GUI"
+    usage: "/leaderboard [key]"
+
   saveexempt:
     description: "Toggle periodic save exemption for a player"
     usage: "/saveexempt <player>"
 
+  channel:
+    description: "Switch chat channel or toggle spy (admins)"
+    usage: "/channel <GLOBAL|TOWN|KINGDOM|EMPIRE|RELIGION|ALLIANCE|spy>"
+
+  tpmy:
+    description: "Teleport to your town / kingdom / empire"
+    usage: "/tpmy <town|kingdom|empire>"
+
+  savecheck:
+    description: "Admin: force save all data and report status"
+    usage: "/savecheck"
+
 permissions:
   nations.admin:
     description: "Admin access to Nations plugin"
+    default: op
+
+  nations.chat.spy:
+    description: "Allows an admin to spy on all private society/religion channels"
     default: op
 
   nations.admin.bypass:
@@ -168,3 +188,5 @@ permissions:
   nations.save.exempt:
     description: "When set, this player will be exempt from periodic partial money saves (useful for admins/test accounts)"
     default: op
+
+softdepend: [ProtocolLib]

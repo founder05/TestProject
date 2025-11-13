@@ -3,6 +3,7 @@ package me.marcdoesntexists.nations.commands;
 import me.marcdoesntexists.nations.Nations;
 import me.marcdoesntexists.nations.enums.JobType;
 import me.marcdoesntexists.nations.managers.DataManager;
+import me.marcdoesntexists.nations.utils.MessageUtils;
 import me.marcdoesntexists.nations.utils.PlayerData;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -13,6 +14,7 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class JobCommand implements CommandExecutor, TabCompleter {
@@ -28,7 +30,7 @@ public class JobCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage("§cThis command can only be used by players!");
+            sender.sendMessage(MessageUtils.get("commands.player_only"));
             return true;
         }
 
@@ -57,35 +59,34 @@ public class JobCommand implements CommandExecutor, TabCompleter {
     }
 
     private boolean handleList(Player player, String[] args) {
-        player.sendMessage("§7§m----------§r §6Available Jobs§7 §m----------");
+        player.sendMessage(MessageUtils.get("jobs.header"));
 
         for (JobType jobType : JobType.values()) {
-            player.sendMessage("§e• §6" + jobType.getDisplayName());
-            player.sendMessage("§7  Base Salary: §a$" + jobType.getBaseSalary() + "§7/day");
-            player.sendMessage("§7  Tax: §c" + jobType.getTaxPercentage() + "%");
+            player.sendMessage(MessageUtils.format("jobs.list_item", Map.of("display", jobType.getDisplayName())));
+            player.sendMessage(MessageUtils.format("jobs.joined", Map.of("job", jobType.getDisplayName(), "salary", String.valueOf(jobType.getBaseSalary()), "tax", String.valueOf(jobType.getTaxPercentage()))));
         }
 
-        player.sendMessage("§7§m--------------------------------");
-        player.sendMessage("§7Use §e/job join <type>§7 to get a job!");
+        player.sendMessage(MessageUtils.get("jobs.footer"));
+        player.sendMessage(MessageUtils.get("jobs.join_hint"));
 
         return true;
     }
 
     private boolean handleJoin(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /job join <type>");
+            player.sendMessage(MessageUtils.get("jobs.usage_join"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
 
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town to get a job!");
+            player.sendMessage(MessageUtils.get("jobs.must_be_in_town"));
             return true;
         }
 
         if (data.getJob() != null) {
-            player.sendMessage("§cYou already have a job! Use /job quit first.");
+            player.sendMessage(MessageUtils.get("jobs.already_have_job"));
             return true;
         }
 
@@ -93,16 +94,14 @@ public class JobCommand implements CommandExecutor, TabCompleter {
         try {
             jobType = JobType.valueOf(args[1].toUpperCase());
         } catch (IllegalArgumentException e) {
-            player.sendMessage("§cInvalid job type! Use /job list to see available jobs.");
+            player.sendMessage(MessageUtils.get("jobs.invalid_type"));
             return true;
         }
 
         data.setJob(jobType.name());
         data.setJobExperience(0);
 
-        player.sendMessage("§a✔ You are now a §6" + jobType.getDisplayName() + "§a!");
-        player.sendMessage("§7Salary: §a$" + jobType.getBaseSalary() + "§7/day");
-        player.sendMessage("§7Tax: §c" + jobType.getTaxPercentage() + "%");
+        player.sendMessage(MessageUtils.format("jobs.joined", Map.of("job", jobType.getDisplayName(), "salary", String.valueOf(jobType.getBaseSalary()), "tax", String.valueOf(jobType.getTaxPercentage()))));
 
         return true;
     }
@@ -111,7 +110,7 @@ public class JobCommand implements CommandExecutor, TabCompleter {
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
 
         if (data.getJob() == null) {
-            player.sendMessage("§cYou don't have a job!");
+            player.sendMessage(MessageUtils.get("jobs.no_job"));
             return true;
         }
 
@@ -120,7 +119,7 @@ public class JobCommand implements CommandExecutor, TabCompleter {
         data.setJobExperience(0);
 
         JobType jobType = JobType.valueOf(currentJob);
-        player.sendMessage("§a✔ You have quit your job as §6" + jobType.getDisplayName() + "§a!");
+        player.sendMessage(MessageUtils.format("jobs.you_quit", Map.of("job", jobType.getDisplayName())));
 
         return true;
     }
@@ -129,35 +128,23 @@ public class JobCommand implements CommandExecutor, TabCompleter {
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
 
         if (data.getJob() == null) {
-            player.sendMessage("§cYou don't have a job!");
-            player.sendMessage("§7Use §e/job list§7 to see available jobs.");
+            player.sendMessage(MessageUtils.get("jobs.no_job"));
+            player.sendMessage(MessageUtils.get("jobs.header"));
             return true;
         }
 
         JobType jobType = JobType.valueOf(data.getJob());
 
-        player.sendMessage("§7§m----------§r §6Your Job§7 §m----------");
-        player.sendMessage("§eJob: §6" + jobType.getDisplayName());
-        player.sendMessage("§eSalary: §a$" + jobType.getBaseSalary() + "§7/day");
-        player.sendMessage("§eTax: §c" + jobType.getTaxPercentage() + "%");
-        player.sendMessage("§eExperience: §6" + data.getJobExperience());
-
-        if (data.getTown() != null) {
-            player.sendMessage("§eEmployer: §6" + data.getTown());
-        }
-
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("jobs.info_header"));
+        player.sendMessage(MessageUtils.format("jobs.joined", Map.of("job", jobType.getDisplayName(), "salary", String.valueOf(jobType.getBaseSalary()), "tax", String.valueOf(jobType.getTaxPercentage()))));
+        player.sendMessage(MessageUtils.format("jobs.info_footer", Map.of()));
 
         return true;
     }
 
     private void sendHelp(Player player) {
-        player.sendMessage("§7§m----------§r §6Job Commands§7 §m----------");
-        player.sendMessage("§e/job list§7 - View available jobs");
-        player.sendMessage("§e/job join <type>§7 - Get a job");
-        player.sendMessage("§e/job quit§7 - Quit your job");
-        player.sendMessage("§e/job info§7 - View your job info");
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("jobs.header"));
+        player.sendMessage(MessageUtils.get("jobs.footer"));
     }
 
     @Override

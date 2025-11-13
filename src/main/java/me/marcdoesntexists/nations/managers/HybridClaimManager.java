@@ -9,6 +9,8 @@ import org.bukkit.entity.Player;
 
 import java.util.UUID;
 
+import me.marcdoesntexists.nations.economy.EconomyService;
+
 public class HybridClaimManager {
     private static HybridClaimManager instance;
     private final Nations plugin;
@@ -39,6 +41,26 @@ public class HybridClaimManager {
 
             return new ClaimResult(result.isSuccess(), result.getMessage());
         } else {
+            // Try to charge the player first via external economy, fallback to town treasury
+            EconomyService econ = EconomyService.getInstance();
+            // compute cost locally to avoid access issues
+            int baseCost = plugin.getConfigurationManager().getSettlementsConfig().getInt("settlements.towns.claim-cost", 1000);
+            int numClaims = this.getTownClaimCount(town.getName());
+            int cost = baseCost + (int) (baseCost * numClaims * 0.1);
+
+            boolean charged = false;
+            if (econ != null) {
+                charged = econ.withdrawFromPlayer(player.getUniqueId(), cost);
+            }
+            if (!charged) {
+                if (town.getBalance() < cost) {
+                    return new ClaimResult(false, "Not enough money! Need " + cost + " coins. Town has " + town.getBalance() + " coins.");
+                }
+                town.removeMoney(cost);
+                // Persist town immediately when using town funds
+                try { plugin.getDataManager().saveTown(town); } catch (Throwable ignored) {}
+            }
+
             ClaimManager.ClaimResult result =
                     internalManager.claimChunk(chunk, town);
 

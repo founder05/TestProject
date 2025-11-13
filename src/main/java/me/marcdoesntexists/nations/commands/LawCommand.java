@@ -6,7 +6,7 @@ import me.marcdoesntexists.nations.law.Crime;
 import me.marcdoesntexists.nations.law.JusticeService;
 import me.marcdoesntexists.nations.managers.DataManager;
 import me.marcdoesntexists.nations.managers.LawManager;
-import me.marcdoesntexists.nations.utils.CustomMessages;
+import me.marcdoesntexists.nations.utils.MessageUtils;
 import me.marcdoesntexists.nations.utils.PlayerData;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -37,7 +37,7 @@ public class LawCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage("§cThis command can only be used by players!");
+            sender.sendMessage(MessageUtils.get("commands.player_only"));
             return true;
         }
 
@@ -67,19 +67,19 @@ public class LawCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleReport(Player player, String[] args) {
         if (args.length < 3) {
-            player.sendMessage("§cUsage: /law report <player> <crime>");
+            player.sendMessage(MessageUtils.get("law.usage_report"));
             return true;
         }
 
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town to report crimes!");
+            player.sendMessage(MessageUtils.get("law.must_be_in_town"));
             return true;
         }
 
         Player criminal = plugin.getServer().getPlayer(args[1]);
         if (criminal == null) {
-            player.sendMessage("§cPlayer not found!");
+            player.sendMessage(MessageUtils.get("law.player_not_found"));
             return true;
         }
 
@@ -87,7 +87,7 @@ public class LawCommand implements CommandExecutor, TabCompleter {
         try {
             crimeType = CrimeType.valueOf(args[2].toUpperCase());
         } catch (IllegalArgumentException e) {
-            player.sendMessage("§cInvalid crime type! Use /law crimes to see valid types.");
+            player.sendMessage(MessageUtils.get("law.invalid_crime_type"));
             return true;
         }
 
@@ -101,12 +101,12 @@ public class LawCommand implements CommandExecutor, TabCompleter {
                 justiceService.recordCrime(criminal.getUniqueId(), crimeType, data.getTown(), location);
 
         if (recorded) {
-            player.sendMessage(String.format("§a✔ " + CustomMessages.Law.CRIME_RECORDED, crimeType.getDisplayName()));
-            player.sendMessage("§7Criminal: §e" + criminal.getName());
-            player.sendMessage("§7Crime: §c" + crimeType.getDisplayName());
-            player.sendMessage("§7Fine: §6$" + justiceService.getCrimeBaseFine(crimeType));
+            player.sendMessage(MessageUtils.format("law.crime_recorded", Map.of("crime", crimeType.getDisplayName())));
+            player.sendMessage(MessageUtils.format("law.criminal_line", Map.of("criminal", criminal.getName())));
+            player.sendMessage(MessageUtils.format("law.crime_line", Map.of("crime", crimeType.getDisplayName())));
+            player.sendMessage(MessageUtils.format("law.fine_line", Map.of("fine", String.valueOf(justiceService.getCrimeBaseFine(crimeType)))));
         } else {
-            player.sendMessage("§cFailed to record crime. Please try again later.");
+            player.sendMessage(MessageUtils.get("law.failed_record"));
         }
 
         return true;
@@ -116,7 +116,7 @@ public class LawCommand implements CommandExecutor, TabCompleter {
         PlayerData data = dataManager.getPlayerData(player.getUniqueId());
 
         if (data.getTown() == null) {
-            player.sendMessage("§cYou must be in a town to view crimes!");
+            player.sendMessage(MessageUtils.get("law.must_be_in_town"));
             return true;
         }
 
@@ -126,28 +126,28 @@ public class LawCommand implements CommandExecutor, TabCompleter {
                 .collect(Collectors.toList());
 
         if (townCrimes.isEmpty()) {
-            player.sendMessage("§aNo unsolved crimes in your town!");
+            player.sendMessage(MessageUtils.get("law.list_none"));
             return true;
         }
 
-        player.sendMessage("§7§m----------§r §cUnsolved Crimes§7 (" + townCrimes.size() + ")§m----------");
+        player.sendMessage(MessageUtils.format("law.list_header", Map.of("count", String.valueOf(townCrimes.size()))));
 
         for (Crime crime : townCrimes) {
             String criminalName = plugin.getServer().getOfflinePlayer(crime.getCriminalId()).getName();
-            player.sendMessage("§c• §6" + crime.getCrimeType().getDisplayName());
-            player.sendMessage("§7  Criminal: §e" + criminalName);
-            player.sendMessage("§7  Date: §e" + dateFormat.format(new Date(crime.getTimestamp())));
-            player.sendMessage("§7  ID: §e" + crime.getCrimeId().toString().substring(0, 8));
+            player.sendMessage(MessageUtils.format("law.list_item_crime", Map.of("crime", crime.getCrimeType().getDisplayName())));
+            player.sendMessage(MessageUtils.format("law.list_item_criminal", Map.of("criminal", criminalName)));
+            player.sendMessage(MessageUtils.format("law.list_item_date", Map.of("date", dateFormat.format(new Date(crime.getTimestamp())))));
+            player.sendMessage(MessageUtils.format("law.list_item_id", Map.of("id", crime.getCrimeId().toString().substring(0, 8))));
         }
 
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("law.list_footer"));
 
         return true;
     }
 
     private boolean handleInfo(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage("§cUsage: /law info <crimeId>");
+            player.sendMessage(MessageUtils.get("law.usage_info"));
             return true;
         }
 
@@ -163,7 +163,7 @@ public class LawCommand implements CommandExecutor, TabCompleter {
                     }
                 }
                 if (foundCrime == null) {
-                    player.sendMessage("§cCrime not found!");
+                    player.sendMessage(MessageUtils.get("law.not_found"));
                     return true;
                 }
                 crimeId = foundCrime.getCrimeId();
@@ -171,58 +171,56 @@ public class LawCommand implements CommandExecutor, TabCompleter {
                 crimeId = UUID.fromString(fullId);
             }
         } catch (IllegalArgumentException e) {
-            player.sendMessage("§cInvalid crime ID!");
+            player.sendMessage(MessageUtils.get("law.invalid_id"));
             return true;
         }
 
         Crime crime = lawManager.getCrime(crimeId);
         if (crime == null) {
-            player.sendMessage("§cCrime not found!");
+            player.sendMessage(MessageUtils.get("law.not_found"));
             return true;
         }
 
         String criminalName = plugin.getServer().getOfflinePlayer(crime.getCriminalId()).getName();
 
-        player.sendMessage("§7§m----------§r §cCrime Info§7 §m----------");
-        player.sendMessage("§eCriminal: §6" + criminalName);
-        player.sendMessage("§eCrime: §c" + crime.getCrimeType().getDisplayName());
-        player.sendMessage("§eTown: §6" + crime.getTownId());
-        player.sendMessage("§eDate: §6" + dateFormat.format(new Date(crime.getTimestamp())));
-        player.sendMessage("§eLocation: §6" + crime.getLocation());
-        player.sendMessage("§eSolved: §6" + (crime.isSolved() ? "Yes" : "No"));
-        player.sendMessage("§eFine: §6$" + crime.getCrimeType().getBaseFine());
+        player.sendMessage(MessageUtils.get("law.info_header"));
+        player.sendMessage(MessageUtils.format("law.info_criminal", Map.of("criminal", criminalName)));
+        player.sendMessage(MessageUtils.format("law.info_crime", Map.of("crime", crime.getCrimeType().getDisplayName())));
+        player.sendMessage(MessageUtils.format("law.info_town", Map.of("town", crime.getTownId())));
+        player.sendMessage(MessageUtils.format("law.info_date", Map.of("date", dateFormat.format(new Date(crime.getTimestamp())))));
+        player.sendMessage(MessageUtils.format("law.info_location", Map.of("location", crime.getLocation())));
+        player.sendMessage(MessageUtils.format("law.info_solved", Map.of("solved", crime.isSolved() ? MessageUtils.get("yes") : MessageUtils.get("no"))));
+        player.sendMessage(MessageUtils.format("law.info_fine", Map.of("fine", String.valueOf(crime.getCrimeType().getBaseFine()))));
 
         if (crime.getEvidence() != null) {
-            player.sendMessage("§eEvidence: §6" + crime.getEvidence());
+            player.sendMessage(MessageUtils.format("law.info_evidence", Map.of("evidence", crime.getEvidence())));
         }
 
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("law.info_footer"));
 
         return true;
     }
 
     private boolean handleCrimes(Player player, String[] args) {
-        player.sendMessage("§7§m----------§r §cCrime Types§7 §m----------");
+        player.sendMessage(MessageUtils.get("law.crimes_header"));
 
         for (CrimeType crimeType : CrimeType.values()) {
-            player.sendMessage("§c• §6" + crimeType.getDisplayName());
-            player.sendMessage("§7  Type: §e" + crimeType.name().toLowerCase());
-            player.sendMessage("§7  Base Fine: §6$" + crimeType.getBaseFine());
+            player.sendMessage(MessageUtils.format("law.crime_type_item", Map.of("display", crimeType.getDisplayName(), "type", crimeType.name().toLowerCase(), "fine", String.valueOf(crimeType.getBaseFine()))));
         }
 
-        player.sendMessage("§7§m--------------------------------");
-        player.sendMessage("§7Use §e/law report <player> <type>§7 to report a crime!");
+        player.sendMessage(MessageUtils.get("law.crimes_footer"));
+        player.sendMessage(MessageUtils.get("law.crimes_help"));
 
         return true;
     }
 
     private void sendHelp(Player player) {
-        player.sendMessage("§7§m----------§r §cLaw Commands§7 §m----------");
-        player.sendMessage("§e/law report <player> <crime>§7 - Report a crime");
-        player.sendMessage("§e/law list§7 - List unsolved crimes");
-        player.sendMessage("§e/law info <crimeId>§7 - View crime details");
-        player.sendMessage("§e/law crimes§7 - List crime types");
-        player.sendMessage("§7§m--------------------------------");
+        player.sendMessage(MessageUtils.get("law.help_header"));
+        player.sendMessage(MessageUtils.get("law.help_report"));
+        player.sendMessage(MessageUtils.get("law.help_list"));
+        player.sendMessage(MessageUtils.get("law.help_info"));
+        player.sendMessage(MessageUtils.get("law.help_crimes"));
+        player.sendMessage(MessageUtils.get("law.help_footer"));
     }
 
     @Override

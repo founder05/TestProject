@@ -187,8 +187,8 @@ public class EconomyService {
         }
     }
 
-    public void withdrawFromPlayer(UUID playerId, double amount) {
-        if (amount <= 0) return;
+    public boolean withdrawFromPlayer(UUID playerId, double amount) {
+        if (amount <= 0) return true;
         try {
             if (vaultEconomy != null) {
                 OfflinePlayer off = Bukkit.getOfflinePlayer(playerId);
@@ -196,34 +196,32 @@ public class EconomyService {
                 if (resp != null && resp.transactionSuccess()) {
                     Transaction transaction = new Transaction(playerId, -amount, "External Withdraw");
                     economyManager.recordTransaction(transaction);
-                    return;
+                    return true;
                 }
-                return;
+                return false;
             }
             if (essentialsPlugin != null && essentialsGetUserMethod != null && essentialsTakeMoneyMethod != null) {
                 Object user = invokeEssentialsGetUser(playerId);
                 if (user != null) {
                     Object res = essentialsTakeMoneyMethod.invoke(user, amount);
-                    // try to interpret boolean or Number return
-                    switch (res) {
-                        case null -> {
-                            Transaction transaction = new Transaction(playerId, -amount, "Essentials Withdraw (unknown result)");
-                            economyManager.recordTransaction(transaction);
-                            return; // assume success if no exception
-
-                        }
-                        case Boolean b when b -> {
+                    // interpret return values: null (assume success), Boolean true, Number
+                    if (res == null) {
+                        Transaction transaction = new Transaction(playerId, -amount, "Essentials Withdraw (unknown result)");
+                        economyManager.recordTransaction(transaction);
+                        return true; // assume success
+                    }
+                    if (res instanceof Boolean) {
+                        if ((Boolean) res) {
                             Transaction transaction = new Transaction(playerId, -amount, "Essentials Withdraw");
                             economyManager.recordTransaction(transaction);
-                            return;
+                            return true;
                         }
-                        case Number number -> {
-                            Transaction transaction = new Transaction(playerId, -amount, "Essentials Withdraw");
-                            economyManager.recordTransaction(transaction);
-                            return;
-                        }
-                        default -> {
-                        }
+                        return false;
+                    }
+                    if (res instanceof Number) {
+                        Transaction transaction = new Transaction(playerId, -amount, "Essentials Withdraw");
+                        economyManager.recordTransaction(transaction);
+                        return true;
                     }
                 }
             }
@@ -233,16 +231,21 @@ public class EconomyService {
             if (ok) {
                 Transaction transaction = new Transaction(playerId, -amount, "Internal Withdraw");
                 economyManager.recordTransaction(transaction);
+                try { plugin.getDataManager().savePlayerMoney(playerId); } catch (Throwable ignored) {}
+                return true;
             }
+            return false;
         } catch (InvocationTargetException ite) {
             plugin.getLogger().warning("Error withdrawing via essentials: " + ite.getCause());
+            return false;
         } catch (Exception e) {
             plugin.getLogger().warning("withdrawFromPlayer failed: " + e.getMessage());
+            return false;
         }
     }
 
-    public void depositToPlayer(UUID playerId, double amount) {
-        if (amount <= 0) return;
+    public boolean depositToPlayer(UUID playerId, double amount) {
+        if (amount <= 0) return true;
         try {
             if (vaultEconomy != null) {
                 OfflinePlayer off = Bukkit.getOfflinePlayer(playerId);
@@ -250,32 +253,31 @@ public class EconomyService {
                 if (resp != null && resp.transactionSuccess()) {
                     Transaction transaction = new Transaction(playerId, amount, "External Deposit");
                     economyManager.recordTransaction(transaction);
-                    return;
+                    return true;
                 }
-                return;
+                return false;
             }
             if (essentialsPlugin != null && essentialsGetUserMethod != null && essentialsAddMoneyMethod != null) {
                 Object user = invokeEssentialsGetUser(playerId);
                 if (user != null) {
                     Object res = essentialsAddMoneyMethod.invoke(user, amount);
-                    switch (res) {
-                        case null -> {
-                            Transaction transaction = new Transaction(playerId, amount, "Essentials Deposit (unknown result)");
-                            economyManager.recordTransaction(transaction);
-                            return;
-                        }
-                        case Boolean b when b -> {
+                    if (res == null) {
+                        Transaction transaction = new Transaction(playerId, amount, "Essentials Deposit (unknown result)");
+                        economyManager.recordTransaction(transaction);
+                        return true;
+                    }
+                    if (res instanceof Boolean) {
+                        if ((Boolean) res) {
                             Transaction transaction = new Transaction(playerId, amount, "Essentials Deposit");
                             economyManager.recordTransaction(transaction);
-                            return;
+                            return true;
                         }
-                        case Number number -> {
-                            Transaction transaction = new Transaction(playerId, amount, "Essentials Deposit");
-                            economyManager.recordTransaction(transaction);
-                            return;
-                        }
-                        default -> {
-                        }
+                        return false;
+                    }
+                    if (res instanceof Number) {
+                        Transaction transaction = new Transaction(playerId, amount, "Essentials Deposit");
+                        economyManager.recordTransaction(transaction);
+                        return true;
                     }
                 }
             }
@@ -284,10 +286,14 @@ public class EconomyService {
             plugin.getDataManager().getPlayerData(playerId).addMoney((int) Math.floor(amount));
             Transaction transaction = new Transaction(playerId, amount, "Internal Deposit");
             economyManager.recordTransaction(transaction);
+            try { plugin.getDataManager().savePlayerMoney(playerId); } catch (Throwable ignored) {}
+            return true;
         } catch (InvocationTargetException ite) {
             plugin.getLogger().warning("Error depositing via essentials: " + ite.getCause());
+            return false;
         } catch (Exception e) {
             plugin.getLogger().warning("depositToPlayer failed: " + e.getMessage());
+            return false;
         }
     }
 
@@ -338,6 +344,7 @@ public class EconomyService {
             town.removeMoney((int) taxAmount);
             Transaction transaction = new Transaction(null, taxAmount, "Town Tax from " + town.getName());
             economyManager.recordTransaction(transaction);
+            try { plugin.getDataManager().saveTown(town); } catch (Throwable ignored) {}
         }
     }
 
@@ -352,6 +359,7 @@ public class EconomyService {
                 double townTax = town.getBalance() * kingdomTaxRate;
                 totalTax += townTax;
                 town.removeMoney((int) townTax);
+                try { plugin.getDataManager().saveTown(town); } catch (Throwable ignored) {}
             }
         }
 
@@ -375,6 +383,7 @@ public class EconomyService {
                         double townTax = town.getBalance() * empireTaxRate;
                         totalTax += townTax;
                         town.removeMoney((int) townTax);
+                        try { plugin.getDataManager().saveTown(town); } catch (Throwable ignored) {}
                     }
                 }
             }
@@ -458,7 +467,7 @@ public class EconomyService {
     public void persistOnlinePlayersMoney() {
         try {
             FileConfiguration econCfg = configManager.getEconomyConfig();
-            boolean enabled = econCfg != null ? econCfg.getBoolean("partial-save-enabled", true) : true;
+            boolean enabled = econCfg == null || econCfg.getBoolean("partial-save-enabled", true);
             if (!enabled) return; // partial saves disabled
 
             for (Player p : Bukkit.getOnlinePlayers()) {
@@ -498,14 +507,78 @@ public class EconomyService {
         Town town = societiesManager.getTown(townName);
         if (town != null) {
             town.addMoney(amount);
+            try { plugin.getDataManager().saveTown(town); } catch (Throwable ignored) {}
         }
     }
 
     public boolean removeFromTownTreasury(String townName, int amount) {
         Town town = societiesManager.getTown(townName);
         if (town != null) {
-            return town.removeMoney(amount);
+            boolean ok = town.removeMoney(amount);
+            if (ok) {
+                try { plugin.getDataManager().saveTown(town); } catch (Throwable ignored) {}
+            }
+            return ok;
         }
         return false;
+    }
+
+    // Transfer from player's external account to town treasury atomically.
+    // Returns true on success (player charged and town credited), false on failure.
+    public boolean transferPlayerToTown(UUID playerId, String townName, int amount) {
+        if (amount <= 0) return true;
+        try {
+            Town town = SocietiesManager.getInstance().getTown(townName);
+            if (town == null) return false;
+
+            // Try to withdraw from player's external account first
+            boolean withdrawn = withdrawFromPlayer(playerId, amount);
+            if (!withdrawn) return false;
+
+            // Credit town
+            town.addMoney(amount);
+            Transaction tx = new Transaction(playerId, amount, "Player->Town: " + townName);
+            EconomyManager.getInstance().recordTransaction(tx);
+
+            // Persist both
+            try { plugin.getDataManager().saveTown(town); } catch (Throwable ignored) {}
+            try { plugin.getDataManager().savePlayerMoney(playerId); } catch (Throwable ignored) {}
+
+            return true;
+        } catch (Exception e) {
+            plugin.getLogger().warning("transferPlayerToTown failed: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // Transfer from town treasury to player's external account atomically.
+    // Returns true on success (town debited and player credited), false on failure.
+    public boolean transferTownToPlayer(String townName, UUID playerId, int amount) {
+        if (amount <= 0) return true;
+        try {
+            Town town = SocietiesManager.getInstance().getTown(townName);
+            if (town == null) return false;
+
+            if (!town.removeMoney(amount)) return false;
+
+            boolean deposited = depositToPlayer(playerId, amount);
+            if (!deposited) {
+                // rollback town debit
+                town.addMoney(amount);
+                return false;
+            }
+
+            Transaction tx = new Transaction(playerId, amount, "Town->Player: " + townName);
+            EconomyManager.getInstance().recordTransaction(tx);
+
+            // Persist both
+            try { plugin.getDataManager().saveTown(town); } catch (Throwable ignored) {}
+            try { plugin.getDataManager().savePlayerMoney(playerId); } catch (Throwable ignored) {}
+
+            return true;
+        } catch (Exception e) {
+            plugin.getLogger().warning("transferTownToPlayer failed: " + e.getMessage());
+            return false;
+        }
     }
 }
