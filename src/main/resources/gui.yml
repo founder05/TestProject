@@ -1,263 +1,261 @@
-# Nations GUI Configuration
-# Customize the appearance of the Nations GUI
+# Configuration version (DO NOT MODIFY - used for automatic migrations)
+config-version: 1
 
-# General GUI Settings
+# ===============================================
+# GUI Configuration for Realms Plugin
+# ===============================================
 gui:
-  # Material to fill empty slots
-  fill-material: GRAY_STAINED_GLASS_PANE
+  fill-material: "GRAY_STAINED_GLASS_PANE"
 
-  # Towns GUI
+  # === GUI PRINCIPALE - TOWNS ===
   towns:
-    title: "§6§lTowns"
-    size: 54  # Must be multiple of 9 (9, 18, 27, 36, 45, 54)
-
+    title: "&6⚜ &eFeudi del Regno &6⚜"
+    size: 54
     item:
-      # Item display format
-      name: "§6§l{name}"
-
+      material: "PLAYER_HEAD"
+      name: "&6{name}"
       lore:
-        - "§7§m------------------"
-        - "§eMayor: §f{mayor}"
-        - "§eMembers: §f{members}"
-        - "§eClaims: §f{claims}"
-        - "§eBalance: §6${balance}"
-        - "§eLevel: §f{level}"
         - ""
-        - "§7Kingdom: §f{kingdom}"
-        - "§7§m------------------"
+        - "&eSignore: &f{mayor}"
+        - "&eMembri: &f{members}"
+        - "&eTerre: &f{claims}"
+        - "&eTesoro: &f{balance} aurei"
+        - "&eLivello: &f{level}"
+        - "&eRegno: &f{kingdom}"
+        - ""
+        - "&7Click per maggiori informazioni"
 
-  # Kingdoms GUI
+  # === GUI PRINCIPALE - KINGDOMS ===
   kingdoms:
-    title: "§6§lKingdoms"
+    title: "&6⚜ &eRegni del Mondo &6⚜"
     size: 54
-
     item:
-      # Item display format
-      name: "§6§l⚔ {name}"
-
+      material: "PLAYER_HEAD"
+      name: "&6{name}"
       lore:
-        - "§7§m------------------"
-        - "§eKing: §f{king}"
-        - "§eCapital: §f{capital}"
-        - "§eTowns: §f{towns}"
-        - "§ePopulation: §f{population}"
-        - "§eClaims: §f{claims}"
         - ""
-        - "§6⚔ Military:"
-        - "§7  Vassals: §f{vassals}"
-        - "§7  Allies: §a{allies}"
-        - "§7  Wars: §c{wars}"
+        - "&eRe: &f{king}"
+        - "&eCapitale: &f{capital}"
+        - "&eFeudi: &f{towns}"
+        - "&ePopolazione: &f{population}"
+        - "&eTerre: &f{claims}"
+        - "&eVassalli: &f{vassals}"
+        - "&eAlleati: &f{allies}"
+        - "&eGuerre: &f{wars}"
+        - "&eLivello: &f{level}"
+        - "&eImpero: &f{empire}"
         - ""
-        - "§eLevel: §f{level}"
-        - "§7Empire: §f{empire}"
-        - "§7§m------------------"
+        - "&7Click per maggiori informazioni"
 
-  # Empires GUI
+  # === GUI PRINCIPALE - EMPIRES ===
   empires:
-    title: "§d§lEmpires"
+    title: "&d⚜ &5Imperi del Mondo &d⚜"
     size: 54
-
     item:
-      # Item display format
-      name: "§d§l✦ {name}"
-
+      material: "PLAYER_HEAD"
+      name: "&5{name}"
       lore:
-        - "§7§m------------------"
-        - "§dEmperor: §f{emperor}"
-        - "§dKingdoms: §f{kingdoms}"
-        - "§dTowns: §f{towns}"
-        - "§dPopulation: §f{population}"
-        - "§dClaims: §f{claims}"
         - ""
-        - "§dLevel: §f{level}"
-        - "§7§m------------------"
+        - "&eImperatore: &f{emperor}"
+        - "&eRegni: &f{kingdoms}"
+        - "&eFeudi: &f{towns}"
+        - "&ePopolazione: &f{population}"
+        - "&eTerre: &f{claims}"
+        - "&eLivello: &f{level}"
+        - ""
+        - "&7Click per maggiori informazioni"
 
-  # Leaderboards
-  leaderboards:
-    # Default sounds for leaderboards
-    defaults:
-      open_sound: UI_TOAST_IN
+  # === NAVIGAZIONE ===
+navigation:
+    towns-button:
+      slot: 45
+      material: "OAK_SAPLING"
+      name: "&6⚜ Feudi"
+      lore:
+        - "&7Visualizza tutti i feudi"
+    kingdoms-button:
+      slot: 49
+      material: "IRON_SWORD"
+      name: "&6⚜ Regni"
+      lore:
+        - "&7Visualizza tutti i regni"
+    empires-button:
+      slot: 53
+      material: "DIAMOND_SWORD"
+      name: "&d⚜ Imperi"
+      lore:
+        - "&7Visualizza tutti gli imperi"
+
+  # === LEADERBOARD GLOBALE ===
+leaderboard:
+    title: "&6&l⚔ Leaderboard&r &7- &e{category}"
+    size: 54
+    per_page: 28
+    metric: "towns.population"
+
+    sounds:
+      open: "UI_BUTTON_CLICK"
       open_volume: 1.0
       open_pitch: 1.0
-      click_sound: UI_BUTTON_CLICK
-      click_volume: 1.0
-      click_pitch: 1.0
-    towns_population:
-      title: "§6§lTop Towns by Population"
-      size: 27
-      sound:
-        open: "UI_TOAST_IN"
-        click: "UI_BUTTON_CLICK"
-      metric: "towns.population"
-      item:
-        material: PAPER
-        name: "§6{rank}. {name}"
-        lore:
-          - "§7§m------------------"
-          - "§ePopulation: §6{value}"
-          - "§eMembers: §6{value}"
-          - "§7§m------------------"
-    towns_wealth:
-      title: "§6§lTop Towns by Wealth"
-      size: 27
-      metric: "towns.wealth"
-      item:
-        material: PAPER
-        name: "§6{rank}. {name}"
-        lore:
-          - "§7§m------------------"
-          - "§eBalance: §6{value}"
-          - "§eTowns: §6{metric}"
-          - "§7§m------------------"
-    kingdoms_vassals:
-      title: "§6§lTop Kingdoms by Vassals"
-      size: 27
-      metric: "kingdoms.vassals"
-      item:
-        material: PAPER
-        name: "§6{rank}. {name}"
-        lore:
-          - "§7§m------------------"
-          - "§eVassals: §6{value}"
-          - "§eTowns: §6{metric}"
-          - "§7§m------------------"
-    kingdoms_allies:
-      title: "§6§lTop Kingdoms by Allies"
-      size: 27
-      metric: "kingdoms.allies"
-      item:
-        material: PAPER
-        name: "§6{rank}. {name}"
-        lore:
-          - "§7§m------------------"
-          - "§eAllies: §6{value}"
-          - "§7§m------------------"
-    kingdoms_wars:
-      title: "§6§lTop Kingdoms by Wars"
-      size: 27
-      metric: "kingdoms.wars"
-      item:
-        material: PAPER
-        name: "§6{rank}. {name}"
-        lore:
-          - "§7§m------------------"
-          - "§eActive Wars: §6{value}"
-          - "§7§m------------------"
-    empires_wealth:
-      title: "§d§lTop Empires by Wealth"
-      size: 27
-      metric: "empires.balance"
-      item:
-        material: PAPER
-        name: "§d{rank}. {name}"
-        lore:
-          - "§7§m------------------"
-          - "§dWealth: §6{value}"
-          - "§7§m------------------"
-    players_money:
-      title: "§6§lTop Players by Wealth"
-      size: 27
-      sound:
-        open: "ENTITY_PLAYER_LEVELUP"
-        open_volume: 1.0
-        open_pitch: 1.0
-        click: "ENTITY_ITEM_PICKUP"
-        click_volume: 1.0
-        click_pitch: 1.0
-      metric: "players.money"
-      item:
-        material: PLAYER_HEAD
-        name: "§6{rank}. {name}"
-        lore:
-          - "§7§m------------------"
-          - "§eWealth: §6{value}"
-          - "§7§m------------------"
-    players_noble_exp:
-      title: "§6§lTop Players by Noble XP"
-      size: 27
-      metric: "noble_exp"
-      item:
-        material: PLAYER_HEAD
-        name: "§6{rank}. {name}"
-        lore:
-          - "§7§m------------------"
-          - "§eNoble XP: §6{value}"
-          - "§7§m------------------"
-    players_job_exp:
-      title: "§6§lTop Players by Job XP"
-      size: 27
-      sound:
-        open: "ENTITY_PLAYER_LEVELUP"
-        click: "ENTITY_ITEM_PICKUP"
-      metric: "job_exp"
-      item:
-        material: PLAYER_HEAD
-        name: "§6{rank}. {name}"
-        lore:
-          - "§7§m------------------"
-          - "§eJob XP: §6{value}"
-          - "§7§m------------------"
-    gods_power:
-      title: "§6§lTop Gods by Power"
-      size: 27
-      metric: "gods.power"
-      item:
-        material: PAPER
-        name: "§6{rank}. {name}"
-        lore:
-          - "§7§m------------------"
-          - "§ePower: §6{value}"
-          - "§7§m------------------"
-    religions_followers:
-      title: "§6§lTop Religions by Followers"
-      size: 27
-      sound:
-        open: "UI_TOAST_IN"
-        click: "UI_BUTTON_CLICK"
-      metric: "religions.followers"
-      item:
-        material: PAPER
-        name: "§6{rank}. {name}"
-        lore:
-          - "§7§m------------------"
-          - "§eFollowers: §6{value}"
-          - "§7§m------------------"
+      click: "UI_BUTTON_CLICK"
+      click_volume: 0.8
+      click_pitch: 1.2
+      error: "ENTITY_VILLAGER_NO"
+      error_volume: 0.6
+      error_pitch: 0.8
+      close: "BLOCK_CHEST_CLOSE"
+      close_volume: 1.0
+      close_pitch: 1.0
 
-  # Navigation Buttons
-  navigation:
-    # Towns Button
-    towns-button:
-      slot: 45  # Bottom left
-      material: OAK_SAPLING
-      name: "§a§lTowns"
-      lore:
-        - "§7View all towns"
-        - "§7in the world"
+    navigation:
+      prev_button:
+        slot: 45
+        material: "ARROW"
+        display_name: "&e◀ Pagina Precedente"
+      next_button:
+        slot: 53
+        material: "ARROW"
+        display_name: "&ePagina Successiva ▶"
+      close_button:
+        slot: 49
+        material: "BARRIER"
+        display_name: "&c✖ Chiudi"
+      page_info:
+        slot: 50
+        material: "BOOK"
+        display_name: "&7Pagina &f{page}&7/&f{total}"
 
-    # Kingdoms Button
-    kingdoms-button:
-      slot: 49  # Bottom center
-      material: IRON_SWORD
-      name: "§6§lKingdoms"
-      lore:
-        - "§7View all kingdoms"
-        - "§7and their power"
+    items:
+      entry:
+        material: "PLAYER_HEAD"
+        display_name: "&e#{rank} &6{name}"
+        lore:
+          - "&7Valore: &f{value}"
+        skull_owner_from_name: true
 
-    # Empires Button
-    empires-button:
-      slot: 53  # Bottom right
-      material: DIAMOND_SWORD
-      name: "§d§lEmpires"
-      lore:
-        - "§7View mighty empires"
-        - "§7that rule the world"
+  # === LEADERBOARD SPECIFICHE ===
+leaderboard-types:
+     towns_population:
+       metric: "towns.population"
+       items:
+         entry:
+          display_name: "&e#{rank} &6{name}"
+          lore:
+            - "&7Popolazione: &f{value}"
 
-# You can customize GUI sounds here. For leaderboards each board may define:
-#   sound.open:     (String) Sound enum name played when the GUI opens
-#   sound.open_volume: (Float) volume (default 1.0)
-#   sound.open_pitch:  (Float) pitch (default 1.0)
-#   sound.click:    (String) Sound enum name played when an item is clicked
-#   sound.click_volume: (Float) volume for click (default 1.0)
-#   sound.click_pitch:  (Float) pitch for click (default 1.0)
-# Defaults can be set under gui.leaderboards.defaults (open_sound/open_volume/open_pitch, click_sound/click_volume/click_pitch)
-# Example valid sound names: ENTITY_PLAYER_LEVELUP, UI_TOAST_IN, ENTITY_ITEM_PICKUP, UI_BUTTON_CLICK
+towns_wealth:
+       metric: "towns.wealth"
+       items:
+         entry:
+          display_name: "&e#{rank} &6{name}"
+          lore:
+            - "&7Ricchezza: &a${value}"
+
+towns_claims:
+       metric: "towns.claims"
+       items:
+         entry:
+          display_name: "&e#{rank} &6{name}"
+          lore:
+            - "&7Terre: &f{value}"
+
+towns_level:
+       metric: "towns.level"
+       items:
+         entry:
+          display_name: "&e#{rank} &6{name}"
+          lore:
+            - "&7Livello: &f{value}"
+
+kingdoms_population:
+       metric: "kingdoms.population"
+       items:
+         entry:
+          display_name: "&e#{rank} &6{name}"
+          lore:
+            - "&7Popolazione: &f{value}"
+
+kingdoms_towns:
+       metric: "kingdoms.towns"
+       items:
+         entry:
+          display_name: "&e#{rank} &6{name}"
+          lore:
+            - "&7Feudi: &f{value}"
+
+kingdoms_wealth:
+       metric: "kingdoms.wealth"
+       items:
+         entry:
+          display_name: "&e#{rank} &6{name}"
+          lore:
+            - "&7Ricchezza: &a${value}"
+
+kingdoms_vassals:
+       metric: "kingdoms.vassals"
+       items:
+         entry:
+          display_name: "&e#{rank} &6{name}"
+          lore:
+            - "&7Vassalli: &f{value}"
+
+kingdoms_level:
+       metric: "kingdoms.level"
+       items:
+         entry:
+          display_name: "&e#{rank} &6{name}"
+          lore:
+            - "&7Livello: &f{value}"
+
+players_money:
+       metric: "players.money"
+       items:
+         entry:
+          display_name: "&e#{rank} &b{name}"
+          lore:
+            - "&7Denaro: &a${value}"
+
+players_noble:
+       metric: "players.noble"
+       items:
+         entry:
+          display_name: "&e#{rank} &b{name}"
+          lore:
+            - "&7Rango Nobiliare: &f{value}"
+
+empires_population:
+       metric: "empires.population"
+       items:
+         entry:
+          display_name: "&e#{rank} &d{name}"
+          lore:
+            - "&7Popolazione: &f{value}"
+
+empires_kingdoms:
+       metric: "empires.kingdoms"
+       items:
+         entry:
+          display_name: "&e#{rank} &d{name}"
+          lore:
+            - "&7Regni: &f{value}"
+
+empires_claims:
+       metric: "empires.claims"
+       items:
+         entry:
+          display_name: "&e#{rank} &d{name}"
+          lore:
+            - "&7Territori: &f{value}"
+
+empires_level:
+       metric: "empires.level"
+       items:
+         entry:
+          display_name: "&e#{rank} &d{name}"
+          lore:
+            - "&7Livello: &f{value}"
+messages:
+    currently_viewing: "&a✔ &7Stai visualizzando"
+    click_to_view: "&eClick per visualizzare"
+    leaderboard_click: "&6Hai selezionato &f{name} &6- Valore: &f{value}"
+    town_verbose: "&eVisualizzazione dettagliata: &6{town} &7({details})"

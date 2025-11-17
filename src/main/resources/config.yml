@@ -1,18 +1,29 @@
+# Configuration version (DO NOT MODIFY - used for automatic migrations)
+config-version: 1
+
 plugin:
-  name: Nations
-  version: 1.0
+  name: Realms
+  version: 1.0.0
   description: "A comprehensive civilization management plugin"
+  release-date: "2025-11-16"
+  config-migration-version: 1
+  last-updated: "2025-11-16"
 
 # Main plugin settings
 storage:
   type: "YAML"
   auto-save-interval: 600
-  data-folder: "plugins/Nations/data"
+  data-folder: "plugins/Realms/data"
 
 # Default starting values for players
 player-defaults:
   starting-money: 1000
   starting-town-cost: 5000
+
+# Town naming rules
+town:
+  name_min: 3
+  name_max: 16
 
 # General plugin features
 features:
@@ -26,14 +37,224 @@ features:
 
 # File save atomic options
 save:
-  tmp-dir: ""          # empty => use system tmp (recommended). Set absolute path to override.
+  tmp-dir: "plugins/Realms/tmp"  # default to plugin tmp to avoid OneDrive locks; set absolute path to override.
   max-attempts: 12
   initial-backoff-ms: 200
   max-backoff-ms: 4000
 
 # Visualizer configuration (particle fallback and cleanup behavior)
 visualizer:
-  particle: "END_ROD"        # Particle enum name used by the particle visualizer
+  particle: END_ROD        # Particle enum name used by the particle visualizer
   spacing: 4                  # Block spacing between visual markers when using particles
   refresh-ticks: 40           # How often (ticks) the particle visualizer refreshes
   cleanup-on-enable: true     # Attempt to remove residual marker entities on plugin enable
+  protection:
+    enabled: true            # Enable protection that prevents players from standing on marker blocks
+    mode: "safe-teleport"  # "bounce" (teleport back to from) or "safe-teleport" (move to safe adjacent pos)
+    safe-teleport-vertical-offset: 1  # y offset search start for safe teleport
+    look-radius: 2          # radius (blocks) around 'from' to search for safe spot
+    log-attempts: true      # log attempts to stand/teleport onto markers
+    protect-mounts: true    # also prevent mounts/vehicles from being positioned on markers
+    protect-teleport-commands: true  # attempt to block /sethome /spawn /home on marker blocks (best-effort)
+
+pvp:
+  # Radius (blocks) around the acceptance location that defines the duel area
+  radius: 50.0
+  # Duel timeout in seconds
+  timeout-seconds: 120
+  # Penalty applied to the loser when they flee/timeout/quit: "kill" or "none"
+  penalty: "kill"
+  bossbar:
+    enabled: true
+    color: RED
+    style: SOLID
+  sound:
+    # Example Sound enum names (case-insensitive). Leave empty to disable.
+    start: ENTITY_PLAYER_LEVELUP
+    end: ENTITY_EXPERIENCE_ORB_PICKUP
+
+# Subclaim purchase policy
+subclaims:
+  # Policy options:
+  # - "mayor": Only the town mayor can purchase subclaims
+  # - "trusted": Town mayor and trusted players can purchase
+  # - "members": Any town member can purchase
+  # - "permission": Players with specific permission can purchase
+  # - "social": Only players with specific social classes/noble tiers can purchase
+  purchase_policy: "social"
+
+  # Permission node required when purchase_policy is "permission"
+  purchase_permission_node: "realms.claims.buychunk"
+
+  # Noble tiers/social classes allowed to purchase subclaims when purchase_policy is "social"
+  # Valid tiers (case-insensitive): KNIGHT, BARON, COUNT, DUKE, PRINCE, KING
+  # Note: COMMONER cannot own land (landClaimLimit = 0)
+  # Each tier has different land claim limits:
+  #   KNIGHT  = max 20 chunks
+  #   BARON   = max 50 chunks
+  #   COUNT   = max 100 chunks
+  #   DUKE    = max 200 chunks
+  #   PRINCE  = max 500 chunks
+  #   KING    = max 1000 chunks
+  required_social_classes:
+    - "KNIGHT"
+    - "BARON"
+    - "COUNT"
+    - "DUKE"
+    - "PRINCE"
+    - "KING"
+
+# ========== ADVANCED SETTINGS - FOR POWER USERS ONLY ==========
+# WARNING: Modifying these settings may break plugin functionality if not done correctly.
+# Only change these if you understand what each option does.
+advanced:
+  listeners:
+    # Entity damage and protection
+    entity-protection:
+      # Protect passive mobs (animals, villagers, etc.) in claims
+      protect-passive-mobs: true
+      # Protect hostile mobs from damage in claims (not recommended)
+      protect-hostile-mobs: false
+      # Allow members to damage mobs in their own claims
+      members-can-damage-mobs: true
+      # Allow trusted players to damage mobs in claims
+      trusted-can-damage-mobs: true
+      # Block projectile damage to mobs from non-members
+      block-projectile-damage: true
+      # Protect mobs that can be used as entities to interact with (Item Frames, Armor Stands, etc.)
+      protect-item-entities: true
+
+    # PvP protection settings
+    pvp-protection:
+      # Enable PvP protection in claims
+      enabled: true
+      # Protect from direct melee attacks
+      protect-melee: true
+      # Protect from projectile attacks (arrows, snowballs, etc.)
+      protect-projectile: true
+      # Protect from explosion damage to players
+      protect-explosion: true
+      # Always prevent same-town members from attacking each other (even if PvP enabled)
+      prevent-friendly-fire: true
+      # Check attacker's claim instead of victim's (advanced, may cause unexpected behavior)
+      use-attacker-claim: false
+
+    # Block protection
+    block-protection:
+      # Enable claim block protection
+      enabled: true
+      # Protect against block break
+      protect-break: true
+      # Protect against block place
+      protect-place: true
+      # Protect against block interaction (buttons, levers, doors, etc.)
+      protect-interact: true
+      # Protect containers (chests, furnaces, etc.)
+      protect-containers: true
+      # Allow members to bypass block protection in their claims
+      members-bypass: true
+      # Allow trusted players to bypass block protection
+      trusted-bypass: true
+
+    # Explosion protection
+    explosion-protection:
+      # Enable explosion protection in claims
+      enabled: true
+      # Protect blocks from TNT explosions
+      protect-from-tnt: true
+      # Protect blocks from creeper explosions
+      protect-from-creeper: true
+      # Protect blocks from other explosions (wither, ghast, etc.)
+      protect-from-other: true
+      # Remove explosion blocks that would damage other claims (cross-claim protection)
+      cross-claim-protection: true
+      # Cancel entire explosion event if all blocks are protected (may improve performance)
+      cancel-if-all-protected: true
+
+    # Liquid flow protection
+    liquid-protection:
+      # Enable liquid flow protection
+      enabled: true
+      # Block lava flow into claims
+      block-lava-flow: true
+      # Block water flow into claims
+      block-water-flow: true
+      # Check source block claim ownership (more strict)
+      check-source-claim: true
+      # Distance in blocks to check for cross-claim flow
+      flow-check-distance: 5
+
+    # Fire and lightning protection
+    fire-protection:
+      # Enable fire protection
+      enabled: true
+      # Protect from fire spread
+      protect-spread: true
+      # Protect from lightning strikes
+      protect-lightning: true
+      # Cancel fire damage to blocks in claims
+      cancel-fire-damage: true
+
+    # Mob spawning control
+    mob-spawning:
+      # Enable mob spawning control in claims
+      enabled: true
+      # Block hostile mob spawning (respects claim settings)
+      control-hostile: true
+      # Block passive mob spawning (respects claim settings)
+      control-passive: false
+      # Block spawner-based spawns (respects claim settings)
+      control-spawner: true
+
+    # Enderman griefing protection
+    enderman-protection:
+      # Enable enderman block pickup protection
+      enabled: true
+      # Prevent endermen from picking up blocks in all claims
+      protect-all-claims: true
+      # Prevent endermen from picking up blocks in wilderness
+      protect-wilderness: false
+
+    # Player interaction
+    player-interaction:
+      # Enable player interaction protection
+      enabled: true
+      # Protect item frames from non-members
+      protect-item-frames: true
+      # Protect armor stands from non-members
+      protect-armor-stands: true
+      # Protect paintings from non-members
+      protect-paintings: true
+      # Protect entities with inventories (llamas, donkeys, etc.)
+      protect-inventory-entities: true
+
+  # Performance optimization settings
+  performance:
+    # Cache claim lookups (improves performance but may use more memory)
+    cache-claim-lookups: true
+    # Cache size for claim lookups (0 = unlimited)
+    claim-cache-size: 1000
+    # Cache expiration time in seconds
+    claim-cache-expire-seconds: 300
+    # Async claim checks where possible (experimental)
+    async-claim-checks: false
+    # Batch save operations (improves performance during high load)
+    batch-save: true
+    # Batch size for save operations
+    batch-save-size: 50
+
+  # Debug and logging options
+  debug:
+    # Enable verbose logging for claim events
+    log-claim-events: false
+    # Log PvP protection events
+    log-pvp-events: false
+    # Log explosion protection events
+    log-explosion-events: false
+    # Log entity damage events
+    log-entity-damage: false
+    # Log performance warnings (slow operations)
+    log-performance-warnings: true
+    # Log all listener activations (VERY VERBOSE - only for debugging)
+    log-all-listeners: false
+

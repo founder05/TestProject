@@ -1,3 +1,8 @@
+# Configuration version (DO NOT MODIFY - used for automatic migrations)
+config-version: 1
+# Last Updated: 2025-11-16
+# Settlement Evolution System Version: 1.0.0
+
 # Settlement Evolution System Configuration
 
 settlement-evolution:

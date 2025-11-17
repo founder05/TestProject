@@ -1,0 +1,25 @@
+# Example gp-mappings.yml for Realms claim migration
+# Two supported formats:
+# 1) claimToTown: maps GriefPrevention claim IDs to your desired town name
+# 2) townClaims: maps town name to a list of claim IDs
+
+# Format A: claimId -> town name
+claimToTown:
+  "12345": "Roma"
+  "12346": "Roma"
+  "98765": "Napoli"
+
+# Format B: town -> [claimId, claimId, ...]
+townClaims:
+  Milano:
+    - 22222
+    - 22223
+  Venezia:
+    - 33333
+    - 33334
+
+# Place this file inside the plugin data folder (plugins/Realms/gp-mappings.yml)
+# Then ensure the ClaimData files from GriefPrevention are available at:
+# <server-root>/plugins/GriefPreventionData/ClaimData/
+# Run /claimtransfer as an operator or a player with permission 'realms.claimtransfer'.
+

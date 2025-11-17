@@ -1,23 +1,53 @@
-name: Nations
-version: '1.0'
-main: me.marcdoesntexists.nations.Nations
+name: Realms
+version: '1.0.0'
+main: me.marcdoesntexists.realms.Realms
 api-version: '1.21'
 authors:
   - MarcDoesntExists
 description: "A comprehensive civilization management plugin for Minecraft"
+website: https://github.com/MarcDoesntExists/Realms
+# Release Date: 2025-11-16
+# Config Migration System: v1.0
+# Last Updated: 2025-11-16
 
 commands:
   town:
     description: "Manage towns"
     usage: "/town [subcommand]"
+    aliases: [towns]
+  town.transfer:
+    description: "Transfer town ownership"
+    usage: "/town transfer <player>"
+  town.disband:
+    description: "Disband your town (requires confirmation)"
+    usage: "/town disband confirm"
 
   show:
     description: "Toggle display of your town's claim borders"
-    usage: "/showclaims"
+    usage: "/show [toggle]"
+    aliases: [ showclaims ]
 
   kingdom:
     description: "Manage kingdoms"
     usage: "/kingdom [subcommand]"
+    aliases: [kings]
+  kingdom.transfer:
+    description: "Transfer kingdom leadership"
+    usage: "/kingdom transfer <player>"
+  kingdom.disband:
+    description: "Disband the kingdom (requires confirmation)"
+    usage: "/kingdom disband confirm"
+
+  empire:
+    description: "Manage empires"
+    usage: "/empire [subcommand]"
+    aliases: [imperiums]
+  empire.transfer:
+    description: "Transfer empire leadership"
+    usage: "/empire transfer <player>"
+  empire.disband:
+    description: "Disband the empire (requires confirmation)"
+    usage: "/empire disband confirm"
 
   war:
     description: "Manage warfare"
@@ -27,17 +57,9 @@ commands:
     description: "Manage alliances"
     usage: "/alliance [subcommand]"
 
-  religion:
-    description: "Manage religions"
-    usage: "/religion [subcommand]"
-
   job:
     description: "Manage jobs"
     usage: "/job [subcommand]"
-
-  law:
-    description: "Manage laws and crimes"
-    usage: "/law [subcommand]"
 
   treaty:
     description: "Manage treaties between kingdoms"
@@ -46,7 +68,7 @@ commands:
   feudal:
     description: "Manage feudal relationships and vassals"
     usage: "/feudal [subcommand]"
-    aliases: [vassal]
+    aliases: [ vassal ]
 
   evolve:
     description: "Evolve your settlement (Town → Kingdom → Empire)"
@@ -64,17 +86,17 @@ commands:
     description: "Manage noble tiers and promotions"
     usage: "/noble [subcommand]"
 
-  god:
-    description: "Manage gods and religion features"
-    usage: "/god [subcommand]"
-
-  nations:
-    description: "Open Nations GUI"
-    usage: "/nations [towns|kingdoms|empires]"
+  realms:
+    description: "Open Realms GUI"
+    usage: "/realms [towns|kingdoms|empires]"
 
   leaderboard:
     description: "Open leaderboards GUI"
     usage: "/leaderboard [key]"
+
+  duel:
+    description: "Challenge or accept a PvP duel"
+    usage: "/duel <player> | /duel accept"
 
   saveexempt:
     description: "Toggle periodic save exemption for a player"
@@ -82,7 +104,7 @@ commands:
 
   channel:
     description: "Switch chat channel or toggle spy (admins)"
-    usage: "/channel <GLOBAL|TOWN|KINGDOM|EMPIRE|RELIGION|ALLIANCE|spy>"
+    usage: "/channel <GLOBAL|TOWN|KINGDOM|EMPIRE|ALLIANCE|spy>"
 
   tpmy:
     description: "Teleport to your town / kingdom / empire"
@@ -91,102 +113,159 @@ commands:
   savecheck:
     description: "Admin: force save all data and report status"
     usage: "/savecheck"
+  testsave:
+    description: "Admin: run a diagnostic save test (uses SaveAtomicTester)"
+    usage: "/testsave"
+    permission: realms.admin
+    permission-message: "You don't have permission to run testsave"
+
+  claimtransfer:
+    description: "Migrate claims from GriefPrevention to Realms internal claim system"
+    usage: "/claimtransfer"
+    permission: realms.claimtransfer
+    permission-message: "You don't have permission to run claimtransfer"
+
+  configmigrate:
+    description: "Manage configuration migrations and backups"
+    usage: "/configmigrate [check|migrate|backup|restore|clean]"
+    permission: realms.admin.config
+    permission-message: "You don't have permission to manage config migrations"
+    aliases: [cfgmigrate, migrateconfig]
+
+  allowgrief:
+    description: "Toggle permission for a player to perform owner-allowed grief actions in your claim"
+    usage: "/allowgrief <player>"
+    permission: realms.claim.allowgrief
+    permission-message: "You don't have permission to allow griefing in your claim"
 
 permissions:
-  nations.admin:
-    description: "Admin access to Nations plugin"
+  realms.admin:
+    description: "Admin access to Realms plugin"
     default: op
 
-  nations.chat.spy:
-    description: "Allows an admin to spy on all private society/religion channels"
+  realms.admin.config:
+    description: "Manage configuration migrations and backups"
     default: op
 
-  nations.admin.bypass:
+  realms.chat.spy:
+    description: "Allows an admin to spy on all private society channels"
+    default: op
+
+  # Permission for allowgrief command
+  realms.claim.allowgrief:
+    description: "Allow owners/trusted to permit specific players to grief in their claim"
+    default: true
+
+  realms.admin.bypass:
     description: "Bypass protection in claimed chunks"
     default: op
 
-  nations.claim.show:
-    description: Allows viewing your town claim borders
+  realms.claim.show:
+    description: "Allows viewing your town claim borders"
     default: op
 
-  nations.town.create:
+  realms.town.create:
     description: "Create towns"
     default: true
 
-  nations.kingdom.create:
+  realms.kingdom.create:
     description: "Create kingdoms"
     default: true
 
-  nations.war.declare:
+  realms.war.declare:
     description: "Declare wars"
     default: true
 
-  nations.alliance.create:
+  realms.alliance.create:
     description: "Create alliances"
     default: true
 
-  nations.treaty.create:
+  realms.treaty.create:
     description: "Create treaties"
     default: true
 
-  nations.feudal.manage:
+  realms.feudal.manage:
     description: "Manage feudal relationships"
     default: true
 
-  nations.evolve:
+  realms.evolve:
     description: "Evolve settlements"
     default: true
 
-  # Military permissions
-  nations.military.*:
+  realms.military.*:
     description: "All military commands"
     default: op
-  nations.military.enlist:
+  realms.military.enlist:
     description: "Enlist players into the military"
     default: op
-  nations.military.manage:
+  realms.military.manage:
     description: "Promote/Demote/Discharge players"
     default: op
-  nations.military.view:
+  realms.military.view:
     description: "View military info and list"
     default: true
 
-  # Trial / justice permissions
-  nations.trial.*:
+  realms.trial.*:
     description: "All trial commands"
     default: op
-  nations.trial.start:
+  realms.trial.start:
     description: "Start trials"
     default: op
-  nations.trial.judge:
+  realms.trial.judge:
     description: "Judge and sentence"
     default: op
 
-  # Nobility permissions
-  nations.noble.*:
+  realms.noble.*:
     description: "All noble commands"
     default: op
-  nations.noble.promote:
+  realms.noble.promote:
     description: "Promote players in the noble system"
     default: op
-  nations.noble.upgrade:
+  realms.noble.upgrade:
     description: "Upgrade your noble tier"
     default: true
 
-  # God / religion permissions
-  nations.god.*:
-    description: "All god/religion commands"
-    default: op
-  nations.god.create:
-    description: "Create gods"
-    default: op
-  nations.god.worship:
-    description: "Worship gods"
-    default: true
-
-  # Exemptions
-  nations.save.exempt:
+  realms.save.exempt:
     description: "When set, this player will be exempt from periodic partial money saves (useful for admins/test accounts)"
     default: op
 
-softdepend: [ProtocolLib]
+  realms.duel:
+    description: "Allow players to send/accept duels"
+    default: true
+
+  realms.duel.admin:
+    description: "Administrative duel management (force end/cancel)"
+    default: op
+
+  realms.leaderboard.open:
+    description: "Open leaderboard GUI"
+    default: true
+
+  realms.notice.crime:
+    description: "Receive broadcast notifications about recorded crimes"
+    default: op
+
+  realms.town.transfer:
+    description: "Allow players to transfer their town to another player"
+    default: true
+  realms.town.disband:
+    description: "Allow players to disband their town"
+    default: true
+  realms.kingdom.transfer:
+    description: "Allow kings to transfer their kingdom title"
+    default: true
+  realms.kingdom.disband:
+    description: "Allow kings to disband their kingdom"
+    default: true
+  realms.empire.transfer:
+    description: "Allow emperors to transfer their empire title"
+    default: true
+  realms.empire.disband:
+    description: "Allow emperors to disband their empire"
+    default: true
+
+  realms.claimtransfer:
+    description: "Allow running claim migration from GriefPrevention"
+    default: op
+
+softdepend: [ ProtocolLib, PlaceholderAPI ]
